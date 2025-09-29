@@ -27,7 +27,6 @@ from market.serializers import (
     SubletSerializerPublic,
 )
 
-
 User = get_user_model()
 
 
@@ -95,7 +94,10 @@ class Items(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return ItemSerializerList
-        elif self.action == "retrieve" and self.get_object().seller != self.request.user:
+        elif (
+            self.action == "retrieve"
+            and self.get_object().seller != self.request.user
+        ):
             return ItemSerializerPublic
         else:
             return ItemSerializer
@@ -141,7 +143,10 @@ class Sublets(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return SubletSerializerList
-        elif self.action == "retrieve" and self.get_object().item.seller != self.request.user:
+        elif (
+            self.action == "retrieve"
+            and self.get_object().item.seller != self.request.user
+        ):
             return SubletSerializerPublic
         else:
             return SubletSerializer
@@ -213,7 +218,9 @@ class CreateImages(generics.CreateAPIView):
         instances = []
 
         for img in images:
-            img_serializer = self.get_serializer(data={"item": item_id, "image": img})
+            img_serializer = self.get_serializer(
+                data={"item": item_id, "image": img}
+            )
             img_serializer.is_valid(raise_exception=True)
             instances.append(img_serializer.save())
 
@@ -238,7 +245,9 @@ class DeleteImage(generics.DestroyAPIView):
 
 # TODO: We don't use the CreateModelMixin or DestroyModelMixin's functionality here.
 # Think about if there's a better way
-class Favorites(mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+class Favorites(
+    mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet
+):
     serializer_class = ItemSerializer
     http_method_names = ["post", "delete"]
     permission_classes = [IsAuthenticated | IsSuperUser]
@@ -280,19 +289,20 @@ class Offers(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if Item.objects.filter(pk=int(self.kwargs["item_id"])).exists():
-            return Offer.objects.filter(item_id=int(self.kwargs["item_id"])).order_by("created_at")
+            return Offer.objects.filter(
+                item_id=int(self.kwargs["item_id"])
+            ).order_by("created_at")
         else:
             raise exceptions.NotFound("No Item matches the given query")
 
     def create(self, request, *args, **kwargs):
         # Required to be mutable since the item field is from the URL
-        data = request.data
-        request.POST._mutable = True
+        data = request.data.copy()
         if self.get_queryset().filter(user=self.request.user).exists():
             raise exceptions.ValidationError("Offer already exists")
         data["item"] = int(self.kwargs["item_id"])
         data["user"] = self.request.user.id
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)

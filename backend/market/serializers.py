@@ -5,7 +5,6 @@ from rest_framework import serializers
 
 from market.models import Category, Item, ItemImage, Offer, Sublet, Tag
 
-
 User = get_user_model()
 
 
@@ -31,7 +30,7 @@ class OfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offer
         fields = "__all__"
-        read_only_fields = ["id", "created_date", "user"]
+        read_only_fields = ["id", "created_at", "user"]
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
@@ -40,7 +39,9 @@ class OfferSerializer(serializers.ModelSerializer):
 
 # Create/Update Image Serializer
 class ItemImageSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(write_only=True, required=False, allow_null=True)
+    image = serializers.ImageField(
+        write_only=True, required=False, allow_null=True
+    )
 
     class Meta:
         model = ItemImage
@@ -87,12 +88,16 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def validate_title(self, value):
         if self.contains_profanity(value):
-            raise serializers.ValidationError("The title contains inappropriate language.")
+            raise serializers.ValidationError(
+                "The title contains inappropriate language."
+            )
         return value
 
     def validate_description(self, value):
         if self.contains_profanity(value):
-            raise serializers.ValidationError("The description contains inappropriate language.")
+            raise serializers.ValidationError(
+                "The description contains inappropriate language."
+            )
         return value
 
     def contains_profanity(self, text):
@@ -169,7 +174,9 @@ class SubletSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
     def create(self, validated_data):
-        item_serializer = ItemSerializer(data=validated_data.pop("item"), context=self.context)
+        item_serializer = ItemSerializer(
+            data=validated_data.pop("item"), context=self.context
+        )
         item_serializer.is_valid(raise_exception=True)
         validated_data["item"] = item_serializer.save()
         instance = super().create(validated_data)
@@ -178,7 +185,10 @@ class SubletSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if item_data := validated_data.pop("item", None):
             item_serializer = ItemSerializer(
-                instance=instance.item, data=item_data, context=self.context, partial=True
+                instance=instance.item,
+                data=item_data,
+                context=self.context,
+                partial=True,
             )
             item_serializer.is_valid(raise_exception=True)
             validated_data["item"] = item_serializer.save()

@@ -15,7 +15,6 @@ from market.views import (
     UserFavorites,
 )
 
-
 app_name = "market"
 
 router = routers.DefaultRouter()

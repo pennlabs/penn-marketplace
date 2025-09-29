@@ -7,7 +7,10 @@ from market.models import Category, Item, ItemImage, Offer, Sublet, Tag
 class ItemAdmin(admin.ModelAdmin):
 
     def image_tag(self, instance):
-        images = ['<img src="%s" height="150" />' for image in instance.images.all()]
+        images = [
+            '<img src="%s" height="150" />' % image.image.url
+            for image in instance.images.all()
+        ]
         return mark_safe("<br>".join(images))
 
     image_tag.short_description = "Item Images"

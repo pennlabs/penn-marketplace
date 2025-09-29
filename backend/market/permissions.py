@@ -23,7 +23,10 @@ class ItemOwnerPermission(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Check if the user is the owner of the Item.
-        return request.method in permissions.SAFE_METHODS or obj.seller == request.user
+        return (
+            request.method in permissions.SAFE_METHODS
+            or obj.seller == request.user
+        )
 
 
 class SubletOwnerPermission(permissions.BasePermission):
@@ -36,7 +39,10 @@ class SubletOwnerPermission(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Check if the user is the owner of the Item.
-        return request.method in permissions.SAFE_METHODS or obj.item.seller == request.user
+        return (
+            request.method in permissions.SAFE_METHODS
+            or obj.item.seller == request.user
+        )
 
 
 class ItemImageOwnerPermission(permissions.BasePermission):
@@ -50,7 +56,10 @@ class ItemImageOwnerPermission(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Check if the user is the owner of the Item.
-        return request.method in permissions.SAFE_METHODS or obj.item.seller == request.user
+        return (
+            request.method in permissions.SAFE_METHODS
+            or obj.item.seller == request.user
+        )
 
 
 class OfferOwnerPermission(permissions.BasePermission):
