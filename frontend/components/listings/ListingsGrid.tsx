@@ -38,8 +38,8 @@ export const ListingsGrid = ({ type, listings }: Props) => {
         return lastPage.length > 0 ? allPages.length + 1 : undefined;
       },
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 1 * 60 * 1000, // 1 minutes
+      gcTime: 5 * 60 * 1000, // 5 minutes
     });
 
   useEffect(() => {
