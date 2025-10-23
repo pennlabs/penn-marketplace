@@ -7,10 +7,8 @@ from django.contrib.auth import get_user_model
 from django.core.files.storage import Storage
 from django.test import TestCase
 from django.utils.timezone import now
-from rest_framework.test import APIClient
-
 from market.models import Category, Item, ItemImage, Offer, Sublet, Tag
-
+from rest_framework.test import APIClient
 
 User = get_user_model()
 
@@ -112,7 +110,9 @@ class BaseMarketTest(TestCase):
                 sublets.append(created_sublet)
         return items, sublets
 
-    def assert_dict_equal_ignoring_keys(self, actual, expected, ignored_keys=(), unordered_keys=()):
+    def assert_dict_equal_ignoring_keys(
+        self, actual, expected, ignored_keys=(), unordered_keys=()
+    ):
         ignored = set(ignored_keys)
         unordered = set(unordered_keys)
 
@@ -146,6 +146,56 @@ class BaseMarketTest(TestCase):
         self.assertEqual(normalize(actual), normalize(expected))
 
 
+class TestTagGet(BaseMarketTest):
+    def setUp(self):
+        super().setUp()
+
+    def test_get_tags(self):
+        params = {
+            "offset": 1,
+            "limit": 2,
+        }
+        response = self.client.get("/market/tags/", params)
+        expected_response = {
+            "count": 8,
+            "next": "http://testserver/market/tags/?limit=2&offset=3",
+            "previous": "http://testserver/market/tags/?limit=2",
+            "page_size": 2,
+            "offset": 1,
+            "results": [{"name": "Used"}, {"name": "Couch"}],
+        }
+        self.assertEqual(response.status_code, 200)
+        self.assert_dict_equal_ignoring_keys(response.json(), expected_response, [], ["results"])
+
+
+class TestCategoryGet(BaseMarketTest):
+    def setUp(self):
+        super().setUp()
+
+    def test_get_categories(self):
+        params = {
+            "offset": 0,
+            "limit": 5,
+        }
+        response = self.client.get("/market/categories/", params)
+        expected_response = {
+            "count": 6,
+            "next": "http://testserver/market/categories/?limit=5&offset=5",
+            "previous": None,
+            "page_size": 5,
+            "offset": 0,
+            "results": [
+                {"name": "Book"},
+                {"name": "Electronics"},
+                {"name": "Furniture"},
+                {"name": "Food"},
+                {"name": "Sublet"},
+            ],
+        }
+        self.assertEqual(response.status_code, 200)
+        self.assert_dict_equal_ignoring_keys(response.json(), expected_response, [], ["results"])
+
+
 class TestItemGet(BaseMarketTest):
     def setUp(self):
         super().setUp()
@@ -155,64 +205,78 @@ class TestItemGet(BaseMarketTest):
 
     def test_get_items(self):
         response = self.client.get("/market/items/")
-        expected_response = [
-            {
-                "id": self.items[0].id,
-                "seller": self.users[0].id,
-                "tags": ["Textbook", "Used"],
-                "category": "Book",
-                "title": "Math Textbook",
-                "price": 20.0,
-                "expires_at": "3000-12-12T00:00:00-05:00",
-                "images": [],
-                "favorite_count": 0,
-            },
-            {
-                "id": self.items[1].id,
-                "seller": self.users[1].id,
-                "tags": ["Laptop", "New"],
-                "category": "Electronics",
-                "title": "Macbook Pro",
-                "price": 2000.0,
-                "expires_at": "3000-08-12T01:00:00-04:00",
-                "images": [],
-                "favorite_count": 0,
-            },
-            {
-                "id": self.items[2].id,
-                "seller": self.users[1].id,
-                "tags": ["Couch"],
-                "category": "Furniture",
-                "title": "Couch",
-                "price": 400.0,
-                "expires_at": "3000-12-12T00:00:00-05:00",
-                "images": [],
-                "favorite_count": 0,
-            },
-        ]
+        expected_response = {
+            "count": 3,
+            "next": None,
+            "previous": None,
+            "page_size": 25,
+            "offset": 0,
+            "results": [
+                {
+                    "id": self.items[0].id,
+                    "seller": self.users[0].id,
+                    "tags": ["Textbook", "Used"],
+                    "category": "Book",
+                    "title": "Math Textbook",
+                    "price": 20.0,
+                    "expires_at": "3000-12-12T00:00:00-05:00",
+                    "images": [],
+                    "favorite_count": 0,
+                },
+                {
+                    "id": self.items[1].id,
+                    "seller": self.users[1].id,
+                    "tags": ["Laptop", "New"],
+                    "category": "Electronics",
+                    "title": "Macbook Pro",
+                    "price": 2000.0,
+                    "expires_at": "3000-08-12T01:00:00-04:00",
+                    "images": [],
+                    "favorite_count": 0,
+                },
+                {
+                    "id": self.items[2].id,
+                    "seller": self.users[1].id,
+                    "tags": ["Couch"],
+                    "category": "Furniture",
+                    "title": "Couch",
+                    "price": 400.0,
+                    "expires_at": "3000-12-12T00:00:00-05:00",
+                    "images": [],
+                    "favorite_count": 0,
+                },
+            ],
+        }
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
-            response.json(), expected_response, [], ["", "tags", "images"]
+            response.json(), expected_response, [], ["results", "results.tags", "results.images"]
         )
 
     def test_get_item_seller(self):
         response = self.client.get("/market/items/?seller=true")
-        expected_response = [
-            {
-                "id": self.items[0].id,
-                "seller": self.users[0].id,
-                "tags": ["Textbook", "Used"],
-                "category": "Book",
-                "title": "Math Textbook",
-                "price": 20.0,
-                "expires_at": "3000-12-12T00:00:00-05:00",
-                "images": [],
-                "favorite_count": 0,
-            }
-        ]
+        expected_response = {
+            "count": 1,
+            "next": None,
+            "previous": None,
+            "page_size": 25,
+            "offset": 0,
+            "results": [
+                {
+                    "id": self.items[0].id,
+                    "seller": self.users[0].id,
+                    "tags": ["Textbook", "Used"],
+                    "category": "Book",
+                    "title": "Math Textbook",
+                    "price": 20.0,
+                    "expires_at": "3000-12-12T00:00:00-05:00",
+                    "images": [],
+                    "favorite_count": 0,
+                }
+            ],
+        }
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
-            response.json(), expected_response, [], ["", "tags", "images"]
+            response.json(), expected_response, [], ["results", "results.tags", "results.images"]
         )
 
     def test_get_single_item_own(self):
@@ -680,52 +744,59 @@ class TestSubletGet(BaseMarketTest):
     def test_get_sublets(self):
         response = self.client.get("/market/sublets/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()), 2)
-        expected_response = [
-            {
-                "id": self.sublets[0].id,
-                "item": {
-                    "id": self.items[0].id,
-                    "seller": self.users[0].id,
-                    "tags": ["New"],
-                    "category": "Sublet",
-                    "title": "Cira Green Sublet",
-                    "price": 1350.0,
-                    "expires_at": "3000-12-12T00:00:00-05:00",
-                    "images": [],
-                    "favorite_count": 0,
+        expected_response = {
+            "count": 2,
+            "next": None,
+            "previous": None,
+            "page_size": 25,
+            "offset": 0,
+            "results": [
+                {
+                    "id": self.sublets[0].id,
+                    "item": {
+                        "id": self.items[0].id,
+                        "seller": self.users[0].id,
+                        "tags": ["New"],
+                        "category": "Sublet",
+                        "title": "Cira Green Sublet",
+                        "price": 1350.0,
+                        "expires_at": "3000-12-12T00:00:00-05:00",
+                        "images": [],
+                        "favorite_count": 0,
+                    },
+                    "address": "Cira Green, Philadelphia, PA",
+                    "beds": 3.0,
+                    "baths": 1.0,
+                    "start_date": "2024-01-01T00:00:00-05:00",
+                    "end_date": "3000-05-31T00:00:00-04:00",
                 },
-                "address": "Cira Green, Philadelphia, PA",
-                "beds": 3.0,
-                "baths": 1.0,
-                "start_date": "2024-01-01T00:00:00-05:00",
-                "end_date": "3000-05-31T00:00:00-04:00",
-            },
-            {
-                "id": self.sublets[1].id,
-                "item": {
-                    "id": self.items[1].id,
-                    "seller": self.users[1].id,
-                    "tags": ["New"],
-                    "category": "Sublet",
-                    "title": "Rodin Quad",
-                    "price": 1350.0,
-                    "expires_at": "3000-12-12T00:00:00-05:00",
-                    "images": [],
-                    "favorite_count": 0,
+                {
+                    "id": self.sublets[1].id,
+                    "item": {
+                        "id": self.items[1].id,
+                        "seller": self.users[1].id,
+                        "tags": ["New"],
+                        "category": "Sublet",
+                        "title": "Rodin Quad",
+                        "price": 1350.0,
+                        "expires_at": "3000-12-12T00:00:00-05:00",
+                        "images": [],
+                        "favorite_count": 0,
+                    },
+                    "address": "3901 Locust Walk, Philadelphia, PA",
+                    "beds": 4.0,
+                    "baths": 1.0,
+                    "start_date": "2024-01-01T00:00:00-05:00",
+                    "end_date": "3000-05-31T00:00:00-04:00",
                 },
-                "address": "3901 Locust Walk, Philadelphia, PA",
-                "beds": 4.0,
-                "baths": 1.0,
-                "start_date": "2024-01-01T00:00:00-05:00",
-                "end_date": "3000-05-31T00:00:00-04:00",
-            },
-        ]
+            ],
+        }
+
         self.assert_dict_equal_ignoring_keys(
             response.json(),
             expected_response,
             ["created_at"],
-            ["", "tags", "images", "buyers", "favorites"],
+            ["results", "results.tags", "results.images", "results.favorites"],
         )
 
     def test_get_sublet_own(self):
@@ -1095,43 +1166,59 @@ class TestOffer(BaseMarketTest):
 
     def test_get_all_user_offers(self):
         response = self.client.get("/market/offers/made/")
-        expected_response = [
-            {
-                "id": self.offers[0].id,
-                "phone_number": None,
-                "email": "self_user@gmail.com",
-                "message": "",
-                "user": self.users[0].id,
-                "item": self.items[1].id,
-            },
-            {
-                "id": self.offers[1].id,
-                "phone_number": "+15555555555",
-                "email": "self_user@gmail.com",
-                "message": "I want this",
-                "user": self.users[0].id,
-                "item": self.items[4].id,
-            },
-        ]
+        expected_response = {
+            "count": 2,
+            "next": None,
+            "previous": None,
+            "page_size": 25,
+            "offset": 0,
+            "results": [
+                {
+                    "id": self.offers[0].id,
+                    "phone_number": None,
+                    "email": "self_user@gmail.com",
+                    "message": "",
+                    "user": self.users[0].id,
+                    "item": self.items[1].id,
+                },
+                {
+                    "id": self.offers[1].id,
+                    "phone_number": "+15555555555",
+                    "email": "self_user@gmail.com",
+                    "message": "I want this",
+                    "user": self.users[0].id,
+                    "item": self.items[4].id,
+                },
+            ],
+        }
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
-            response.json(), expected_response, ["created_at"], [""]
+            response.json(), expected_response, ["results.created_at"], ["results"]
         )
 
     def test_list_item_offers(self):
         response = self.client.get(f"/market/items/{self.items[0].id}/offers/")
-        expected = [
-            {
-                "id": self.offers[2].id,
-                "phone_number": "+15555555555",
-                "email": "user1@gmail.com",
-                "message": "",
-                "user": self.users[1].id,
-                "item": self.items[0].id,
-            }
-        ]
+        expected = {
+            "count": 1,
+            "next": None,
+            "previous": None,
+            "page_size": 25,
+            "offset": 0,
+            "results": [
+                {
+                    "id": self.offers[2].id,
+                    "phone_number": "+15555555555",
+                    "email": "user1@gmail.com",
+                    "message": "",
+                    "user": self.users[1].id,
+                    "item": self.items[0].id,
+                }
+            ],
+        }
         self.assertEqual(response.status_code, 200)
-        self.assert_dict_equal_ignoring_keys(response.json(), expected, ["created_at"], [""])
+        self.assert_dict_equal_ignoring_keys(
+            response.json(), expected, ["results.created_at"], ["results"]
+        )
 
     def test_get_offer_other(self):
         response = self.client.get(f"/market/items/{self.items[1].id}/offers/")
