@@ -1,13 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from rest_framework import exceptions, generics, mixins, status, viewsets
-from rest_framework.generics import get_object_or_404
+from rest_framework import exceptions, mixins, status, viewsets
+from rest_framework.generics import (
+    CreateAPIView,
+    DestroyAPIView,
+    ListAPIView,
+    get_object_or_404,
+)
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from market.models import Category, Item, ItemImage, Offer, Sublet, Tag
+from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
     ItemImageOwnerPermission,
@@ -25,28 +30,32 @@ from market.serializers import (
     SubletSerializer,
     SubletSerializerList,
     SubletSerializerPublic,
+    TagSerializer,
 )
 
 User = get_user_model()
 
 
-class Tags(APIView):
+class Tags(ListAPIView):
+    serializer_class = TagSerializer
+    pagination_class = PageSizeOffsetPagination
 
-    def get(self, request, format=None):
-        response_data = Tag.objects.values_list("name", flat=True)
-        return Response(response_data)
-
-
-class Categories(APIView):
-
-    def get(self, request, format=None):
-        response_data = Category.objects.values_list("name", flat=True)
-        return Response(response_data)
+    def get_queryset(self):
+        return Tag.objects.all()
 
 
-class UserFavorites(generics.ListAPIView):
+class Categories(ListAPIView):
+    serializer_class = TagSerializer
+    pagination_class = PageSizeOffsetPagination
+
+    def get_queryset(self):
+        return Category.objects.all()
+
+
+class UserFavorites(ListAPIView):
     serializer_class = ItemSerializerList
     permission_classes = [IsAuthenticated]
+    pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -54,18 +63,20 @@ class UserFavorites(generics.ListAPIView):
 
 
 # TODO: Can add feature to filter for active offers only
-class OffersMade(generics.ListAPIView):
+class OffersMade(ListAPIView):
     serializer_class = OfferSerializer
     permission_classes = [IsAuthenticated | IsSuperUser]
+    pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
         user = self.request.user
         return Offer.objects.filter(user=user)
 
 
-class OffersReceived(generics.ListAPIView):
+class OffersReceived(ListAPIView):
     serializer_class = OfferSerializer
     permission_classes = [IsAuthenticated | IsSuperUser]
+    pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -90,14 +101,12 @@ class Items(viewsets.ModelViewSet):
     permission_classes = [ItemOwnerPermission | IsSuperUser]
     serializer_class = ItemSerializer
     queryset = Item.objects.filter(sublet__isnull=True)
+    pagination_class = PageSizeOffsetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
             return ItemSerializerList
-        elif (
-            self.action == "retrieve"
-            and self.get_object().seller != self.request.user
-        ):
+        elif self.action == "retrieve" and self.get_object().seller != self.request.user:
             return ItemSerializerPublic
         else:
             return ItemSerializer
@@ -131,7 +140,11 @@ class Items(viewsets.ModelViewSet):
         else:
             queryset = queryset.filter(expires_at__gte=timezone.now())
 
-        # Serialize and return the queryset
+        page = self.paginate_queryset(queryset.order_by("id"))  # stable ordering helps
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -139,14 +152,12 @@ class Items(viewsets.ModelViewSet):
 class Sublets(viewsets.ModelViewSet):
     permission_classes = [SubletOwnerPermission | IsSuperUser]
     queryset = Sublet.objects.all()
+    pagination_class = PageSizeOffsetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
             return SubletSerializerList
-        elif (
-            self.action == "retrieve"
-            and self.get_object().item.seller != self.request.user
-        ):
+        elif self.action == "retrieve" and self.get_object().item.seller != self.request.user:
             return SubletSerializerPublic
         else:
             return SubletSerializer
@@ -189,14 +200,13 @@ class Sublets(viewsets.ModelViewSet):
         else:
             queryset = queryset.filter(item__expires_at__gte=timezone.now())
 
-        # Serialize and return the queryset
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 
 # TODO: This doesn't use CreateAPIView's functionality since we overrode the create method.
 # Think about if there's a better way
-class CreateImages(generics.CreateAPIView):
+class CreateImages(CreateAPIView):
     serializer_class = ItemImageSerializer
     http_method_names = ["post"]
     permission_classes = [ItemOwnerPermission | IsSuperUser]
@@ -218,9 +228,7 @@ class CreateImages(generics.CreateAPIView):
         instances = []
 
         for img in images:
-            img_serializer = self.get_serializer(
-                data={"item": item_id, "image": img}
-            )
+            img_serializer = self.get_serializer(data={"item": item_id, "image": img})
             img_serializer.is_valid(raise_exception=True)
             instances.append(img_serializer.save())
 
@@ -228,7 +236,7 @@ class CreateImages(generics.CreateAPIView):
         return Response(data, status=status.HTTP_201_CREATED)
 
 
-class DeleteImage(generics.DestroyAPIView):
+class DeleteImage(DestroyAPIView):
     serializer_class = ItemImageSerializer
     http_method_names = ["delete"]
     permission_classes = [ItemImageOwnerPermission | IsSuperUser]
@@ -245,12 +253,11 @@ class DeleteImage(generics.DestroyAPIView):
 
 # TODO: We don't use the CreateModelMixin or DestroyModelMixin's functionality here.
 # Think about if there's a better way
-class Favorites(
-    mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet
-):
+class Favorites(mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = ItemSerializer
     http_method_names = ["post", "delete"]
     permission_classes = [IsAuthenticated | IsSuperUser]
+    pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -286,12 +293,11 @@ class Offers(viewsets.ModelViewSet):
 
     permission_classes = [OfferOwnerPermission | IsSuperUser]
     serializer_class = OfferSerializer
+    pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
         if Item.objects.filter(pk=int(self.kwargs["item_id"])).exists():
-            return Offer.objects.filter(
-                item_id=int(self.kwargs["item_id"])
-            ).order_by("created_at")
+            return Offer.objects.filter(item_id=int(self.kwargs["item_id"])).order_by("created_at")
         else:
             raise exceptions.NotFound("No Item matches the given query")
 
