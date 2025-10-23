@@ -21,6 +21,7 @@ from market.permissions import (
     SubletOwnerPermission,
 )
 from market.serializers import (
+    CategorySerializer,
     ItemImageSerializer,
     ItemImageURLSerializer,
     ItemSerializer,
@@ -45,7 +46,7 @@ class Tags(ListAPIView):
 
 
 class Categories(ListAPIView):
-    serializer_class = TagSerializer
+    serializer_class = CategorySerializer
     pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
@@ -140,7 +141,7 @@ class Items(viewsets.ModelViewSet):
         else:
             queryset = queryset.filter(expires_at__gte=timezone.now())
 
-        page = self.paginate_queryset(queryset.order_by("id"))  # stable ordering helps
+        page = self.paginate_queryset(queryset.order_by("id"))
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
@@ -199,6 +200,11 @@ class Sublets(viewsets.ModelViewSet):
             queryset = queryset.filter(item__seller=request.user)
         else:
             queryset = queryset.filter(item__expires_at__gte=timezone.now())
+
+        page = self.paginate_queryset(queryset.order_by("id"))
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
