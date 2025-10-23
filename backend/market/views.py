@@ -11,6 +11,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from market.mixins import DefaultOrderMixin
 from market.models import Category, Item, ItemImage, Offer, Sublet, Tag
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
@@ -37,7 +38,7 @@ from market.serializers import (
 User = get_user_model()
 
 
-class Tags(ListAPIView):
+class Tags(ListAPIView, DefaultOrderMixin):
     serializer_class = TagSerializer
     pagination_class = PageSizeOffsetPagination
 
@@ -45,7 +46,7 @@ class Tags(ListAPIView):
         return Tag.objects.all()
 
 
-class Categories(ListAPIView):
+class Categories(ListAPIView, DefaultOrderMixin):
     serializer_class = CategorySerializer
     pagination_class = PageSizeOffsetPagination
 
@@ -53,7 +54,7 @@ class Categories(ListAPIView):
         return Category.objects.all()
 
 
-class UserFavorites(ListAPIView):
+class UserFavorites(ListAPIView, DefaultOrderMixin):
     serializer_class = ItemSerializerList
     permission_classes = [IsAuthenticated]
     pagination_class = PageSizeOffsetPagination
@@ -64,7 +65,7 @@ class UserFavorites(ListAPIView):
 
 
 # TODO: Can add feature to filter for active offers only
-class OffersMade(ListAPIView):
+class OffersMade(ListAPIView, DefaultOrderMixin):
     serializer_class = OfferSerializer
     permission_classes = [IsAuthenticated | IsSuperUser]
     pagination_class = PageSizeOffsetPagination
@@ -74,7 +75,7 @@ class OffersMade(ListAPIView):
         return Offer.objects.filter(user=user)
 
 
-class OffersReceived(ListAPIView):
+class OffersReceived(ListAPIView, DefaultOrderMixin):
     serializer_class = OfferSerializer
     permission_classes = [IsAuthenticated | IsSuperUser]
     pagination_class = PageSizeOffsetPagination
@@ -84,7 +85,7 @@ class OffersReceived(ListAPIView):
         return Offer.objects.filter(item__seller=user)
 
 
-class Items(viewsets.ModelViewSet):
+class Items(viewsets.ModelViewSet, DefaultOrderMixin):
     """
     list:
     Returns a list of Items that match query parameters (e.g., amenities) and belong to the user.
@@ -114,14 +115,13 @@ class Items(viewsets.ModelViewSet):
 
     @staticmethod
     def get_filter_dict():
-        filter_dict = {
+        return {
             "category": "category__name",
             "title": "title__icontains",
             "min_price": "price__gte",
             "max_price": "price__lte",
             "negotiable": "negotiable",
         }
-        return filter_dict
 
     def list(self, request, *args, **kwargs):
         """Returns a list of Items that match query parameters and user ownership."""
@@ -141,7 +141,7 @@ class Items(viewsets.ModelViewSet):
         else:
             queryset = queryset.filter(expires_at__gte=timezone.now())
 
-        page = self.paginate_queryset(queryset.order_by("id"))
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
@@ -150,7 +150,7 @@ class Items(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class Sublets(viewsets.ModelViewSet):
+class Sublets(viewsets.ModelViewSet, DefaultOrderMixin):
     permission_classes = [SubletOwnerPermission | IsSuperUser]
     queryset = Sublet.objects.all()
     pagination_class = PageSizeOffsetPagination
@@ -201,7 +201,7 @@ class Sublets(viewsets.ModelViewSet):
         else:
             queryset = queryset.filter(item__expires_at__gte=timezone.now())
 
-        page = self.paginate_queryset(queryset.order_by("id"))
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
