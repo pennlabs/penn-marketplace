@@ -30,7 +30,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <TanstackQueryProvider>
-          {children}
+          <div className="p-6">
+            {children}
+          </div>
           <ReactQueryDevtools />
         </TanstackQueryProvider>
       </body>
