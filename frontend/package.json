@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.5",
+    "@tanstack/react-query-devtools": "^5.90.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jose": "^3.20.4",
@@ -17,6 +18,7 @@
     "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-intersection-observer": "^9.16.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
