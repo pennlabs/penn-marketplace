@@ -8,9 +8,7 @@ User = get_user_model()
 class Offer(models.Model):
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["user", "item"], name="unique_offer_market"
-            )
+            models.UniqueConstraint(fields=["user", "item"], name="unique_offer_market")
         ]
         indexes = [
             models.Index(fields=["user"]),
@@ -18,9 +16,7 @@ class Offer(models.Model):
             models.Index(fields=["created_at"]),
         ]
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="offers"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers")
     item = models.ForeignKey("Item", on_delete=models.CASCADE)
     email = models.EmailField(max_length=255, null=True, blank=True)
     phone_number = PhoneNumberField(null=True, blank=True)
@@ -31,8 +27,21 @@ class Offer(models.Model):
         return f"Offer for {self.item} made by {self.user}"
 
 
+class Attribute(models.Model):
+    name = models.CharField(max_length=255, primary_key=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Category(models.Model):
     name = models.CharField(max_length=50, primary_key=True)
+    required_attributes = models.ManyToManyField(
+        Attribute, blank=True, related_name="categories_required"
+    )
+    recommended_attributes = models.ManyToManyField(
+        Attribute, blank=True, related_name="categories_recommended"
+    )
 
     def __str__(self):
         return self.name
@@ -55,17 +64,11 @@ class Item(models.Model):
             models.Index(fields=["negotiable"]),
         ]
 
-    seller = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="items_listed"
-    )
-    buyers = models.ManyToManyField(
-        User, through=Offer, related_name="items_offered", blank=True
-    )
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="items_listed")
+    buyers = models.ManyToManyField(User, through=Offer, related_name="items_offered", blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    favorites = models.ManyToManyField(
-        User, related_name="items_favorited", blank=True
-    )
+    favorites = models.ManyToManyField(User, related_name="items_favorited", blank=True)
 
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
@@ -74,9 +77,20 @@ class Item(models.Model):
     negotiable = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
+    additional_data = models.JSONField(null=True, blank=True, default=dict)
 
     def __str__(self):
         return f"{self.title} by {self.seller}"
+
+    def clean(self):
+        super().clean()
+        required_fields = self.category.required_attributes.values_list("name", flat=True)
+        if missing := [field for field in required_fields if field not in self.additional_data]:
+            raise ValueError(f"Missing required fields for category {self.category}: {missing}")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Sublet(models.Model):
@@ -88,9 +102,7 @@ class Sublet(models.Model):
             models.Index(fields=["baths"]),
         ]
 
-    item = models.OneToOneField(
-        Item, on_delete=models.CASCADE, related_name="sublet"
-    )
+    item = models.OneToOneField(Item, on_delete=models.CASCADE, related_name="sublet")
     address = models.CharField(max_length=255)
     beds = models.FloatField()
     baths = models.FloatField()
@@ -103,7 +115,5 @@ class Sublet(models.Model):
 
 
 class ItemImage(models.Model):
-    item = models.ForeignKey(
-        Item, on_delete=models.CASCADE, related_name="images"
-    )
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="marketplace/images")
