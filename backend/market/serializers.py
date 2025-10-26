@@ -1,30 +1,45 @@
 from django.contrib.auth import get_user_model
 from phonenumber_field.serializerfields import PhoneNumberField
 from profanity_check import predict
-from rest_framework import serializers
+from rest_framework.serializers import (
+    ImageField,
+    ModelSerializer,
+    SerializerMethodField,
+    SlugRelatedField,
+    ValidationError,
+)
 
 from market.models import Listing, ListingImage, Offer, Tag, Type
 
 User = get_user_model()
 
 
-class TagSerializer(serializers.ModelSerializer):
+class TagSerializer(ModelSerializer):
     class Meta:
         model = Tag
-        fields = "__all__"
-        read_only_fields = [field.name for field in model._meta.fields]
+        fields = ["name"]
+        read_only_fields = fields
 
 
 # TODO: We could make a Read-Only Serializer in a PennLabs core library.
 # This could inherit from that.
-class TypeSerializer(serializers.ModelSerializer):
+class TypeSerializer(ModelSerializer):
+    required_attributes = SerializerMethodField()
+    recommended_attributes = SerializerMethodField()
+
+    def get_required_attributes(self, obj):
+        return [attr.name for attr in obj.required_attributes.all()]
+
+    def get_recommended_attributes(self, obj):
+        return [attr.name for attr in obj.recommended_attributes.all()]
+
     class Meta:
         model = Type
-        fields = "__all__"
-        read_only_fields = [field.name for field in model._meta.fields]
+        fields = ["name", "required_attributes", "recommended_attributes"]
+        read_only_fields = fields
 
 
-class OfferSerializer(serializers.ModelSerializer):
+class OfferSerializer(ModelSerializer):
     phone_number = PhoneNumberField()
 
     class Meta:
@@ -38,8 +53,8 @@ class OfferSerializer(serializers.ModelSerializer):
 
 
 # Create/Update Image Serializer
-class ListingImageSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(write_only=True, required=False, allow_null=True)
+class ListingImageSerializer(ModelSerializer):
+    image = ImageField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = ListingImage
@@ -47,8 +62,8 @@ class ListingImageSerializer(serializers.ModelSerializer):
 
 
 # Browse images
-class ListingImageURLSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
+class ListingImageURLSerializer(ModelSerializer):
+    image_url = SerializerMethodField()
 
     def get_image_url(self, obj):
         image = obj.image
@@ -69,8 +84,10 @@ class ListingImageURLSerializer(serializers.ModelSerializer):
 
 
 # complex listing serializer for use in C/U/D + getting info about a singular listing
-class ListingSerializer(serializers.ModelSerializer):
+class ListingSerializer(ModelSerializer):
     images = ListingImageSerializer(many=True, required=False, read_only=True)
+    type = SlugRelatedField(slug_field="name", queryset=Type.objects.all())
+    tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
 
     class Meta:
         model = Listing
@@ -86,12 +103,12 @@ class ListingSerializer(serializers.ModelSerializer):
 
     def validate_title(self, value):
         if self.contains_profanity(value):
-            raise serializers.ValidationError("The title contains inappropriate language.")
+            raise ValidationError("The title contains inappropriate language.")
         return value
 
     def validate_description(self, value):
         if self.contains_profanity(value):
-            raise serializers.ValidationError("The description contains inappropriate language.")
+            raise ValidationError("The description contains inappropriate language.")
         return value
 
     def contains_profanity(self, text):
@@ -104,9 +121,11 @@ class ListingSerializer(serializers.ModelSerializer):
 
 
 # Read-only serializer for use when reading a single listing
-class ListingSerializerPublic(serializers.ModelSerializer):
-    buyer_count = serializers.SerializerMethodField()
-    favorite_count = serializers.SerializerMethodField()
+class ListingSerializerPublic(ModelSerializer):
+    buyer_count = SerializerMethodField()
+    favorite_count = SerializerMethodField()
+    type = SlugRelatedField(slug_field="name", queryset=Type.objects.all())
+    tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
 
     class Meta:
@@ -137,8 +156,10 @@ class ListingSerializerPublic(serializers.ModelSerializer):
 
 
 # Read-only serializer for use when pulling all listings /etc
-class ListingSerializerList(serializers.ModelSerializer):
-    favorite_count = serializers.SerializerMethodField()
+class ListingSerializerList(ModelSerializer):
+    favorite_count = SerializerMethodField()
+    type = SlugRelatedField(slug_field="name", queryset=Type.objects.all())
+    tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
 
     class Meta:
