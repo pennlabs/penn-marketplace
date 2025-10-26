@@ -28,14 +28,14 @@ class Offer(models.Model):
 
 
 class Attribute(models.Model):
-    name = models.CharField(max_length=255, primary_key=True)
+    name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
 
 
 class Type(models.Model):
-    name = models.CharField(max_length=50, primary_key=True)
+    name = models.CharField(max_length=50)
     required_attributes = models.ManyToManyField(
         Attribute, blank=True, related_name="types_required"
     )
@@ -48,7 +48,7 @@ class Type(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=255, primary_key=True)
+    name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
