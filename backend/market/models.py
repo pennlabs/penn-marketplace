@@ -8,23 +8,23 @@ User = get_user_model()
 class Offer(models.Model):
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["user", "item"], name="unique_offer_market")
+            models.UniqueConstraint(fields=["user", "listing"], name="unique_offer_market")
         ]
         indexes = [
             models.Index(fields=["user"]),
-            models.Index(fields=["item"]),
+            models.Index(fields=["listing"]),
             models.Index(fields=["created_at"]),
         ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers")
-    item = models.ForeignKey("Item", on_delete=models.CASCADE)
+    listing = models.ForeignKey("Listing", on_delete=models.CASCADE)
     email = models.EmailField(max_length=255, null=True, blank=True)
     phone_number = PhoneNumberField(null=True, blank=True)
     message = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Offer for {self.item} made by {self.user}"
+        return f"Offer for {self.listing} made by {self.user}"
 
 
 class Attribute(models.Model):
@@ -34,13 +34,13 @@ class Attribute(models.Model):
         return self.name
 
 
-class Category(models.Model):
+class Type(models.Model):
     name = models.CharField(max_length=50, primary_key=True)
     required_attributes = models.ManyToManyField(
-        Attribute, blank=True, related_name="categories_required"
+        Attribute, blank=True, related_name="types_required"
     )
     recommended_attributes = models.ManyToManyField(
-        Attribute, blank=True, related_name="categories_recommended"
+        Attribute, blank=True, related_name="types_recommended"
     )
 
     def __str__(self):
@@ -54,7 +54,7 @@ class Tag(models.Model):
         return self.name
 
 
-class Item(models.Model):
+class Listing(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=["title"]),
@@ -64,11 +64,13 @@ class Item(models.Model):
             models.Index(fields=["negotiable"]),
         ]
 
-    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="items_listed")
-    buyers = models.ManyToManyField(User, through=Offer, related_name="items_offered", blank=True)
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="listings_created")
+    buyers = models.ManyToManyField(
+        User, through=Offer, related_name="listings_offered", blank=True
+    )
     tags = models.ManyToManyField(Tag, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    favorites = models.ManyToManyField(User, related_name="items_favorited", blank=True)
+    type = models.ForeignKey(Type, on_delete=models.CASCADE)
+    favorites = models.ManyToManyField(User, related_name="listings_favorited", blank=True)
 
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
@@ -84,36 +86,15 @@ class Item(models.Model):
 
     def clean(self):
         super().clean()
-        required_fields = self.category.required_attributes.values_list("name", flat=True)
+        required_fields = self.type.required_attributes.values_list("name", flat=True)
         if missing := [field for field in required_fields if field not in self.additional_data]:
-            raise ValueError(f"Missing required fields for category {self.category}: {missing}")
+            raise ValueError(f"Missing required fields for type {self.type}: {missing}")
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
 
-class Sublet(models.Model):
-    class Meta:
-        indexes = [
-            models.Index(fields=["start_date"]),
-            models.Index(fields=["end_date"]),
-            models.Index(fields=["beds"]),
-            models.Index(fields=["baths"]),
-        ]
-
-    item = models.OneToOneField(Item, on_delete=models.CASCADE, related_name="sublet")
-    address = models.CharField(max_length=255)
-    beds = models.FloatField()
-    baths = models.FloatField()
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
-
-    def delete(self, *args, **kwargs):
-        self.item.delete()
-        super().delete(*args, **kwargs)
-
-
-class ItemImage(models.Model):
-    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="images")
+class ListingImage(models.Model):
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="marketplace/images")
