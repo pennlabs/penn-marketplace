@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -88,7 +89,9 @@ class Listing(models.Model):
         super().clean()
         required_fields = self.type.required_attributes.values_list("name", flat=True)
         if missing := [field for field in required_fields if field not in self.additional_data]:
-            raise ValueError(f"Missing required fields for type {self.type}: {missing}")
+            raise ValidationError(
+                {"additional_data": f"Missing required fields for type {self.type}: {missing}"}
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()

@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError as ModelValidationError
 from phonenumber_field.serializerfields import PhoneNumberField
 from profanity_check import predict
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.serializers import (
     ImageField,
     ModelSerializer,
@@ -117,7 +119,17 @@ class ListingSerializer(ModelSerializer):
     def create(self, validated_data):
         self.validate(validated_data)
         validated_data["seller"] = self.context["request"].user
-        return super().create(validated_data)
+        try:
+            return super().create(validated_data)
+        except ModelValidationError as e:
+            raise DRFValidationError(e.message_dict if hasattr(e, "message_dict") else e.messages)
+
+    def update(self, instance, validated_data):
+        self.validate(validated_data)
+        try:
+            return super().update(instance, validated_data)
+        except ModelValidationError as e:
+            raise DRFValidationError(e.message_dict if hasattr(e, "message_dict") else e.messages)
 
 
 # Read-only serializer for use when reading a single listing
