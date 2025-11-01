@@ -10,7 +10,6 @@ from market.views import (
     OffersMade,
     OffersReceived,
     Tags,
-    Types,
     UserFavorites,
 )
 
@@ -22,8 +21,6 @@ router.register(r"listings", Listings, basename="listings")
 additional_urls = [
     # List of all amenities
     path("tags/", Tags.as_view(), name="tags"),
-    # List of all types
-    path("types/", Types.as_view(), name="types"),
     # All favorites for user
     path("favorites/", UserFavorites.as_view(), name="user-favorites"),
     # All offers made by user

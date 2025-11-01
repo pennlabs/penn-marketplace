@@ -18,7 +18,7 @@ class Offer(models.Model):
         ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers")
-    listing = models.ForeignKey("Listing", on_delete=models.CASCADE)
+    listing = models.ForeignKey("Listing", on_delete=models.CASCADE, related_name="offers_received")
     email = models.EmailField(max_length=255, null=True, blank=True)
     phone_number = PhoneNumberField(null=True, blank=True)
     message = models.CharField(max_length=255, blank=True)
@@ -28,22 +28,12 @@ class Offer(models.Model):
         return f"Offer for {self.listing} made by {self.user}"
 
 
-class Attribute(models.Model):
-    name = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.name
-
-
-class Type(models.Model):
-    name = models.CharField(max_length=50)
-    required_attributes = models.ManyToManyField(
-        Attribute, blank=True, related_name="types_required"
-    )
-    recommended_attributes = models.ManyToManyField(
-        Attribute, blank=True, related_name="types_recommended"
-    )
-
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    
+    class Meta:
+        verbose_name_plural = "Categories"
+    
     def __str__(self):
         return self.name
 
@@ -70,7 +60,6 @@ class Listing(models.Model):
         User, through=Offer, related_name="listings_offered", blank=True
     )
     tags = models.ManyToManyField(Tag, blank=True)
-    type = models.ForeignKey(Type, on_delete=models.CASCADE)
     favorites = models.ManyToManyField(User, related_name="listings_favorited", blank=True)
 
     title = models.CharField(max_length=255)
@@ -80,24 +69,52 @@ class Listing(models.Model):
     negotiable = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
-    additional_data = models.JSONField(null=True, blank=True, default=dict)
 
     def __str__(self):
         return f"{self.title} by {self.seller}"
-
-    def clean(self):
-        super().clean()
-        required_fields = self.type.required_attributes.values_list("name", flat=True)
-        if missing := [field for field in required_fields if field not in self.additional_data]:
-            raise ValidationError(
-                {"additional_data": f"Missing required fields for type {self.type}: {missing}"}
-            )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
 
 
 class ListingImage(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="marketplace/images")
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Image for {self.listing}"
+
+
+class Item(Listing):
+    class Condition(models.TextChoices):
+        NEW = "NEW", "New"
+        LIKE_NEW = "LIKE_NEW", "Used - Like New"
+        GOOD = "GOOD", "Used - Good"
+        FAIR = "FAIR", "Used - Fair"
+    
+    condition = models.CharField(
+        max_length=50,
+        choices=Condition.choices,
+        default=Condition.NEW
+    )
+    category = models.ForeignKey(
+        Category, on_delete=models.PROTECT, related_name="items"
+    )
+
+
+class Sublet(Listing):
+    address = models.CharField(max_length=255)
+    beds = models.PositiveIntegerField()
+    baths = models.PositiveIntegerField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.start_date >= self.end_date:
+            raise ValidationError("End date must be after start date")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

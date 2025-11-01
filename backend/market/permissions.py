@@ -26,19 +26,6 @@ class ListingOwnerPermission(permissions.BasePermission):
         return request.method in permissions.SAFE_METHODS or obj.seller == request.user
 
 
-class SubletOwnerPermission(permissions.BasePermission):
-    """
-    Custom permission to allow the owner of a Listing to edit or delete it.
-    """
-
-    def has_permission(self, request, view):
-        return request.user.is_authenticated
-
-    def has_object_permission(self, request, view, obj):
-        # Check if the user is the owner of the Listing.
-        return request.method in permissions.SAFE_METHODS or obj.listing.seller == request.user
-
-
 class ListingImageOwnerPermission(permissions.BasePermission):
     """
     Custom permission to allow the owner of a ListingImage to edit or delete it.

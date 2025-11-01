@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from market.mixins import DefaultOrderMixin
-from market.models import Listing, ListingImage, Offer, Tag, Type
+from market.models import Item, Listing, ListingImage, Offer, Sublet, Tag
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
@@ -28,7 +28,6 @@ from market.serializers import (
     ListingSerializerPublic,
     OfferSerializer,
     TagSerializer,
-    TypeSerializer,
 )
 
 User = get_user_model()
@@ -40,14 +39,6 @@ class Tags(ListAPIView, DefaultOrderMixin):
 
     def get_queryset(self):
         return Tag.objects.all()
-
-
-class Types(ListAPIView, DefaultOrderMixin):
-    serializer_class = TypeSerializer
-    pagination_class = PageSizeOffsetPagination
-
-    def get_queryset(self):
-        return Type.objects.all()
 
 
 class UserFavorites(ListAPIView, DefaultOrderMixin):
@@ -84,10 +75,10 @@ class OffersReceived(ListAPIView, DefaultOrderMixin):
 class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
     """
     list:
-    Returns a list of Listings that match query parameters (e.g., amenities) and belong to the user.
+    Returns a list of Listings that match query parameters. Supports filtering by type (item/sublet) and type-specific fields.
 
     create:
-    Create a Listing.
+    Create a Listing (Item or Sublet based on listing_type).
 
     partial_update:
     Update certain fields in the Listing. Only the owner can edit it.
@@ -110,20 +101,44 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
             return ListingSerializer
 
     @staticmethod
-    def get_filter_dict():
-        return {
-            "type": "type__name",
+    def get_filter_dict(listing_type):
+        base_filters = {
             "title": "title__icontains",
             "min_price": "price__gte",
             "max_price": "price__lte",
             "negotiable": "negotiable",
         }
 
+        item_filters = {
+            "condition": "item__condition",
+            "category": "item__category__name",
+        }
+        
+        sublet_filters = {
+            "beds": "sublet__beds",
+            "baths": "sublet__baths",
+            "address": "sublet__address__icontains",
+        }
+        
+        if listing_type == "item":
+            return {**base_filters, **item_filters}
+        elif listing_type == "sublet":
+            return {**base_filters, **sublet_filters}
+        else:
+            return base_filters
+
     def list(self, request, *args, **kwargs):
-        """Returns a list of Listings that match query parameters and user ownership."""
+        """
+        Returns a list of Listings that match query parameters. Supports filtering by type and type-specific fields."""
         queryset = self.get_queryset()
 
-        filter_dict = self.get_filter_dict()
+        listing_type = request.query_params.get("type", "").lower()
+        if listing_type == "item":
+            queryset = queryset.filter(item__isnull=False)
+        elif listing_type == "sublet":
+            queryset = queryset.filter(sublet__isnull=False)
+
+        filter_dict = self.get_filter_dict(listing_type)
 
         for param, field in filter_dict.items():
             if param_value := request.query_params.get(param):
@@ -131,6 +146,11 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
 
         for tag in request.query_params.getlist("tags"):
             queryset = queryset.filter(tags__name=tag)
+
+        if start_date := request.query_params.get("start_date"):
+            queryset = queryset.filter(sublet__start_date__gte=start_date)
+        if end_date := request.query_params.get("end_date"):
+            queryset = queryset.filter(sublet__end_date__lte=end_date)
 
         if request.query_params.get("seller", "false").lower() == "true":
             queryset = queryset.filter(seller=request.user)
