@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.storage import Storage
 from django.test import TestCase
 from django.utils.timezone import now
-from market.models import Category, Item, ItemImage, Offer, Sublet, Tag
+from market.models import Attribute, Category, Item, ItemImage, Offer, Sublet, Tag
 from rest_framework.test import APIClient
 
 User = get_user_model()
@@ -16,12 +16,27 @@ User = get_user_model()
 class BaseMarketTest(TestCase):
     def setUp(self):
         self.client = APIClient()
+        self.attributes = self.load_attributes()
         self.tags = self.load_tags()
         self.categories = self.load_categories()
         self.users = [
             self.load_user("user", "user@gmail.com", "user", True, True),
             self.load_user("user1", "user1@gmail.com", "user1", False, False),
         ]
+
+    def load_attributes(self):
+        attributes = [
+            "Address",
+            "Beds",
+            "Baths",
+            "StartDate",
+            "EndDate",
+            "Condition",
+        ]
+        attribute_objects = Attribute.objects.bulk_create(
+            [Attribute(name=attr) for attr in attributes]
+        )
+        return attribute_objects
 
     def load_tags(self):
         tags = [
@@ -35,7 +50,6 @@ class BaseMarketTest(TestCase):
             "House",
         ]
         tag_objects = Tag.objects.bulk_create([Tag(name=tag) for tag in tags])
-
         return tag_objects
 
     def load_categories(self):
@@ -48,6 +62,10 @@ class BaseMarketTest(TestCase):
             "Other",
         ]
         category_objects = Category.objects.bulk_create([Category(name=cat) for cat in categories])
+        sublet_category = Category.objects.filter(name="Sublet").first()
+        sublet_category.required_attributes.set(
+            Attribute.objects.filter(name__in=["Address", "Beds", "Baths", "StartDate", "EndDate"])
+        )
         return category_objects
 
     def load_user(self, username, email=None, password=None, is_self=False, auth=False):
@@ -185,11 +203,15 @@ class TestCategoryGet(BaseMarketTest):
             "page_size": 5,
             "offset": 0,
             "results": [
-                {"name": "Book"},
-                {"name": "Electronics"},
-                {"name": "Furniture"},
-                {"name": "Food"},
-                {"name": "Sublet"},
+                {"name": "Book", "required_attributes": [], "recommended_attributes": []},
+                {"name": "Electronics", "required_attributes": [], "recommended_attributes": []},
+                {"name": "Furniture", "required_attributes": [], "recommended_attributes": []},
+                {"name": "Food", "required_attributes": [], "recommended_attributes": []},
+                {
+                    "name": "Sublet",
+                    "required_attributes": ["Address", "Baths", "Beds", "EndDate", "StartDate"],
+                    "recommended_attributes": [],
+                },
             ],
         }
         self.assertEqual(response.status_code, 200)
@@ -297,6 +319,7 @@ class TestItemGet(BaseMarketTest):
             "buyers": [],
             "tags": ["Textbook", "Used"],
             "favorites": [],
+            "additional_data": {},
         }
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
@@ -329,6 +352,7 @@ class TestItemGet(BaseMarketTest):
             "expires_at": "3000-08-12T01:00:00-04:00",
             "images": [],
             "favorite_count": 0,
+            "additional_data": {},
         }
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
@@ -373,6 +397,7 @@ class TestItemPost(BaseMarketTest):
             "buyers": [],
             "tags": ["New"],
             "favorites": [],
+            "additional_data": {},
         }
         self.assertEqual(response.status_code, 201)
         self.assert_dict_equal_ignoring_keys(
@@ -430,6 +455,7 @@ class TestItemPost(BaseMarketTest):
             "buyers": [],
             "tags": ["New"],
             "favorites": [],
+            "additional_data": {},
         }
         self.assertEqual(response.status_code, 201)
         self.assert_dict_equal_ignoring_keys(
@@ -546,6 +572,7 @@ class TestItemPatch(BaseMarketTest):
             "expires_at": "3000-12-13T00:00:00-05:00",
             "images": [],
             "favorites": [],
+            "additional_data": {},
         }
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
@@ -608,6 +635,7 @@ class TestItemPatch(BaseMarketTest):
             "expires_at": "3000-12-14T00:00:00-05:00",
             "images": [],
             "favorites": [],
+            "additional_data": {},
         }
 
         self.assertEqual(response.status_code, 200)
@@ -670,7 +698,19 @@ class TestItemPatch(BaseMarketTest):
         )
 
     def test_update_item_to_sublet(self):
-        response = self.client.patch(f"/market/items/{self.items[0].id}/", {"category": "Sublet"})
+        data = {
+            "category": "Sublet",
+            "additional_data": {
+                "Address": "123 Main St, Philadelphia, PA",
+                "Beds": 2,
+                "Baths": 1,
+                "StartDate": "2024-01-01T00:00:00-05:00",
+                "EndDate": "3000-05-31T00:00:00-04:00",
+            },
+        }
+        response = self.client.patch(
+            f"/market/items/{self.items[0].id}/", data=data, format="json"
+        )
         expected_response = {
             "id": self.items[0].id,
             "images": [],
@@ -685,6 +725,13 @@ class TestItemPatch(BaseMarketTest):
             "buyers": [],
             "tags": ["Textbook", "Used"],
             "favorites": [],
+            "additional_data": {
+                "Address": "123 Main St, Philadelphia, PA",
+                "Beds": 2,
+                "Baths": 1,
+                "StartDate": "2024-01-01T00:00:00-05:00",
+                "EndDate": "3000-05-31T00:00:00-04:00",
+            },
         }
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
