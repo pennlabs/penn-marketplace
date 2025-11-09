@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import {
   CLIENT_ID,
   OIDC_AUTHORIZATION_ENDPOINT,
@@ -30,6 +29,8 @@ export function getLoginUrl(state: string): URL {
 
 export async function getTokensFromCookies(): Promise<AuthTokens | null> {
   try {
+    // Dynamic import to avoid loading server-only module in client components
+    const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
     const idToken = cookieStore.get("id_token")?.value;
     const accessToken = cookieStore.get("access_token")?.value;
