@@ -13,19 +13,23 @@ class DefaultOrderMixin:
 
 class ListingTypeMixin:
     def get_listing_type(self, obj):
-        if isinstance(obj, Item):
-            return "item"
-        elif isinstance(obj, Sublet):
-            return "sublet"
+        for subclass in (Item, Sublet):
+            try:
+                getattr(obj, subclass.__name__.lower())
+                return subclass.__name__.lower()
+            except subclass.DoesNotExist:
+                continue
         return "other"
-    
+
     def get_additional_data(self, obj):
         from market.serializers import ItemDataSerializer, SubletDataSerializer
-        
-        if isinstance(obj, Item):
-            serializer = ItemDataSerializer(obj, context=self.context)
+
+        listing_type = self.get_listing_type(obj)
+        if listing_type == "item":
+            serializer = ItemDataSerializer(obj.item, context=self.context)
             return serializer.data
-        elif isinstance(obj, Sublet):
-            serializer = SubletDataSerializer(obj, context=self.context)
+        elif listing_type == "sublet":
+            serializer = SubletDataSerializer(obj.sublet, context=self.context)
             return serializer.data
+        print("UNKNOWN LISTING TYPE FOR ADDITIONAL DATA")
         return {}
