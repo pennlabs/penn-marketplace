@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from market.mixins import DefaultOrderMixin
-from market.models import Item, Listing, ListingImage, Offer, Sublet, Tag
+from market.models import Listing, ListingImage, Offer, Tag
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
@@ -95,7 +95,7 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
     def get_serializer_class(self):
         if self.action == "list":
             return ListingSerializerList
-        elif self.action == "retrieve" and self.get_object().seller != self.request.user:
+        elif self.action == "retrieve":
             return ListingSerializerPublic
         else:
             return ListingSerializer
@@ -113,13 +113,13 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
             "condition": "item__condition",
             "category": "item__category__name",
         }
-        
+
         sublet_filters = {
             "beds": "sublet__beds",
             "baths": "sublet__baths",
             "address": "sublet__address__icontains",
         }
-        
+
         if listing_type == "item":
             return {**base_filters, **item_filters}
         elif listing_type == "sublet":
@@ -129,7 +129,8 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
 
     def list(self, request, *args, **kwargs):
         """
-        Returns a list of Listings that match query parameters. Supports filtering by type and type-specific fields."""
+        Returns a list of Listings that match query parameters. Supports filtering by type and type-specific fields.
+        """
         queryset = self.get_queryset()
 
         listing_type = request.query_params.get("type", "").lower()
@@ -165,6 +166,15 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.seller == request.user:
+            serializer_class = ListingSerializer
+        else:
+            serializer_class = ListingSerializerPublic
+        serializer = serializer_class(instance)
+        return Response(serializer.data)
+
 
 # TODO: This doesn't use CreateAPIView's functionality since we overrode the create method.
 # Think about if there's a better way
@@ -190,7 +200,9 @@ class CreateImages(CreateAPIView):
         instances = []
 
         for img in images:
-            img_serializer = self.get_serializer(data={"listing": listing_id, "image": img})
+            img_serializer = self.get_serializer(
+                data={"listing": listing_id, "image": img}
+            )
             img_serializer.is_valid(raise_exception=True)
             instances.append(img_serializer.save())
 
@@ -215,7 +227,9 @@ class DeleteImage(DestroyAPIView):
 
 # TODO: We don't use the CreateModelMixin or DestroyModelMixin's functionality here.
 # Think about if there's a better way
-class Favorites(mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+class Favorites(
+    mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet
+):
     serializer_class = ListingSerializer
     http_method_names = ["post", "delete"]
     permission_classes = [IsAuthenticated | IsSuperUser]
@@ -236,7 +250,9 @@ class Favorites(mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.Gene
 
     def destroy(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        listing = get_object_or_404(queryset, pk=int(self.kwargs["listing_id"]))
+        listing = get_object_or_404(
+            queryset, pk=int(self.kwargs["listing_id"])
+        )
         self.get_queryset().remove(listing)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -259,9 +275,9 @@ class Offers(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
-            return Offer.objects.filter(listing_id=int(self.kwargs["listing_id"])).order_by(
-                "created_at"
-            )
+            return Offer.objects.filter(
+                listing_id=int(self.kwargs["listing_id"])
+            ).order_by("created_at")
         else:
             raise exceptions.NotFound("No Listing matches the given query")
 
@@ -289,7 +305,9 @@ class Offers(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):
-        if not Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
+        if not Listing.objects.filter(
+            pk=int(self.kwargs["listing_id"])
+        ).exists():
             raise exceptions.NotFound("No Listing matches the given query")
         for offer in self.get_queryset():
             self.check_object_permissions(request, offer)
