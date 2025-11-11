@@ -1,4 +1,4 @@
-import getItems from "@/actions/items";
+import { getItems } from "@/lib/actions";
 import { ListingsGrid } from "@/components/listings/ListingsGrid";
 
 export default async function Home() {

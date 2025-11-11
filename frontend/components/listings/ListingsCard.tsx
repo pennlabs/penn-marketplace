@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ListingCondition } from "@/types/listings";
-import { ListingCategory } from "@/types/listings";
+import { ListingCondition } from "@/lib/types";
+import { ListingCategory } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import defaultImage from "@/public/images/default-image.jpg";
 
