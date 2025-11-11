@@ -200,14 +200,23 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
                 }
             })
         
-        return Item.objects.create(
+        tags = validated_data.pop("tags", None)
+
+        item = Item.objects.create(
             condition=additional_data.get("condition"),
             category=category,
-            **validated_data
+            **validated_data,
         )
+
+        if tags:
+            item.tags.set(tags)
+
+        return item
     
     def _create_sublet(self, validated_data, additional_data):
-        return Sublet.objects.create(
+        tags = validated_data.pop("tags", None)
+        
+        sublet = Sublet.objects.create(
             address=additional_data.get("address"),
             beds=additional_data.get("beds"),
             baths=additional_data.get("baths"),
@@ -215,18 +224,32 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             end_date=additional_data.get("end_date"),
             **validated_data
         )
+    
+        if tags:
+            sublet.tags.set(tags)
+
+        return sublet
 
     def update(self, instance, validated_data):
+        listing_type = self.initial_data.get("listing_type")
         additional_data = self.initial_data.get("additional_data", {})
         
         try:
+            tags = validated_data.pop("tags", None)
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
+            if tags:
+                instance.tags.set(tags)
             
+            if listing_type and listing_type != self.get_listing_type(instance):
+                raise ValidationError({
+                    "listing_type": "Cannot change listing type on update."
+                })
+
             if additional_data:
-                if isinstance(instance, Item):
+                if self.get_listing_type(instance) == "item":
                     self._update_item(instance, additional_data)
-                elif isinstance(instance, Sublet):
+                elif self.get_listing_type(instance) == "sublet":
                     self._update_sublet(instance, additional_data)
             
             instance.save()
@@ -236,19 +259,25 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             raise ValidationError(e.message_dict if hasattr(e, "message_dict") else e.messages)
     
     def _update_item(self, instance, additional_data):
+        item = instance.item
         if "condition" in additional_data:
-            instance.condition = additional_data["condition"]
+            item.condition = additional_data["condition"]
         
         if "category" in additional_data:
             category = Category.objects.filter(name=additional_data["category"]).first()
             if category:
-                instance.category = category
+                item.category = category
+        item.full_clean()
+        item.save()
     
     def _update_sublet(self, instance, additional_data):
+        sublet = instance.sublet
         sublet_fields = ["address", "beds", "baths", "start_date", "end_date"]
         for field in sublet_fields:
             if field in additional_data:
-                setattr(instance, field, additional_data[field])
+                setattr(sublet, field, additional_data[field])
+        sublet.full_clean()
+        sublet.save()
 
 
 # Read-only serializer for use when reading a single listing

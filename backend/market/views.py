@@ -89,8 +89,12 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
 
     permission_classes = [ListingOwnerPermission | IsSuperUser]
     serializer_class = ListingSerializer
-    queryset = Listing.objects.all()
     pagination_class = PageSizeOffsetPagination
+
+    def get_queryset(self):
+        return Listing.objects.select_related(
+            "item", "sublet"
+        ).prefetch_related("tags", "images")
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -249,10 +253,12 @@ class Favorites(
         return Response(status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        listing = get_object_or_404(
-            queryset, pk=int(self.kwargs["listing_id"])
-        )
+        listing_id = int(self.kwargs["listing_id"])
+        listing = get_object_or_404(Listing, id=listing_id)
+
+        if listing not in request.user.listings_favorited.all():
+            raise exceptions.NotFound("Favorite does not exist.")
+
         self.get_queryset().remove(listing)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
