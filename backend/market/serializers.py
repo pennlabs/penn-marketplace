@@ -1,30 +1,29 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError as ModelValidationError
 from phonenumber_field.serializerfields import PhoneNumberField
 from profanity_check import predict
-from rest_framework import serializers
+from rest_framework.serializers import (
+    ImageField,
+    ModelSerializer,
+    SerializerMethodField,
+    SlugRelatedField,
+    ValidationError,
+)
 
-from market.models import Category, Item, ItemImage, Offer, Sublet, Tag
+from market.mixins import ListingTypeMixin
+from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, Tag
 
 User = get_user_model()
 
 
-class TagSerializer(serializers.ModelSerializer):
+class TagSerializer(ModelSerializer):
     class Meta:
         model = Tag
-        fields = "__all__"
-        read_only_fields = [field.name for field in model._meta.fields]
+        fields = ["name"]
+        read_only_fields = fields
 
 
-# TODO: We could make a Read-Only Serializer in a PennLabs core library.
-# This could inherit from that.
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = "__all__"
-        read_only_fields = [field.name for field in model._meta.fields]
-
-
-class OfferSerializer(serializers.ModelSerializer):
+class OfferSerializer(ModelSerializer):
     phone_number = PhoneNumberField()
 
     class Meta:
@@ -38,19 +37,17 @@ class OfferSerializer(serializers.ModelSerializer):
 
 
 # Create/Update Image Serializer
-class ItemImageSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(
-        write_only=True, required=False, allow_null=True
-    )
+class ListingImageSerializer(ModelSerializer):
+    image = ImageField(write_only=True, required=False, allow_null=True)
 
     class Meta:
-        model = ItemImage
+        model = ListingImage
         fields = "__all__"
 
 
 # Browse images
-class ItemImageURLSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
+class ListingImageURLSerializer(ModelSerializer):
+    image_url = SerializerMethodField()
 
     def get_image_url(self, obj):
         image = obj.image
@@ -65,18 +62,62 @@ class ItemImageURLSerializer(serializers.ModelSerializer):
             return image.url
 
     class Meta:
-        model = ItemImage
+        model = ListingImage
         fields = "__all__"
         read_only_fields = [field.name for field in model._meta.fields]
 
 
-# complex item serializer for use in C/U/D + getting info about a singular item
-class ItemSerializer(serializers.ModelSerializer):
-    images = ItemImageSerializer(many=True, required=False, read_only=True)
-
+class ItemDataSerializer(ModelSerializer):
+    category = SlugRelatedField(slug_field="name", read_only=True)
+    
     class Meta:
         model = Item
-        fields = "__all__"
+        fields = ['condition', 'category']
+
+
+class SubletDataSerializer(ModelSerializer):
+    class Meta:
+        model = Sublet
+        fields = ['address', 'beds', 'baths', 'start_date', 'end_date']
+
+
+# Unified serializer for all listing types (Items and Sublets); used for CRUD operations
+class ListingSerializer(ListingTypeMixin, ModelSerializer):
+    LISTING_TYPE_CONFIG = {
+        "item": {
+            "required_fields": ["condition", "category"],
+            "model": Item,
+        },
+        "sublet": {
+            "required_fields": ["address", "beds", "baths", "start_date", "end_date"],
+            "model": Sublet,
+        },
+    }
+
+    images = ListingImageSerializer(many=True, required=False, read_only=True)
+    tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
+    listing_type = SerializerMethodField()
+    additional_data = SerializerMethodField()
+
+    class Meta:
+        model = Listing
+        fields = [
+            "id",
+            "seller",
+            "buyers",
+            "tags",
+            "favorites",
+            "title",
+            "description",
+            "external_link",
+            "price",
+            "negotiable",
+            "created_at",
+            "expires_at",
+            "images",
+            "listing_type",
+            "additional_data",
+        ]
         read_only_fields = [
             "id",
             "created_at",
@@ -86,43 +127,175 @@ class ItemSerializer(serializers.ModelSerializer):
             "favorites",
         ]
 
+    def validate(self, attrs):
+        if not self.instance:
+            listing_type = self.initial_data.get("listing_type")
+            additional_data = self.initial_data.get("additional_data", {})
+            
+            if not listing_type:
+                raise ValidationError({
+                    "listing_type": "This field is required for creating a listing."
+                })
+
+            if listing_type not in self.LISTING_TYPE_CONFIG:
+                valid_types = ", ".join(self.LISTING_TYPE_CONFIG.keys())
+                raise ValidationError({
+                    "listing_type": f"Must be one of: {valid_types}"
+                })
+            
+            config = self.LISTING_TYPE_CONFIG[listing_type]
+            required_fields = config["required_fields"]
+            
+            missing_fields = [f for f in required_fields if f not in additional_data]
+            if missing_fields:
+                raise ValidationError({
+                    "additional_data": {
+                        f: f"This field is required for {listing_type}"
+                        for f in missing_fields
+                    }
+                })
+        
+        return super().validate(attrs)
+
     def validate_title(self, value):
         if self.contains_profanity(value):
-            raise serializers.ValidationError(
-                "The title contains inappropriate language."
-            )
+            raise ValidationError("The title contains inappropriate language.")
         return value
 
     def validate_description(self, value):
         if self.contains_profanity(value):
-            raise serializers.ValidationError(
-                "The description contains inappropriate language."
-            )
+            raise ValidationError("The description contains inappropriate language.")
         return value
 
     def contains_profanity(self, text):
         return predict([text])[0]
 
     def create(self, validated_data):
-        self.validate(validated_data)
         validated_data["seller"] = self.context["request"].user
-        return super().create(validated_data)
+        
+        listing_type = self.initial_data.get("listing_type")
+        additional_data = self.initial_data.get("additional_data", {})
+        
+        create_method_name = f"_create_{listing_type}"
+        create_method = getattr(self, create_method_name, None)
+        
+        if not create_method:
+            valid_types = ", ".join(self.LISTING_TYPE_CONFIG.keys())
+            raise ValidationError({
+                "listing_type": f"Must be one of: {valid_types}"
+            })
+        
+        try:
+            return create_method(validated_data, additional_data)
+        except ModelValidationError as e:
+            raise ValidationError(e.message_dict if hasattr(e, "message_dict") else e.messages)
+    
+    def _create_item(self, validated_data, additional_data):
+        category_name = additional_data.get("category")
+        category = Category.objects.filter(name=category_name).first()
+        if not category:
+            raise ValidationError({
+                "additional_data": {
+                    "category": f"Category '{category_name}' does not exist."
+                }
+            })
+        
+        tags = validated_data.pop("tags", None)
+
+        item = Item.objects.create(
+            condition=additional_data.get("condition"),
+            category=category,
+            **validated_data,
+        )
+
+        if tags:
+            item.tags.set(tags)
+
+        return item
+    
+    def _create_sublet(self, validated_data, additional_data):
+        tags = validated_data.pop("tags", None)
+        
+        sublet = Sublet.objects.create(
+            address=additional_data.get("address"),
+            beds=additional_data.get("beds"),
+            baths=additional_data.get("baths"),
+            start_date=additional_data.get("start_date"),
+            end_date=additional_data.get("end_date"),
+            **validated_data
+        )
+    
+        if tags:
+            sublet.tags.set(tags)
+
+        return sublet
+
+    def update(self, instance, validated_data):
+        listing_type = self.initial_data.get("listing_type")
+        additional_data = self.initial_data.get("additional_data", {})
+        
+        try:
+            tags = validated_data.pop("tags", None)
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            if tags:
+                instance.tags.set(tags)
+            
+            if listing_type and listing_type != self.get_listing_type(instance):
+                raise ValidationError({
+                    "listing_type": "Cannot change listing type on update."
+                })
+
+            if additional_data:
+                if self.get_listing_type(instance) == "item":
+                    self._update_item(instance, additional_data)
+                elif self.get_listing_type(instance) == "sublet":
+                    self._update_sublet(instance, additional_data)
+            
+            instance.save()
+            return instance
+            
+        except ModelValidationError as e:
+            raise ValidationError(e.message_dict if hasattr(e, "message_dict") else e.messages)
+    
+    def _update_item(self, instance, additional_data):
+        item = instance.item
+        if "condition" in additional_data:
+            item.condition = additional_data["condition"]
+        
+        if "category" in additional_data:
+            category = Category.objects.filter(name=additional_data["category"]).first()
+            if category:
+                item.category = category
+        item.full_clean()
+        item.save()
+    
+    def _update_sublet(self, instance, additional_data):
+        sublet = instance.sublet
+        sublet_fields = ["address", "beds", "baths", "start_date", "end_date"]
+        for field in sublet_fields:
+            if field in additional_data:
+                setattr(sublet, field, additional_data[field])
+        sublet.full_clean()
+        sublet.save()
 
 
-# Read-only serializer for use when reading a single item
-class ItemSerializerPublic(serializers.ModelSerializer):
-    buyer_count = serializers.SerializerMethodField()
-    favorite_count = serializers.SerializerMethodField()
-    images = ItemImageURLSerializer(many=True)
+# Read-only serializer for use when reading a single listing
+class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
+    buyer_count = SerializerMethodField()
+    favorite_count = SerializerMethodField()
+    tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
+    images = ListingImageURLSerializer(many=True)
+    listing_type = SerializerMethodField()
+    additional_data = SerializerMethodField()
 
     class Meta:
-        model = Item
+        model = Listing
         fields = [
             "id",
             "seller",
             "buyer_count",
             "tags",
-            "category",
             "title",
             "description",
             "external_link",
@@ -131,6 +304,8 @@ class ItemSerializerPublic(serializers.ModelSerializer):
             "expires_at",
             "images",
             "favorite_count",
+            "listing_type",
+            "additional_data",
         ]
         read_only_fields = fields
 
@@ -141,78 +316,29 @@ class ItemSerializerPublic(serializers.ModelSerializer):
         return obj.favorites.count()
 
 
-# Read-only serializer for use when pulling all items/etc
-class ItemSerializerList(serializers.ModelSerializer):
-    favorite_count = serializers.SerializerMethodField()
-    images = ItemImageURLSerializer(many=True)
+# Read-only serializer for use when pulling all listings /etc
+class ListingSerializerList(ListingTypeMixin, ModelSerializer):
+    favorite_count = SerializerMethodField()
+    tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
+    images = ListingImageURLSerializer(many=True)
+    listing_type = SerializerMethodField()
+    additional_data = SerializerMethodField()
 
     class Meta:
-        model = Item
+        model = Listing
         fields = [
             "id",
             "seller",
             "tags",
-            "category",
             "title",
             "price",
             "expires_at",
             "images",
             "favorite_count",
+            "listing_type",
+            "additional_data",
         ]
         read_only_fields = fields
 
     def get_favorite_count(self, obj):
         return obj.favorites.count()
-
-
-class SubletSerializer(serializers.ModelSerializer):
-    item = ItemSerializer(required=True)
-
-    class Meta:
-        model = Sublet
-        fields = "__all__"
-        read_only_fields = ["id"]
-
-    def create(self, validated_data):
-        item_serializer = ItemSerializer(
-            data=validated_data.pop("item"), context=self.context
-        )
-        item_serializer.is_valid(raise_exception=True)
-        validated_data["item"] = item_serializer.save()
-        instance = super().create(validated_data)
-        return instance
-
-    def update(self, instance, validated_data):
-        if item_data := validated_data.pop("item", None):
-            item_serializer = ItemSerializer(
-                instance=instance.item,
-                data=item_data,
-                context=self.context,
-                partial=True,
-            )
-            item_serializer.is_valid(raise_exception=True)
-            validated_data["item"] = item_serializer.save()
-        instance = super().update(instance, validated_data)
-        return instance
-
-    def destroy(self, instance):
-        instance.item.delete()
-        instance.delete()
-
-
-class SubletSerializerPublic(serializers.ModelSerializer):
-    item = ItemSerializerPublic(required=True)
-
-    class Meta:
-        model = Sublet
-        fields = "__all__"
-        read_only_fields = [field.name for field in model._meta.fields]
-
-
-class SubletSerializerList(serializers.ModelSerializer):
-    item = ItemSerializerList(required=True)
-
-    class Meta:
-        model = Sublet
-        fields = "__all__"
-        read_only_fields = [field.name for field in model._meta.fields]
