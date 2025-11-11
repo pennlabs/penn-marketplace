@@ -5,7 +5,7 @@ import { ListingCategory } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import defaultImage from "@/public/images/default-image.jpg";
 
-type Props = {
+interface Props {
   price: number;
   title: string;
   previewImageUrl?: string;
