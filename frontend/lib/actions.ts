@@ -65,17 +65,19 @@ async function serverFetch<T>(
 // ------------------------------------------------------------
 // items
 // ------------------------------------------------------------
-export async function getItems({ pageParam = 1 }: { pageParam: unknown }) {
+export async function getItems({ pageParam = 0 }: { pageParam: unknown }) {
+  const offset = typeof pageParam === 'number' ? pageParam : 0;
   return await serverFetch<PaginatedResponse<Item>>(
-    `/market/items/?_page=${pageParam}&_limit=${FETCH_LISTINGS_LIMIT}`
+    `/market/listings/?type=item&limit=${FETCH_LISTINGS_LIMIT}&offset=${offset}`
   );
 }
 
 // ------------------------------------------------------------
 // sublets
 // ------------------------------------------------------------
-export async function getSublets({ pageParam = 1 }: { pageParam: unknown }) {
+export async function getSublets({ pageParam = 0 }: { pageParam: unknown }) {
+  const offset = typeof pageParam === 'number' ? pageParam : 0;
   return await serverFetch<PaginatedResponse<Sublets>>(
-    `/market/sublets/?_page=${pageParam}&_limit=${FETCH_LISTINGS_LIMIT}`
+    `/market/listings/?type=sublet&limit=${FETCH_LISTINGS_LIMIT}&offset=${offset}`
   );
 }
