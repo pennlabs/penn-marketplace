@@ -65,8 +65,9 @@ async function serverFetch<T>(
 // ------------------------------------------------------------
 // items
 // ------------------------------------------------------------
-export async function getItems({ pageParam = 0 }: { pageParam: unknown }) {
-  const offset = typeof pageParam === 'number' ? pageParam : 0;
+export async function getItems({ pageParam = 1 }: { pageParam: unknown }) {
+  const page = typeof pageParam === 'number' ? pageParam : 1;
+  const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
   return await serverFetch<PaginatedResponse<Item>>(
     `/market/listings/?type=item&limit=${FETCH_LISTINGS_LIMIT}&offset=${offset}`
   );
@@ -75,8 +76,9 @@ export async function getItems({ pageParam = 0 }: { pageParam: unknown }) {
 // ------------------------------------------------------------
 // sublets
 // ------------------------------------------------------------
-export async function getSublets({ pageParam = 0 }: { pageParam: unknown }) {
-  const offset = typeof pageParam === 'number' ? pageParam : 0;
+export async function getSublets({ pageParam = 1 }: { pageParam: unknown }) {
+  const page = typeof pageParam === 'number' ? pageParam : 1;
+  const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
   return await serverFetch<PaginatedResponse<Sublets>>(
     `/market/listings/?type=sublet&limit=${FETCH_LISTINGS_LIMIT}&offset=${offset}`
   );
