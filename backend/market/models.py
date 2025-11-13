@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -8,44 +10,43 @@ User = get_user_model()
 class Offer(models.Model):
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["user", "item"], name="unique_offer_market"
-            )
+            models.UniqueConstraint(fields=["user", "listing"], name="unique_offer_market")
         ]
         indexes = [
             models.Index(fields=["user"]),
-            models.Index(fields=["item"]),
+            models.Index(fields=["listing"]),
             models.Index(fields=["created_at"]),
         ]
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="offers"
-    )
-    item = models.ForeignKey("Item", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers")
+    listing = models.ForeignKey("Listing", on_delete=models.CASCADE, related_name="offers_received")
     email = models.EmailField(max_length=255, null=True, blank=True)
-    phone_number = PhoneNumberField(null=True, blank=True)
-    message = models.CharField(max_length=255, blank=True)
+    phone_number = PhoneNumberField()
+    message = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Offer for {self.item} made by {self.user}"
+        return f"Offer for {self.listing} made by {self.user}"
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=50, primary_key=True)
-
+    name = models.CharField(max_length=100, unique=True)
+    
+    class Meta:
+        verbose_name_plural = "Categories"
+    
     def __str__(self):
         return self.name
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=255, primary_key=True)
+    name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
 
 
-class Item(models.Model):
+class Listing(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=["title"]),
@@ -55,22 +56,21 @@ class Item(models.Model):
             models.Index(fields=["negotiable"]),
         ]
 
-    seller = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="items_listed"
-    )
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="listings_created")
     buyers = models.ManyToManyField(
-        User, through=Offer, related_name="items_offered", blank=True
+        User, through=Offer, related_name="listings_offered", blank=True
     )
     tags = models.ManyToManyField(Tag, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    favorites = models.ManyToManyField(
-        User, related_name="items_favorited", blank=True
-    )
+    favorites = models.ManyToManyField(User, related_name="listings_favorited", blank=True)
 
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     external_link = models.URLField(max_length=255, null=True, blank=True)
-    price = models.FloatField()
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
     negotiable = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
@@ -79,31 +79,47 @@ class Item(models.Model):
         return f"{self.title} by {self.seller}"
 
 
-class Sublet(models.Model):
-    class Meta:
-        indexes = [
-            models.Index(fields=["start_date"]),
-            models.Index(fields=["end_date"]),
-            models.Index(fields=["beds"]),
-            models.Index(fields=["baths"]),
-        ]
-
-    item = models.OneToOneField(
-        Item, on_delete=models.CASCADE, related_name="sublet"
-    )
-    address = models.CharField(max_length=255)
-    beds = models.FloatField()
-    baths = models.FloatField()
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
-
-    def delete(self, *args, **kwargs):
-        self.item.delete()
-        super().delete(*args, **kwargs)
-
-
-class ItemImage(models.Model):
-    item = models.ForeignKey(
-        Item, on_delete=models.CASCADE, related_name="images"
-    )
+class ListingImage(models.Model):
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="marketplace/images")
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Image for {self.listing}"
+
+
+class Item(Listing):
+    class Condition(models.TextChoices):
+        NEW = "NEW", "New"
+        LIKE_NEW = "LIKE_NEW", "Used - Like New"
+        GOOD = "GOOD", "Used - Good"
+        FAIR = "FAIR", "Used - Fair"
+    
+    condition = models.CharField(
+        max_length=50,
+        choices=Condition.choices,
+        default=Condition.NEW
+    )
+    category = models.ForeignKey(
+        Category, on_delete=models.PROTECT, related_name="items"
+    )
+
+
+class Sublet(Listing):
+    address = models.CharField(max_length=255)
+    beds = models.PositiveIntegerField()
+    baths = models.PositiveIntegerField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.start_date >= self.end_date:
+            raise ValidationError({"end_date": "End date must be after start date"})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
