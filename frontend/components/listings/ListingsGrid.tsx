@@ -49,7 +49,7 @@ export const ListingsGrid = ({ type, listings }: Props) => {
   }, [inView]);
 
   return (
-    <div className="flex flex-col items-center w-full">
+    <div className="flex flex-col items-center w-full space-y-4">
       <div className="w-full max-w-7xl px-4">
         <div className="grid gap-x-6 gap-y-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {data?.pages.map((group, i) => {
@@ -70,10 +70,11 @@ export const ListingsGrid = ({ type, listings }: Props) => {
           })}
         </div>
       </div>
-      {isFetchingNextPage && hasNextPage && (
-        <Spinner />
-      )}
-
+      <div className="min-h-4 flex items-center justify-center">
+        {isFetchingNextPage && hasNextPage && (
+          <Spinner />
+        )}
+      </div>
       <div ref={ref} />
     </div>
   );
