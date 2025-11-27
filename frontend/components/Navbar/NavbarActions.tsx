@@ -17,23 +17,20 @@ export const NavbarActions = ({
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   const handleCreateNew = () => {
-    // TODO: Implement create new listing modal/navigation
-    console.log("Create new:", createNewText);
+    // TODO
   };
 
   const handleNotificationClick = () => {
-    // TODO: Implement notification panel/dropdown
-    console.log("Notifications clicked");
+    // TODO
   };
 
   const handleAvatarClick = () => {
-    // TODO: Implement user menu/profile dropdown
-    console.log("Avatar clicked");
+    // TODO
   };
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      {/* Desktop new listing button */}
+      {/* desktop only new listing button */}
       <Button
         variant="outline"
         className="hidden md:flex gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
@@ -44,7 +41,7 @@ export const NavbarActions = ({
         <span>{createNewText}</span>
       </Button>
 
-      {/* Mobile new listing button (icon only) */}
+      {/* mobile only new listing button (icon only) */}
       <Button
         variant="outline"
         size="icon"
@@ -55,7 +52,7 @@ export const NavbarActions = ({
         <Plus className="w-4 h-4" />
       </Button>
 
-      {/* Notification bell */}
+      {/* notification bell */}
       <Button
         variant="ghost"
         size="icon"
@@ -72,7 +69,7 @@ export const NavbarActions = ({
         )}
       </Button>
 
-      {/* User avatar */}
+      {/* user avatar */}
       <Button
         variant="ghost"
         size="icon"
@@ -89,7 +86,7 @@ export const NavbarActions = ({
         />
       </Button>
 
-      {/* Mobile menu toggle */}
+      {/* mobile only menu toggle */}
       <Button
         variant="ghost"
         size="icon"

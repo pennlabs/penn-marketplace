@@ -31,10 +31,6 @@ export const Navbar = () => {
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  const handleCreateNew = () => {
-    // TODO
-  };
-
   return (
     <nav className="fixed top-0 z-50 w-full" role="navigation" aria-label="Main navigation">
       <div className="border-b bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 shadow-xs relative z-50">
@@ -84,16 +80,6 @@ export const Navbar = () => {
 
           {/* mobile only tabs */}
           <NavTabs variant="mobile" onLinkClick={closeMobileMenu} />
-
-          {/* mobile only create button */}
-          <Button
-            variant="outline"
-            className="w-full gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-            onClick={handleCreateNew}
-          >
-            <Plus className="w-4 h-4" />
-            <span>{createNewText}</span>
-          </Button>
         </div>
       </div>
     </nav>
