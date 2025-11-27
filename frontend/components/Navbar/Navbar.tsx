@@ -33,7 +33,7 @@ export const Navbar = () => {
 
   return (
     <nav className="fixed top-0 z-50 w-full" role="navigation" aria-label="Main navigation">
-      <div className="border-b bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 shadow-xs relative z-50">
+      <div className="border-b bg-gray-50 backdrop-blur supports-[backdrop-filter]:bg-gray-50/95 shadow-xs relative z-50">
         <div className="flex flex-col py-6 md:space-y-6 space-y-0">
           {/* top row */}
           <div className="flex items-center justify-between gap-4 w-full max-w-[96rem] mx-auto px-4 sm:px-12">
