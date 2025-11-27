@@ -4,6 +4,7 @@ import "./globals.css";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import TanstackQueryProvider from "@/providers/TanstackQueryProvider";
 import { Footer } from "@/components/common/Footer";
+import { Navbar } from "@/components/Navbar/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,10 +29,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col p-6 min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <TanstackQueryProvider>
-          {children}
+          <Navbar />
+          <div className="md:pt-52 pt-32">
+            {children}
+          </div>
           <Footer />
           <ReactQueryDevtools />
         </TanstackQueryProvider>
