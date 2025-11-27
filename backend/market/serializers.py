@@ -16,6 +16,13 @@ from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, 
 User = get_user_model()
 
 
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "first_name", "last_name", "email"]
+        read_only_fields = fields
+
+
 class TagSerializer(ModelSerializer):
     class Meta:
         model = Tag
@@ -69,10 +76,14 @@ class ListingImageURLSerializer(ModelSerializer):
 
 class ItemDataSerializer(ModelSerializer):
     category = SlugRelatedField(slug_field="name", read_only=True)
+    condition = SerializerMethodField()
     
     class Meta:
         model = Item
         fields = ['condition', 'category']
+    
+    def get_condition(self, obj):
+        return obj.get_condition_display()
 
 
 class SubletDataSerializer(ModelSerializer):
@@ -96,6 +107,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
     images = ListingImageSerializer(many=True, required=False, read_only=True)
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
+    seller = UserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
 
@@ -286,6 +298,7 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
     favorite_count = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
+    seller = UserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
 
@@ -321,6 +334,7 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
     favorite_count = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
+    seller = UserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
 
