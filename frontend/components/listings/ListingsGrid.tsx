@@ -5,11 +5,9 @@ import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getItems } from "@/lib/actions";
 import { getSublets } from "@/lib/actions";
-import { Item, PaginatedResponse } from "@/lib/types";
-import { Sublets } from "@/lib/types";
+import { Item, PaginatedResponse, Sublet } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
 import { ListingsCard } from "@/components/listings/ListingsCard";
-import { ListingCategory, ListingCondition } from "@/lib/types";
 
 const QUERY_FNS = {
   items: getItems,
@@ -23,13 +21,13 @@ type Props =
   }
   | {
     type: "sublets";
-    listings: PaginatedResponse<Sublets>;
+    listings: PaginatedResponse<Sublet>;
   };
 
 export const ListingsGrid = ({ type, listings }: Props) => {
   const { ref, inView } = useInView();
   const { data, fetchNextPage, isFetchingNextPage, hasNextPage } =
-    useInfiniteQuery<PaginatedResponse<Item | Sublets>>({
+    useInfiniteQuery<PaginatedResponse<Item | Sublet>>({
       queryKey: [type],
       queryFn: QUERY_FNS[type],
       initialData: { pages: [listings], pageParams: [1] },
@@ -55,16 +53,20 @@ export const ListingsGrid = ({ type, listings }: Props) => {
           {data?.pages.map((group, i) => {
             return (
               <React.Fragment key={i}>
-                {group?.results?.map((post, index) => (
-                  <ListingsCard
-                    key={index}
-                    price={100}
-                    title={"Test item"}
-                    listingCategory={ListingCategory.ART}
-                    condition={ListingCondition.NEW}
-                    href={`/${type}/${post.id}`}
-                  />
-                ))}
+                {group.results.map((post) => {
+                  const previewImageUrl = post.images && post.images.length > 0 
+                    ? post.images[0] 
+                    : undefined;
+                  
+                  return (
+                    <ListingsCard
+                      key={post.id}
+                      listing={post}
+                      previewImageUrl={previewImageUrl}
+                      href={`/${type}/${post.id}`}
+                    />
+                  )
+                })}
               </React.Fragment>
             )
           })}

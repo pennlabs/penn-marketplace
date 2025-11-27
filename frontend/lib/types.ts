@@ -1,40 +1,93 @@
 // ------------------------------------------------------------
-// base listings
+// auth
 // ------------------------------------------------------------
-export type Listings = {
-  id: number;
-  title: string;
+export type AuthTokens = {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  idToken: string;
 };
 
-export enum ListingCondition {
-  NEW = "New",
-  USED_LIKE_NEW = "Used - Like New",
-  USED_GOOD = "Used - Good",
-  USED_FAIR = "Used - Fair",
-}
+export type User = {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+};
 
-export enum ListingCategory {
-  ART = "Art",
-  BOOKS = "Books",
-  CLOTHING = "Clothing",
-  ELECTRONICS = "Electronics",
-  FURNITURE = "Furniture",
-  HOME_AND_GARDEN = "Home and Garden",
-  MUSIC = "Music",
-  OTHER = "Other",
-  TOOLS = "Tools",
-  VEHICLES = "Vehicles",
-}
+// ------------------------------------------------------------
+// additional data types (from API)
+// ------------------------------------------------------------
+export type ListingCondition =
+  | "New"
+  | "Used - Like New"
+  | "Used - Good"
+  | "Used - Fair";
+
+export type ListingCategory =
+  | "Art"
+  | "Books"
+  | "Clothing"
+  | "Electronics"
+  | "Furniture"
+  | "Home and Garden"
+  | "Music"
+  | "Other"
+  | "Tools"
+  | "Vehicles";
+
+export type ItemAdditionalData = {
+  condition: ListingCondition;
+  category: ListingCategory;
+};
+
+export type SubletAdditionalData = {
+  address: string;
+  beds: number;
+  baths: number;
+  start_date: string;
+  end_date: string;
+};
+
+// ------------------------------------------------------------
+// base listing fields (shared by all listings)
+// ------------------------------------------------------------
+type BaseListing = {
+  id: number;
+  title: string;
+  description: string;
+  external_link: string;
+  price: number;
+  negotiable: boolean;
+  created_at: string;
+  expires_at: string;
+  images: string[];
+  tags: string[];
+  favorite_count: number;
+  seller: User;
+};
 
 // ------------------------------------------------------------
 // item
 // ------------------------------------------------------------
-export type Item = Listings;
+export type Item = BaseListing & {
+  listing_type: "item";
+  additional_data: ItemAdditionalData;
+};
 
 // ------------------------------------------------------------
 // sublet
 // ------------------------------------------------------------
-export type Sublets = Listings;
+export type Sublet = BaseListing & {
+  listing_type: "sublet";
+  additional_data: SubletAdditionalData;
+};
+
+// ------------------------------------------------------------
+// base listings (discriminated union)
+// ------------------------------------------------------------
+export type Listing = Item | Sublet;
 
 // ------------------------------------------------------------
 // api responses
@@ -46,14 +99,4 @@ export type PaginatedResponse<T> = {
   page_size: number;
   offset: number;
   results: T[];
-};
-
-// ------------------------------------------------------------
-// auth
-// ------------------------------------------------------------
-export type AuthTokens = {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  idToken: string;
 };
