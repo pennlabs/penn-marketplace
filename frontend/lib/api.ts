@@ -2,14 +2,32 @@ import { getTokensFromCookies } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
 
+// Client-side cookie helper
+function getClientCookie(name: string): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift();
+  return undefined;
+}
+
 async function fetchWithCredentials<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  const tokens = await getTokensFromCookies();
-  const accessToken = tokens?.accessToken;
+  let accessToken: string | undefined;
+
+  // Check if we're on the client or server
+  if (typeof window !== "undefined") {
+    // Client-side: read from document.cookie
+    accessToken = getClientCookie("access_token");
+  } else {
+    // Server-side: use Next.js cookies
+    const tokens = await getTokensFromCookies();
+    accessToken = tokens?.accessToken;
+  }
 
   if (!accessToken) {
     throw new APIError(ErrorMessages.NO_ACCESS_TOKEN, 401);
