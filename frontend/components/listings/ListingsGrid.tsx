@@ -50,8 +50,8 @@ export const ListingsGrid = ({ type, listings }: Props) => {
 
   return (
     <div className="flex flex-col items-center w-full space-y-4">
-      <div className="w-full max-w-7xl px-4">
-        <div className="grid gap-x-6 gap-y-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="w-full max-w-[96rem] px-12">
+        <div className="grid gap-x-6 gap-y-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {data?.pages.map((group, i) => {
             return (
               <React.Fragment key={i}>
