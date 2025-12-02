@@ -1,0 +1,28 @@
+import Image from "next/image";
+import Link from "next/link";
+
+interface Props {
+  onLogoClick?: () => void;
+}
+
+export const Logo = ({ onLogoClick }: Props) => {
+  return (
+    <Link 
+      href="/" 
+      className="flex-shrink-0 flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity" 
+      onClick={onLogoClick}
+      aria-label="Penn Marketplace home"
+    >
+      <Image
+        src="/images/logo.png"
+        alt="Penn Marketplace Logo"
+        width={36}
+        height={36}
+        className="object-contain"
+      />
+      <span className="hidden sm:inline text-xl font-bold text-foreground">
+        Penn Marketplace
+      </span>
+    </Link>
+  );
+};
