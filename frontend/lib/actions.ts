@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
-import { AuthTokens, Item, PaginatedResponse, Sublets } from "@/lib/types";
+import { AuthTokens, Item, PaginatedResponse, Sublet } from "@/lib/types";
 
 async function getTokensFromCookies(): Promise<AuthTokens | null> {
   try {
@@ -79,7 +79,7 @@ export async function getItems({ pageParam = 1 }: { pageParam: unknown }) {
 export async function getSublets({ pageParam = 1 }: { pageParam: unknown }) {
   const page = typeof pageParam === 'number' ? pageParam : 1;
   const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
-  return await serverFetch<PaginatedResponse<Sublets>>(
+  return await serverFetch<PaginatedResponse<Sublet>>(
     `/market/listings/?type=sublet&limit=${FETCH_LISTINGS_LIMIT}&offset=${offset}`
   );
 }
