@@ -1,10 +1,14 @@
 import { getSublets } from "@/lib/actions";
-import { ListingsGrid } from "@/components/listings/ListingsGrid";
+import { PageHeader } from "@/components/common/PageHeader";
+import { ListingsGrid } from "@/components/Listings/ListingsGrid";
 
 export default async function SubletsPage() {
   const sublets = await getSublets({ pageParam: 1 });
 
   return (
-    <ListingsGrid type="sublets" listings={sublets} />
+    <div className="w-full space-y-6 mx-auto container max-w-[96rem] px-12">
+      <PageHeader title="Browse Sublets" description="Find your perfect housing solution at Penn" />
+      <ListingsGrid type="sublets" listings={sublets} />
+    </div>
   );
 }
