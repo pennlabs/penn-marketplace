@@ -1,5 +1,6 @@
 import { getItems } from "@/lib/actions";
 import { PageHeader } from "@/components/common/PageHeader";
+import { ItemFilters } from "@/components/Filters/ItemFilters";
 import { ListingsGrid } from "@/components/Listings/ListingsGrid";
 
 export default async function ItemsPage() {
@@ -8,6 +9,7 @@ export default async function ItemsPage() {
   return (
     <div className="w-full space-y-6 mx-auto container max-w-[96rem] px-12 pt-6">
       <PageHeader title="Browse Items" description="Discover the latest items on sale at Penn" />
+      <ItemFilters />
       <ListingsGrid type="items" listings={items} />
     </div>
   );
