@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Footer } from "@/components/common/Footer";
-import { Navbar } from "@/components/Navbar/Navbar";
+import { Navbar } from "@/components/navbar/Navbar";
 import FiltersProvider from "@/providers/FiltersProvider";
 import TanstackQueryProvider from "@/providers/TanstackQueryProvider";
 

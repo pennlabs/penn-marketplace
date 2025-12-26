@@ -1,6 +1,6 @@
 import { getSublets } from "@/lib/actions";
 import { PageHeader } from "@/components/common/PageHeader";
-import { ListingsGrid } from "@/components/Listings/ListingsGrid";
+import { ListingsGrid } from "@/components/listings/ListingsGrid";
 
 export default async function SubletsPage() {
   const sublets = await getSublets({ pageParam: 1 });

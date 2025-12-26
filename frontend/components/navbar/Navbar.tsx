@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Logo } from "@/components/Navbar/Logo";
-import { NavbarActions } from "@/components/Navbar/NavbarActions";
-import { NavTabs } from "@/components/Navbar/NavTabs";
+import { Logo } from "@/components/navbar/Logo";
+import { NavbarActions } from "@/components/navbar/NavbarActions";
+import { NavTabs } from "@/components/navbar/NavTabs";
 import { cn } from "@/lib/utils";
 
 const ALL_LISTINGS_PAGES = ["/", "/items", "/sublets"] as const;

@@ -3,7 +3,7 @@
 import React from "react";
 import { Item, PaginatedResponse, Sublet } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
-import { ListingsCard } from "@/components/Listings/ListingsCard";
+import { ListingsCard } from "@/components/listings/ListingsCard";
 import { useListings } from "@/hooks/useListings";
 
 type Props =
