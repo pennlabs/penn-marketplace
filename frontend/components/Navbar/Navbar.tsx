@@ -2,31 +2,33 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
 import { Logo } from "@/components/Navbar/Logo";
 import { NavbarActions } from "@/components/Navbar/NavbarActions";
 import { NavTabs } from "@/components/Navbar/NavTabs";
-import { SearchBar } from "@/components/Navbar/SearchBar";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const CREATE_NEW_TEXT = {
+const ALL_LISTINGS_PAGES = ["/", "/items", "/sublets"] as const;
+
+type AllListingsPagePath = (typeof ALL_LISTINGS_PAGES)[number];
+
+const ALL_LISTINGS_PAGES_CREATE_NEW_TEXT: Record<AllListingsPagePath, string> = {
   "/": "New Item",
   "/items": "New Item",
   "/sublets": "New Sublet",
 } as const;
 
-export const isValidPathname = (path: string): path is keyof typeof CREATE_NEW_TEXT => {
-  return path in CREATE_NEW_TEXT;
+const isAllListingsPage = (path: string): path is AllListingsPagePath => {
+  return ALL_LISTINGS_PAGES.includes(path as AllListingsPagePath);
 };
 
 export const Navbar = () => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const createNewText = isValidPathname(pathname)
-    ? CREATE_NEW_TEXT[pathname]
-    : "New Listing";
+  const showListingsTabs = isAllListingsPage(pathname);
+  const createNewText = showListingsTabs
+    ? ALL_LISTINGS_PAGES_CREATE_NEW_TEXT[pathname]
+    : undefined;
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -34,26 +36,24 @@ export const Navbar = () => {
   return (
     <nav className="fixed top-0 z-50 w-full" role="navigation" aria-label="Main navigation">
       <div className="border-b bg-gray-50 backdrop-blur supports-[backdrop-filter]:bg-gray-50/95 shadow-xs relative z-50">
-        <div className="flex flex-col py-6 md:space-y-6 space-y-0">
+        <div className="flex flex-col py-3">
           {/* top row */}
-          <div className="flex items-center justify-between gap-4 w-full max-w-[96rem] mx-auto px-4 sm:px-12">
+          <div className="flex items-center justify-between gap-4 h-10 w-full max-w-[96rem] mx-auto px-4 sm:px-12">
             <Logo onLogoClick={closeMobileMenu} />
 
             {/* desktop only tabs */}
-            <div className="hidden md:block">
-              <NavTabs variant="desktop" />
-            </div>
+            {showListingsTabs && (
+              <div className="hidden md:block">
+                <NavTabs variant="desktop" />
+              </div>
+            )}
 
             <NavbarActions
               createNewText={createNewText}
+              mobileShowHamburger={showListingsTabs}
               isMobileMenuOpen={isMobileMenuOpen}
               onToggleMobileMenu={toggleMobileMenu}
             />
-          </div>
-
-          {/* desktop only search bar */}
-          <div className="hidden md:flex justify-center w-full max-w-[96rem] mx-auto px-4 pb-2">
-            <SearchBar />
           </div>
         </div>
       </div>
@@ -67,17 +67,9 @@ export const Navbar = () => {
             ? "opacity-100 translate-y-0 z-40"
             : "opacity-0 -translate-y-full pointer-events-none z-30"
         )}
-        style={{
-          top: "var(--navbar-height, 88px)",
-        }}
         aria-hidden={!isMobileMenuOpen}
       >
-        <div className="flex flex-col p-4 space-y-4 max-w-[96rem] mx-auto">
-          {/* mobile only search bar */}
-          <div className="pb-4 border-b">
-            <SearchBar />
-          </div>
-
+        <div className="flex flex-col max-w-[96rem] mx-auto">
           {/* mobile only tabs */}
           <NavTabs variant="mobile" onLinkClick={closeMobileMenu} />
         </div>
