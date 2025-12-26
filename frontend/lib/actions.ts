@@ -138,3 +138,10 @@ export async function getSublets({
     `/market/listings/?${params.toString()}`
   );
 }
+
+// ------------------------------------------------------------
+// single listing (items or sublets)
+// ------------------------------------------------------------
+export async function getListing(id: string) {
+  return await serverFetch<Item | Sublet>(`/market/listings/${id}/`);
+}

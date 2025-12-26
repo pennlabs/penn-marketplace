@@ -7,23 +7,28 @@ import { NavbarActions } from "@/components/Navbar/NavbarActions";
 import { NavTabs } from "@/components/Navbar/NavTabs";
 import { cn } from "@/lib/utils";
 
-export const CREATE_NEW_TEXT = {
+const ALL_LISTINGS_PAGES = ["/", "/items", "/sublets"] as const;
+
+type AllListingsPagePath = (typeof ALL_LISTINGS_PAGES)[number];
+
+const ALL_LISTINGS_PAGES_CREATE_NEW_TEXT: Record<AllListingsPagePath, string> = {
   "/": "New Item",
   "/items": "New Item",
   "/sublets": "New Sublet",
 } as const;
 
-export const isValidPathname = (path: string): path is keyof typeof CREATE_NEW_TEXT => {
-  return path in CREATE_NEW_TEXT;
+const isAllListingsPage = (path: string): path is AllListingsPagePath => {
+  return ALL_LISTINGS_PAGES.includes(path as AllListingsPagePath);
 };
 
 export const Navbar = () => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const createNewText = isValidPathname(pathname)
-    ? CREATE_NEW_TEXT[pathname]
-    : "New Listing";
+  const showListingsTabs = isAllListingsPage(pathname);
+  const createNewText = showListingsTabs
+    ? ALL_LISTINGS_PAGES_CREATE_NEW_TEXT[pathname]
+    : undefined;
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -37,12 +42,15 @@ export const Navbar = () => {
             <Logo onLogoClick={closeMobileMenu} />
 
             {/* desktop only tabs */}
-            <div className="hidden md:block">
-              <NavTabs variant="desktop" />
-            </div>
+            {showListingsTabs && (
+              <div className="hidden md:block">
+                <NavTabs variant="desktop" />
+              </div>
+            )}
 
             <NavbarActions
               createNewText={createNewText}
+              mobileShowHamburger={showListingsTabs}
               isMobileMenuOpen={isMobileMenuOpen}
               onToggleMobileMenu={toggleMobileMenu}
             />

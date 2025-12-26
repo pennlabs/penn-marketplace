@@ -4,13 +4,15 @@ import { Bell, Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  createNewText: string;
+  createNewText?: string;
+  mobileShowHamburger: boolean;
   isMobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
 }
 
 export const NavbarActions = ({
   createNewText,
+  mobileShowHamburger,
   isMobileMenuOpen,
   onToggleMobileMenu,
 }: Props) => {
@@ -31,26 +33,30 @@ export const NavbarActions = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3">
       {/* desktop only new listing button */}
-      <Button
-        variant="outline"
-        className="hidden md:flex gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-        onClick={handleCreateNew}
-        aria-label={createNewText}
-      >
-        <Plus className="w-4 h-4" />
-        <span>{createNewText}</span>
-      </Button>
+      {createNewText && (
+        <Button
+          variant="outline"
+          className="hidden md:flex gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          onClick={handleCreateNew}
+          aria-label={createNewText}
+        >
+          <Plus className="w-4 h-4" />
+          <span>{createNewText}</span>
+        </Button>
+      )}
 
       {/* mobile only new listing button (icon only) */}
-      <Button
-        variant="outline"
-        size="icon"
-        className="md:hidden border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-        onClick={handleCreateNew}
-        aria-label={createNewText}
-      >
-        <Plus className="w-4 h-4" />
-      </Button>
+      {createNewText && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="md:hidden border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          onClick={handleCreateNew}
+          aria-label={createNewText}
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
+      )}
 
       {/* notification bell */}
       <Button
@@ -87,21 +93,23 @@ export const NavbarActions = ({
       </Button>
 
       {/* mobile only menu toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="md:hidden"
-        onClick={onToggleMobileMenu}
-        aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-        aria-expanded={isMobileMenuOpen}
-        aria-controls="mobile-menu"
-      >
-        {isMobileMenuOpen ? (
-          <X className="w-5 h-5" />
-        ) : (
-          <Menu className="w-5 h-5" />
-        )}
-      </Button>
+      {mobileShowHamburger && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={onToggleMobileMenu}
+          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-menu"
+        >
+          {isMobileMenuOpen ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <Menu className="w-5 h-5" />
+          )}
+        </Button>
+      )}
     </div>
   );
 };
