@@ -19,13 +19,13 @@ export type User = {
 // ------------------------------------------------------------
 // additional data types (from API)
 // ------------------------------------------------------------
-export type ListingCondition =
-  | "New"
-  | "Used - Like New"
-  | "Used - Good"
-  | "Used - Fair";
+export type ItemCondition =
+  | "NEW"
+  | "LIKE_NEW"
+  | "GOOD"
+  | "FAIR";
 
-export type ListingCategory =
+export type ItemCategory =
   | "Art"
   | "Books"
   | "Clothing"
@@ -38,8 +38,8 @@ export type ListingCategory =
   | "Vehicles";
 
 export type ItemAdditionalData = {
-  condition: ListingCondition;
-  category: ListingCategory;
+  condition: ItemCondition;
+  category: ItemCategory;
 };
 
 export type SubletAdditionalData = {
@@ -88,6 +88,7 @@ export type Sublet = BaseListing & {
 // base listings (discriminated union)
 // ------------------------------------------------------------
 export type Listing = Item | Sublet;
+export type ListingTypes = "items" | "sublets";
 
 // ------------------------------------------------------------
 // api responses
@@ -99,4 +100,45 @@ export type PaginatedResponse<T> = {
   page_size: number;
   offset: number;
   results: T[];
+};
+
+// ------------------------------------------------------------
+// listing data
+// ------------------------------------------------------------
+/**
+ * map of listing type keys to their corresponding data
+ * TODO: add new listing types here to extend the system
+ */
+export type ListingDataMap = {
+  items: Item;
+  sublets: Sublet;
+};
+
+// ------------------------------------------------------------
+// filters
+// ------------------------------------------------------------
+export type ItemFilters = {
+  search: string;
+  category?: string;
+  condition?: string;
+  minPrice?: string;
+  maxPrice?: string;
+};
+
+export type SubletFilters = {
+  numBeds?: string;
+  numBaths?: string;
+  startDate?: string;
+  endDate?: string;
+  minPrice?: string;
+  maxPrice?: string;
+};
+
+/**
+ * map of listing types to their filter types
+ * TODO: add new filter types here when extending the system
+ */
+export type ListingFiltersMap = {
+  items: ItemFilters;
+  sublets: SubletFilters;
 };
