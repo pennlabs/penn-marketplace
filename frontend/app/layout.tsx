@@ -30,12 +30,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`}
       >
         <TanstackQueryProvider>
           <FiltersProvider>
             <Navbar />
-            <div className="md:pt-24 pt-20">
+            <div className="pt-16 flex-grow">
               {children}
             </div>
             <Footer />

@@ -33,7 +33,7 @@ export const Navbar = () => {
       <div className="border-b bg-gray-50 backdrop-blur supports-[backdrop-filter]:bg-gray-50/95 shadow-xs relative z-50">
         <div className="flex flex-col py-3">
           {/* top row */}
-          <div className="flex items-center justify-between gap-4 w-full max-w-[96rem] mx-auto px-4 sm:px-12">
+          <div className="flex items-center justify-between gap-4 h-10 w-full max-w-[96rem] mx-auto px-4 sm:px-12">
             <Logo onLogoClick={closeMobileMenu} />
 
             {/* desktop only tabs */}
