@@ -13,3 +13,8 @@ export function formatPrice(price: number, showMonthly: boolean = false) {
 
   return showMonthly ? `${formatted}/mo` : formatted;
 }
+
+export function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}

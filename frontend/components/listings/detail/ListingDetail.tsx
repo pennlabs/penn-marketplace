@@ -14,7 +14,7 @@ export const ListingDetail = ({ listing }: Props) => {
   const listingType = listing.listing_type;
 
   return (
-    <div className="max-w-[96rem] flex flex-col w-full pt-8 sm:px-12 px-4">
+    <div className="max-w-[96rem] flex flex-col w-full p-8 sm:px-12 px-4">
       <div className="flex items-center justify-between mb-4">
         <BackButton />
         <div className="flex items-center gap-3">
@@ -29,9 +29,8 @@ export const ListingDetail = ({ listing }: Props) => {
             title={listing.title}
             price={listing.price}
             description={listing.description}
-            category={listingType === "item" ? listing.additional_data.category : undefined}
-            condition={listingType === "item" ? listing.additional_data.condition : undefined}
             priceLabel={listingType === "sublet" ? "/mo" : undefined}
+            {...listing.additional_data}
           />
           <UserCard user={listing.seller} label={listingType === "item" ? "Seller" : "Owner"} />
           <ListingActions />
