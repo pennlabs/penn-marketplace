@@ -67,6 +67,7 @@ export const Navbar = () => {
             ? "opacity-100 translate-y-0 z-40"
             : "opacity-0 -translate-y-full pointer-events-none z-30"
         )}
+
         aria-hidden={!isMobileMenuOpen}
       >
         <div className="flex flex-col max-w-[96rem] mx-auto">

@@ -65,22 +65,77 @@ async function serverFetch<T>(
 // ------------------------------------------------------------
 // items
 // ------------------------------------------------------------
-export async function getItems({ pageParam = 1 }: { pageParam: unknown }) {
+export async function getItems({
+  pageParam = 1,
+  search = "",
+  category,
+  condition,
+  minPrice,
+  maxPrice,
+}: {
+  pageParam?: unknown;
+  search?: string;
+  category?: string;
+  condition?: string;
+  minPrice?: string;
+  maxPrice?: string;
+}) {
   const page = typeof pageParam === "number" ? pageParam : 1;
   const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
+
+  const params = new URLSearchParams();
+  params.append("type", "item");
+  params.append("limit", FETCH_LISTINGS_LIMIT.toString());
+  params.append("offset", offset.toString());
+
+  if (search.trim()) params.append("title", search.trim());
+  if (category) params.append("category", category);
+  if (condition) params.append("condition", condition);
+  if (minPrice !== undefined) params.append("min_price", minPrice.toString());
+  if (maxPrice !== undefined) params.append("max_price", maxPrice.toString());
+
   return await serverFetch<PaginatedResponse<Item>>(
-    `/market/listings/?type=item&limit=${FETCH_LISTINGS_LIMIT}&offset=${offset}`
+    `/market/listings/?${params.toString()}`
   );
 }
 
 // ------------------------------------------------------------
 // sublets
 // ------------------------------------------------------------
-export async function getSublets({ pageParam = 1 }: { pageParam: unknown }) {
+export async function getSublets({
+  pageParam = 1,
+  numBeds,
+  numBaths,
+  startDate,
+  endDate,
+  minPrice,
+  maxPrice,
+}: {
+  pageParam?: unknown;
+  numBeds?: string;
+  numBaths?: string;
+  startDate?: string;
+  endDate?: string;
+  minPrice?: string;
+  maxPrice?: string;
+}) {
   const page = typeof pageParam === "number" ? pageParam : 1;
   const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
+
+  const params = new URLSearchParams();
+  params.append("type", "sublet");
+  params.append("limit", FETCH_LISTINGS_LIMIT.toString());
+  params.append("offset", offset.toString());
+
+  if (numBeds !== undefined) params.append("beds", numBeds.toString());
+  if (numBaths !== undefined) params.append("baths", numBaths.toString());
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
+  if (minPrice !== undefined) params.append("min_price", minPrice.toString());
+  if (maxPrice !== undefined) params.append("max_price", maxPrice.toString());
+
   return await serverFetch<PaginatedResponse<Sublet>>(
-    `/market/listings/?type=sublet&limit=${FETCH_LISTINGS_LIMIT}&offset=${offset}`
+    `/market/listings/?${params.toString()}`
   );
 }
 

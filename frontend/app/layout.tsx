@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import TanstackQueryProvider from "@/providers/TanstackQueryProvider";
 import { Footer } from "@/components/common/Footer";
 import { Navbar } from "@/components/Navbar/Navbar";
+import FiltersProvider from "@/providers/FiltersProvider";
+import TanstackQueryProvider from "@/providers/TanstackQueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,14 +30,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`}
       >
         <TanstackQueryProvider>
-          <Navbar />
-          <div className="pt-16 flex-grow">
-            {children}
-          </div>
-          <Footer />
+          <FiltersProvider>
+            <Navbar />
+            <div className="pt-16 flex-grow">
+              {children}
+            </div>
+            <Footer />
+          </FiltersProvider>
           <ReactQueryDevtools />
         </TanstackQueryProvider>
       </body>
