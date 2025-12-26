@@ -1,6 +1,6 @@
 "use client";
 
-import { DatePicker } from "@/components/Filters/DatePicker";
+import { DatePicker } from "@/components/filters/DatePicker";
 import { useFilters } from "@/providers/FiltersProvider";
 
 export const DateSearch = () => {

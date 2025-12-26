@@ -1,6 +1,6 @@
 import { getSublets } from "@/lib/actions";
 import { PageHeader } from "@/components/common/PageHeader";
-import { SubletFilters } from "@/components/Filters/SubletFilters";
+import { SubletFilters } from "@/components/filters/SubletFilters";
 import { ListingsGrid } from "@/components/Listings/ListingsGrid";
 
 export default async function SubletsPage() {

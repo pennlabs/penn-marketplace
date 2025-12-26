@@ -1,6 +1,6 @@
 import { getItems } from "@/lib/actions";
 import { PageHeader } from "@/components/common/PageHeader";
-import { ItemFilters } from "@/components/Filters/ItemFilters";
+import { ItemFilters } from "@/components/filters/ItemFilters";
 import { ListingsGrid } from "@/components/Listings/ListingsGrid";
 
 export default async function ItemsPage() {

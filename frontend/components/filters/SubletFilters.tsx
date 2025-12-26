@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { X, SlidersHorizontal } from "lucide-react";
-import { FilterBar } from "@/components/Filters/FilterBar";
-import { PriceRangeInput } from "@/components/Filters/PriceRangeInput";
-import { DatePicker } from "@/components/Filters/DatePicker";
-import { Select } from "@/components/Filters/Select";
+import { FilterBar } from "@/components/filters/FilterBar";
+import { PriceRangeInput } from "@/components/filters/PriceRangeInput";
+import { DatePicker } from "@/components/filters/DatePicker";
+import { Select } from "@/components/filters/Select";
 import { Button } from "@/components/ui/button";
 import { BATHS_OPTIONS, BEDS_OPTIONS, SUBLET_FILTER_KEYS } from "@/lib/constants";
 import { SubletFilters as SubletFiltersType } from "@/lib/types";

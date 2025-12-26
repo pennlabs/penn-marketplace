@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { X, SlidersHorizontal, Search } from "lucide-react";
-import { FilterBar } from "@/components/Filters/FilterBar";
-import { PriceRangeInput } from "@/components/Filters/PriceRangeInput";
-import { SearchInput } from "@/components/Filters/SearchInput";
-import { Select } from "@/components/Filters/Select";
+import { FilterBar } from "@/components/filters/FilterBar";
+import { PriceRangeInput } from "@/components/filters/PriceRangeInput";
+import { SearchInput } from "@/components/filters/SearchInput";
+import { Select } from "@/components/filters/Select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS, ITEM_FILTER_KEYS } from "@/lib/constants";
