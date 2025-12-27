@@ -1,5 +1,6 @@
 import { getSublets } from "@/lib/actions";
 import { PageHeader } from "@/components/common/PageHeader";
+import { SubletFilters } from "@/components/filters/SubletFilters";
 import { ListingsGrid } from "@/components/Listings/ListingsGrid";
 
 export default async function SubletsPage() {
@@ -8,6 +9,7 @@ export default async function SubletsPage() {
   return (
     <div className="w-full space-y-6 mx-auto container max-w-[96rem] px-12 pt-6">
       <PageHeader title="Browse Sublets" description="Find your perfect housing solution at Penn" />
+      <SubletFilters />
       <ListingsGrid type="sublets" listings={sublets} />
     </div>
   );
