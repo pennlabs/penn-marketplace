@@ -1,10 +1,36 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
-User = get_user_model()
+
+class User(AbstractUser):
+    """This extends the User model from django-labs-account to add phonenumber related fields"""
+    phone_number = PhoneNumberField(null=True, blank=True)
+    phone_verified = models.BooleanField(default=False)
+    phone_verified_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        swappable = "AUTH_USER_MODEL"
+
+class PhoneVerification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="phone_verifications")
+    phone_number = PhoneNumberField()
+    code = models.CharField(max_length=6)
+    verified = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'phone_number', 'code']),
+            models.Index(fields=['expires_at']),
+        ]
+    
+    def __str__(self):
+        return f"Verification for {self.phone_number} - {self.user.username}, verified: {self.verified}"
 
 
 class Offer(models.Model):
@@ -20,9 +46,12 @@ class Offer(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers")
     listing = models.ForeignKey("Listing", on_delete=models.CASCADE, related_name="offers_received")
-    email = models.EmailField(max_length=255, null=True, blank=True)
-    phone_number = PhoneNumberField()
-    message = models.CharField(max_length=255)
+    offered_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
+    message = models.TextField(max_length=500, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -1,6 +1,9 @@
+from datetime import timedelta
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
@@ -12,7 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from market.mixins import DefaultOrderMixin
-from market.models import Listing, ListingImage, Offer, Tag
+from market.models import Listing, ListingImage, Offer, PhoneVerification, Tag
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
@@ -29,6 +32,7 @@ from market.serializers import (
     OfferSerializer,
     TagSerializer,
 )
+from utils.sms import generate_verification_code, send_verification_sms
 
 User = get_user_model()
 
@@ -270,6 +274,7 @@ class Offers(viewsets.ModelViewSet):
 
     create:
     Create an offer on the listing matching the provided ID.
+    User must have a verified phone number before making an offer.
 
     destroy:
     Delete the offer between the user and the listing matching the ID.
@@ -288,7 +293,8 @@ class Offers(viewsets.ModelViewSet):
             raise exceptions.NotFound("No Listing matches the given query")
 
     def create(self, request, *args, **kwargs):
-        # Required to be mutable since the listing field is from the URL
+        if not request.user.phone_number or not request.user.phone_verified:
+            raise exceptions.ValidationError("You must verify your phone number before making an offer")
         data = request.data.copy()
         if self.get_queryset().filter(user=self.request.user).exists():
             raise exceptions.ValidationError("Offer already exists")
@@ -318,3 +324,89 @@ class Offers(viewsets.ModelViewSet):
         for offer in self.get_queryset():
             self.check_object_permissions(request, offer)
         return super().list(request, *args, **kwargs)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def send_verification_code(request):
+    phone_number = request.data.get("phone_number")
+    
+    if not phone_number:
+        raise exceptions.ValidationError("Phone number is required")
+    
+    code = generate_verification_code()
+    expires_at = timezone.now() + timedelta(
+        minutes=settings.PHONE_VERIFICATION_CODE_EXPIRY_MINUTES
+    )
+    
+    # invalidate any existing unverified codes for this user/phone
+    PhoneVerification.objects.filter(
+        user=request.user,
+        phone_number=phone_number,
+        verified=False
+    ).delete()
+
+    PhoneVerification.objects.create(
+        user=request.user,
+        phone_number=phone_number,
+        code=code,
+        expires_at=expires_at
+    )
+    
+    try:
+        send_verification_sms(phone_number, code)
+    except Exception as e:
+        raise exceptions.APIException(f"Failed to send SMS: {str(e)}")
+    
+    return Response({
+        "success": True,
+        "message": "Verification code sent"
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def verify_phone_code(request):
+    phone_number = request.data.get("phone_number")
+    code = request.data.get("code")
+    
+    if not phone_number or not code:
+        raise exceptions.ValidationError("Phone number and code are required")
+    
+    # find valid code
+    verification = PhoneVerification.objects.filter(
+        user=request.user,
+        phone_number=phone_number,
+        code=code,
+        verified=False,
+        expires_at__gt=timezone.now()
+    ).first()
+    
+    if not verification:
+        raise exceptions.ValidationError("Invalid or expired verification code")
+    
+    # mark as verified
+    verification.verified = True
+    verification.save()
+    
+    # update user immediately
+    request.user.phone_number = phone_number
+    request.user.phone_verified = True
+    request.user.phone_verified_at = timezone.now()
+    request.user.save()
+    
+    return Response({
+        "verified": True,
+        "message": "Phone number verified successfully",
+        "phone_number": str(phone_number)
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_phone_status(request):
+    user = request.user
+    return Response({
+        "phone_number": str(user.phone_number) if user.phone_number else None,
+        "phone_verified": user.phone_verified,
+    })

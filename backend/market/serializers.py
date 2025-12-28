@@ -19,7 +19,7 @@ User = get_user_model()
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email"]
+        fields = ["id", "username", "first_name", "last_name", "email", "phone_number", "phone_verified"]
         read_only_fields = fields
 
 
@@ -31,11 +31,11 @@ class TagSerializer(ModelSerializer):
 
 
 class OfferSerializer(ModelSerializer):
-    phone_number = PhoneNumberField()
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Offer
-        fields = "__all__"
+        fields = ["id", "user", "listing", "offered_price", "message", "created_at"]
         read_only_fields = ["id", "created_at", "user"]
 
     def create(self, validated_data):
