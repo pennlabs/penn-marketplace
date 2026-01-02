@@ -11,6 +11,9 @@ from market.views import (
     OffersReceived,
     Tags,
     UserFavorites,
+    get_phone_status,
+    send_verification_code,
+    verify_phone_code,
 )
 
 app_name = "market"
@@ -46,6 +49,10 @@ additional_urls = [
     path("listings/<listing_id>/images/", CreateImages.as_view()),
     # Image Deletion
     path("listings/images/<image_id>/", DeleteImage.as_view()),
+    # Phone verification
+    path("phone/status/", get_phone_status, name="phone-status"),
+    path("phone/send-code/", send_verification_code, name="send-verification-code"),
+    path("phone/verify-code/", verify_phone_code, name="verify-phone-code"),
 ]
 
 urlpatterns = router.urls + additional_urls
