@@ -18,7 +18,7 @@ export function formatDate(dateString: string) {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
-``
+
 // format phone number as (XXX) XXX-XXXX
 export function formatPhoneNumber(value: string): string {
   const digits = value.replace(/\D/g, "");
