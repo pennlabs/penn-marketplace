@@ -12,6 +12,8 @@ interface Props {
 
 export const ListingDetail = ({ listing }: Props) => {
   const listingType = listing.listing_type;
+  const priceLabel = listingType === "sublet" ? "/mo" : undefined;
+  const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
 
   return (
     <div className="max-w-[96rem] mx-auto flex flex-col w-full p-8 sm:px-12 px-4">
@@ -29,11 +31,17 @@ export const ListingDetail = ({ listing }: Props) => {
             title={listing.title}
             price={listing.price}
             description={listing.description}
-            priceLabel={listingType === "sublet" ? "/mo" : undefined}
+            priceLabel={priceLabel}
             {...listing.additional_data}
           />
-          <UserCard user={listing.seller} label={listingType === "item" ? "Seller" : "Owner"} />
-          <ListingActions />
+          <UserCard user={listing.seller} label={listingOwnerLabel} />
+          <ListingActions
+            listingId={listing.id}
+            listingPrice={listing.price}
+            listingTitle={listing.title}
+            priceLabel={priceLabel}
+            listingOwnerLabel={listingOwnerLabel}
+          />
         </div>
       </div>
     </div>

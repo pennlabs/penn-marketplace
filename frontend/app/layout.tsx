@@ -4,6 +4,7 @@ import "./globals.css";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Footer } from "@/components/common/Footer";
 import { Navbar } from "@/components/navbar/Navbar";
+import { Toaster } from "@/components/ui/sonner";
 import FiltersProvider from "@/providers/FiltersProvider";
 import TanstackQueryProvider from "@/providers/TanstackQueryProvider";
 
@@ -41,6 +42,7 @@ export default function RootLayout({
             <Footer />
           </FiltersProvider>
           <ReactQueryDevtools />
+          <Toaster />
         </TanstackQueryProvider>
       </body>
     </html>

@@ -53,10 +53,18 @@ async function serverFetch<T>(
   });
 
   if (!response.ok) {
-    throw new APIError(
-      `${ErrorMessages.API_REQUEST_FAILED}: ${response.status}`,
-      response.status
-    );
+    const errorData = await response.json().catch(() => null);
+    let errorMessage = `${ErrorMessages.API_REQUEST_FAILED}: ${response.status}`;
+
+    if (errorData) {
+      const firstKey = Object.keys(errorData)[0];
+      if (firstKey) {
+        const firstError = errorData[firstKey];
+        errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+      }
+    }
+
+    throw new APIError(errorMessage, response.status);
   }
 
   return response.json();
@@ -144,4 +152,55 @@ export async function getSublets({
 // ------------------------------------------------------------
 export async function getListing(id: string) {
   return await serverFetch<Item | Sublet>(`/market/listings/${id}/`);
+}
+
+// ------------------------------------------------------------
+// offers
+// ------------------------------------------------------------
+export async function createOffer({
+  listingId,
+  offeredPrice,
+  message,
+}: {
+  listingId: number;
+  offeredPrice: number;
+  message?: string;
+}) {
+  const offer = await serverFetch(`/market/listings/${listingId}/offers/`, {
+    method: "POST",
+    body: JSON.stringify({
+      offered_price: offeredPrice,
+      message,
+    }),
+  });
+
+  return offer;
+}
+
+export async function getPhoneStatus() {
+  return await serverFetch<{
+    phone_number: string | null;
+    phone_verified: boolean;
+    phone_verified_at: string | null;
+  }>("/market/phone/status/");
+}
+
+export async function sendVerificationCode(phoneNumber: string) {
+  return await serverFetch<{ success: boolean; phone_number: string }>(
+    "/market/phone/send-code/",
+    {
+      method: "POST",
+      body: JSON.stringify({ phone_number: phoneNumber }),
+    }
+  );
+}
+
+export async function verifyPhoneCode(phoneNumber: string, code: string) {
+  return await serverFetch<{
+    verified: boolean;
+    phone_number: string;
+  }>("/market/phone/verify-code/", {
+    method: "POST",
+    body: JSON.stringify({ phone_number: phoneNumber, code }),
+  });
 }

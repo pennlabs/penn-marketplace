@@ -1,7 +1,7 @@
 import { getItems } from "@/lib/actions";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ItemFilters } from "@/components/filters/ItemFilters";
-import { ListingsGrid } from "@/components/Listings/ListingsGrid";
+import { ListingsGrid } from "@/components/listings/ListingsGrid";
 
 export default async function ItemsPage() {
   const items = await getItems({ pageParam: 1 });
