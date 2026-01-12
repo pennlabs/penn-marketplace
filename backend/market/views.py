@@ -1,6 +1,7 @@
 from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
@@ -15,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from market.mixins import DefaultOrderMixin
-from market.models import Listing, ListingImage, Offer, PhoneVerification, Tag
+from market.models import Listing, ListingImage, Offer, Tag
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
@@ -335,23 +336,13 @@ def send_verification_code(request):
         raise exceptions.ValidationError("Phone number is required")
     
     code = generate_verification_code()
-    expires_at = timezone.now() + timedelta(
-        minutes=settings.PHONE_VERIFICATION_CODE_EXPIRY_MINUTES
-    )
     
-    # invalidate any existing unverified codes for this user/phone
-    PhoneVerification.objects.filter(
-        user=request.user,
-        phone_number=phone_number,
-        verified=False
-    ).delete()
-
-    PhoneVerification.objects.create(
-        user=request.user,
-        phone_number=phone_number,
-        code=code,
-        expires_at=expires_at
-    )
+    # unique cache key for this user + phone combination
+    cache_key = f"phone_verify:{request.user.id}:{phone_number}"
+    
+    # verification code in cache with auto-expiration
+    timeout = settings.PHONE_VERIFICATION_CODE_EXPIRY_MINUTES * 60
+    cache.set(cache_key, code, timeout=timeout)
     
     try:
         send_verification_sms(phone_number, code)
@@ -373,27 +364,19 @@ def verify_phone_code(request):
     if not phone_number or not code:
         raise exceptions.ValidationError("Phone number and code are required")
     
-    # find valid code
-    verification = PhoneVerification.objects.filter(
-        user=request.user,
-        phone_number=phone_number,
-        code=code,
-        verified=False,
-        expires_at__gt=timezone.now()
-    ).first()
+    cache_key = f"phone_verify:{request.user.id}:{phone_number}"
+    stored_code = cache.get(cache_key)
     
-    if not verification:
+    if not stored_code or stored_code != code:
         raise exceptions.ValidationError("Invalid or expired verification code")
     
-    # mark as verified
-    verification.verified = True
-    verification.save()
-    
-    # update user immediately
+    # Success! Update user's phone verification status
     request.user.phone_number = phone_number
     request.user.phone_verified = True
     request.user.phone_verified_at = timezone.now()
     request.user.save()
+    
+    cache.delete(cache_key)
     
     return Response({
         "verified": True,

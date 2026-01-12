@@ -12,25 +12,6 @@ class User(AbstractUser):
     phone_verified_at = models.DateTimeField(null=True, blank=True)
 
 
-class PhoneVerification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="phone_verifications")
-    phone_number = PhoneNumberField()
-    code = models.CharField(max_length=6)
-    verified = models.BooleanField(default=False)
-    expires_at = models.DateTimeField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['user', 'phone_number', 'code']),
-            models.Index(fields=['expires_at']),
-        ]
-    
-    def __str__(self):
-        return f"Verification for {self.phone_number} - {self.user.username}, verified: {self.verified}"
-
-
 class Offer(models.Model):
     class Meta:
         constraints = [

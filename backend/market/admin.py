@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import mark_safe
 
-from market.models import Category, Item, Listing, ListingImage, Offer, PhoneVerification, Sublet, Tag
+from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, Tag
 
 
 class ListingAdmin(admin.ModelAdmin):
@@ -23,4 +23,3 @@ admin.site.register(Listing, ListingAdmin)
 admin.site.register(ListingImage)
 admin.site.register(Item)
 admin.site.register(Sublet)
-admin.site.register(PhoneVerification)
