@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+AUTH_USER_MODEL = "market.User"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -152,3 +153,16 @@ PLATFORM_ACCOUNTS = {
     "PLATFORM_URL": "https://platform.pennlabs.org",
     "CUSTOM_ADMIN": False,
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
+    }
+}
+
+# twilio settings for phone verification
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
+TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", "")
+PHONE_VERIFICATION_CODE_EXPIRY_MINUTES=10
