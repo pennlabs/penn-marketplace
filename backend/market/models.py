@@ -10,9 +10,7 @@ class User(AbstractUser):
     phone_number = PhoneNumberField(null=True, blank=True)
     phone_verified = models.BooleanField(default=False)
     phone_verified_at = models.DateTimeField(null=True, blank=True)
-    
-    class Meta:
-        swappable = "AUTH_USER_MODEL"
+
 
 class PhoneVerification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="phone_verifications")
