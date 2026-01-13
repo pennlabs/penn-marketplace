@@ -14,7 +14,7 @@ export const BASE_URL =
 export const API_BASE_URL =
   process.env.NODE_ENV === "production"
     ? "REPLACE WITH PROD API URL"
-    : "http://localhost:8000";
+    : "http://backend:8000"; // can't be localhost because server fetch happens in container
 
 export const PLATFORM_URL = process.env.PLATFORM_URL;
 export const CLIENT_ID = process.env.CLIENT_ID;

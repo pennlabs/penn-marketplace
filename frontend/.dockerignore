@@ -1,0 +1,39 @@
+# --- node / package manager ---
+node_modules
+.pnp
+.pnp.js
+
+# --- next.js build output ---
+.next
+out
+dist
+build
+
+# --- env files (never send to image) ---
+.env
+.env*.local
+
+# --- logs ---
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- testing ---
+coverage
+.nyc_output
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+*.swo
+
+# --- git ---
+.git
+
+# --- docker files ---
+Dockerfile
+Dockerfile.*

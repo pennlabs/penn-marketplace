@@ -1,0 +1,69 @@
+# -----------------------
+# python bytecode / cache
+# -----------------------
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+
+# -----------------------
+# build artifacts
+# -----------------------
+dist
+build
+
+# -----------------------
+# virtual environments
+# -----------------------
+venv
+env
+ENV
+.venv
+
+# -----------------------
+# django / application
+# -----------------------
+*.log
+db.sqlite3
+db.sqlite3-journal
+staticfiles
+media
+
+# -----------------------
+# Environment variables
+# -----------------------
+.env
+.env.local
+
+# -----------------------
+# testing / coverage
+# -----------------------
+.coverage
+htmlcov
+.pytest_cache
+.tox
+
+# -----------------------
+# editor / OS clutter
+# -----------------------
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# -----------------------
+# git
+# -----------------------
+.git
+
+# -----------------------
+# docker files
+# -----------------------
+Dockerfile
+Dockerfile.*
+.dockerignore
