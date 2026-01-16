@@ -9,6 +9,7 @@ import {
 import { ErrorResponses } from "@/lib/errors";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
   const accessToken = request.cookies.get("access_token")?.value;
   const refreshToken = request.cookies.get("refresh_token")?.value;
   const expiresIn = request.cookies.get("expires_in")?.value;
@@ -16,7 +17,7 @@ export async function middleware(request: NextRequest) {
   // if no access token, redirect to login
   if (!accessToken) {
     try {
-      const loginUrl = getLoginUrl(request.nextUrl.pathname);
+      const loginUrl = getLoginUrl(pathname);
       return NextResponse.redirect(loginUrl);
     } catch (error) {
       return ErrorResponses.missingClientId();
@@ -49,8 +50,7 @@ export async function middleware(request: NextRequest) {
       });
 
       if (res.ok) {
-        const { access_token, refresh_token, expires_in } =
-          await res.json();
+        const { access_token, refresh_token, expires_in } = await res.json();
 
         const response = NextResponse.next();
 
@@ -73,7 +73,7 @@ export async function middleware(request: NextRequest) {
         return response;
       } else {
         // refresh failed, redirect to login
-        const loginUrl = getLoginUrl(request.nextUrl.pathname);
+        const loginUrl = getLoginUrl(pathname);
         return NextResponse.redirect(loginUrl);
       }
     } catch (error) {
@@ -85,5 +85,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/"],
+  matcher: ["/", "/items", "/items/:path*", "/sublets", "/sublets/:path*"],
 };
