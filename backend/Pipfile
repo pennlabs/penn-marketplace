@@ -30,7 +30,7 @@ pyyaml = "*"
 uritemplate = "*"
 uwsgi = "*"
 django-filter = "*"
-django-labs-accounts = {git = "https://github.com/pennlabs/django-labs-accounts.git", ref = "james/support-custom-user-models"}
+django-labs-accounts = ">=1.0.6"
 django-debug-toolbar = "*"
 django-runtime-options = "*"
 django-storages = "*"
