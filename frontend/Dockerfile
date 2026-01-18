@@ -1,7 +1,7 @@
 # -----------------------------
 # base stage (shared setup)
 # -----------------------------
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@latest --activate

@@ -12,10 +12,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend']
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    "default": dj_database_url.config(
-        # this is overriden by the DATABASE_URL env var
-        default="sqlite:///db.sqlite3"
-    )
+    "default": dj_database_url.config()
 }
 
 # Redis - from docker-compose
