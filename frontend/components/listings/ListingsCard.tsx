@@ -95,8 +95,8 @@ export const ListingsCard = ({
           </h2>
 
           <p className="font-bold text-base">
-            <span className="text-brand">{formatPrice(listing.price, false)}</span>
-            {showMonthlyPrice && <span className="text-xs text-black font-normal">/mo</span>}
+            <span>{formatPrice(listing.price, false)}</span>
+            {showMonthlyPrice && <span className="text-xs font-normal">/mo</span>}
           </p>
         </div>
 
