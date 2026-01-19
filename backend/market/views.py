@@ -116,6 +116,7 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
             "min_price": "price__gte",
             "max_price": "price__lte",
             "negotiable": "negotiable",
+            "status": "status",
         }
 
         item_filters = {
@@ -165,7 +166,7 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         if request.query_params.get("seller", "false").lower() == "true":
             queryset = queryset.filter(seller=request.user)
         else:
-            queryset = queryset.filter(expires_at__gte=timezone.now())
+            queryset = queryset.filter(expires_at__gte=timezone.now(), status="verified")
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -177,9 +178,11 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.seller == request.user:
+        if instance.seller == request.user or request.user.is_superuser:
             serializer_class = ListingSerializer
         else:
+            if instance.status != "verified":
+                raise exceptions.NotFound("No Listing matches the given query")
             serializer_class = ListingSerializerPublic
         serializer = serializer_class(instance)
         return Response(serializer.data)

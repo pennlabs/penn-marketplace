@@ -83,6 +83,16 @@ class Listing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
 
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('pending', 'Pending'),
+            ('verified', 'Verified'),
+            ('rejected', 'Rejected'),
+        ],
+        default='pending',
+    )
+
     def __str__(self):
         return f"{self.title} by {self.seller}"
 
