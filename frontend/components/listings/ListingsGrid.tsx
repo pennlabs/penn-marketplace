@@ -1,23 +1,25 @@
 "use client";
 
 import React from "react";
-import { Item, PaginatedResponse, Sublet } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
 import { ListingsCard } from "@/components/listings/ListingsCard";
 import { NoListingsFound } from "@/components/listings/NoListingsFound";
 import { useListings } from "@/hooks/useListings";
+import { Item, PaginatedResponse, Sublet, User } from "@/lib/types";
 
 type Props =
   | {
     type: "items";
     listings: PaginatedResponse<Item>;
+    currentUser: User;
   }
   | {
     type: "sublets";
     listings: PaginatedResponse<Sublet>;
+    currentUser: User;
   };
 
-export const ListingsGrid = ({ type, listings }: Props) => {
+export const ListingsGrid = ({ type, listings, currentUser }: Props) => {
   const { data, isFetchingNextPage, hasNextPage, ref } = useListings({ type, listings });
 
   const totalResults = data?.pages.reduce((acc, page) => acc + page.results.length, 0) || 0;
@@ -28,7 +30,7 @@ export const ListingsGrid = ({ type, listings }: Props) => {
       <div className="w-full">
         {isEmpty && <NoListingsFound type={type} />}
         {!isEmpty && (
-          <div className="grid gap-x-6 gap-y-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <div className="grid gap-x-6 gap-y-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {data?.pages.map((group, i) => (
               <React.Fragment key={i}>
                 {group.results.map((post) => {
@@ -42,6 +44,7 @@ export const ListingsGrid = ({ type, listings }: Props) => {
                       listing={post}
                       previewImageUrl={previewImageUrl}
                       href={`/${type}/${post.id}`}
+                      isMyListing={post.seller.id === currentUser.id}
                     />
                   );
                 })}
