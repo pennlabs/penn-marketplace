@@ -22,7 +22,7 @@ ENV DJANGO_SETTINGS_MODULE=config.settings.development
 ENV SECRET_KEY="temporary key just to build the docker image"
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["uv", "run", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # -----------------------------
 # prod stage (default)
@@ -42,4 +42,4 @@ ENV SECRET_KEY="temporary key just to build the docker image"
 ENV PATH="/app/.venv/bin:$PATH"
 
 # collect static files at build time
-RUN python manage.py collectstatic --noinput
+RUN uv run manage.py collectstatic --noinput
