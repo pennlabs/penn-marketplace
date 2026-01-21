@@ -32,6 +32,7 @@ from market.serializers import (
     ListingSerializerPublic,
     OfferSerializer,
     TagSerializer,
+    UserSerializer,
 )
 from utils.sms import generate_verification_code, send_verification_sms
 
@@ -386,6 +387,13 @@ def verify_phone_code(request):
         "message": "Phone number verified successfully",
         "phone_number": str(phone_number)
     })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_current_user(request):
+    """Get the current authenticated user's info"""
+    return Response(UserSerializer(request.user).data)
 
 
 @api_view(["GET"])

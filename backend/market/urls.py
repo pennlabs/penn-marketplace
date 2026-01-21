@@ -11,6 +11,7 @@ from market.views import (
     OffersReceived,
     Tags,
     UserFavorites,
+    get_current_user,
     get_phone_status,
     send_verification_code,
     verify_phone_code,
@@ -22,6 +23,8 @@ router = routers.DefaultRouter()
 router.register(r"listings", Listings, basename="listings")
 
 additional_urls = [
+    # Current user
+    path("user/me/", get_current_user, name="current-user"),
     # List of all amenities
     path("tags/", Tags.as_view(), name="tags"),
     # All favorites for user

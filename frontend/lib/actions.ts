@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
-import { AuthTokens, Item, PaginatedResponse, Sublet } from "@/lib/types";
+import { AuthTokens, Item, PaginatedResponse, Sublet, User } from "@/lib/types";
 
 async function getTokensFromCookies(): Promise<AuthTokens | null> {
   try {
@@ -68,6 +68,13 @@ async function serverFetch<T>(
   }
 
   return response.json();
+}
+
+// ------------------------------------------------------------
+// user
+// ------------------------------------------------------------
+export async function getCurrentUser(): Promise<User> {
+  return await serverFetch<User>("/market/user/me/");
 }
 
 // ------------------------------------------------------------
