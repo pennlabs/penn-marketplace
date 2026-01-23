@@ -20,7 +20,7 @@ export const PLATFORM_URL = process.env.PLATFORM_URL;
 export const CLIENT_ID = process.env.CLIENT_ID;
 export const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
-export const OIDC_REDIRECT_URI = `${BASE_URL}/callback`; // TODO: needs to be /api/callback not /callback
+export const OIDC_REDIRECT_URI = `${BASE_URL}/api/callback`;
 export const OIDC_AUTHORIZATION_ENDPOINT = `${PLATFORM_URL}/accounts/authorize/`;
 export const OIDC_TOKEN_ENDPOINT = `${API_BASE_URL}/accounts/token/`;
 
