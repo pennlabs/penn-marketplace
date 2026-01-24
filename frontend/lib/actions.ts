@@ -239,7 +239,7 @@ type CreateSubletPayload = {
   price: string;
   negotiable: boolean;
   expires_at: string;
-  externalLink?: string;
+  external_link?: string;
   tags: string[];
   listing_type: "sublet";
   additional_data: {

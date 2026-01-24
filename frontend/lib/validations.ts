@@ -1,4 +1,3 @@
-import { is } from "date-fns/locale";
 import { z } from "zod";
 
 export const phoneSchema = z.object({
