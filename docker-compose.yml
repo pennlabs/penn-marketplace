@@ -1,8 +1,12 @@
+name: penn-marketplace
+
 services:
   db:
     image: postgres:15.8
-    env_file:
-      - ./backend/.env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-penn_marketplace}
     ports:
       - "5432:5432"
     volumes:
@@ -24,7 +28,6 @@ services:
       retries: 5
 
   backend:
-    platform: linux/amd64 
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -39,11 +42,11 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
-    env_file:
-      - ./backend/.env
     environment:
       - PYTHONUNBUFFERED=1
       - DJANGO_SETTINGS_MODULE=config.settings.development
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/penn_marketplace
+      - REDIS_URL=redis://redis:6379/0
     command: sh -c "uv run python manage.py migrate && uv run python manage.py runserver 0.0.0.0:8000"
 
   frontend:
