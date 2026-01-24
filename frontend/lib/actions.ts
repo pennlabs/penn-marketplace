@@ -211,3 +211,51 @@ export async function verifyPhoneCode(phoneNumber: string, code: string) {
     body: JSON.stringify({ phone_number: phoneNumber, code }),
   });
 }
+
+
+
+// ------------------------------------------------------------
+// creating new listings
+// ------------------------------------------------------------
+
+type CreateItemPayload = {
+  title: string;
+  description: string;
+  price: string;
+  negotiable: boolean;
+  expires_at: string;
+  external_link?: string;
+  tags: string[];
+  listing_type: "item";
+  additional_data: {
+    condition: string;
+    category: string;
+  };
+};
+
+type CreateSubletPayload = {
+  title: string;
+  description: string;
+  price: string;
+  negotiable: boolean;
+  expires_at: string;
+  externalLink?: string;
+  tags: string[];
+  listing_type: "sublet";
+  additional_data: {
+    address: string;
+    beds: number;
+    baths: number;
+    start_date: string;
+    end_date: string;
+  };
+};
+
+export type CreateListingPayload = CreateItemPayload | CreateSubletPayload;
+
+export async function createListing(payload: CreateListingPayload): Promise<Listing> {
+  return await serverFetch<Listing>("/market/listings/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

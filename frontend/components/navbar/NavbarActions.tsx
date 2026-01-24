@@ -2,6 +2,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Bell, Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePathname , useRouter} from "next/navigation";
 
 interface Props {
   createNewText?: string;
@@ -17,9 +18,15 @@ export const NavbarActions = ({
   onToggleMobileMenu,
 }: Props) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  const pathName = usePathname();
+  const router = useRouter();
 
   const handleCreateNew = () => {
-    // TODO
+    if (pathName.startsWith("/sublet")) {
+      router.push("/create/sublet");
+    } else {
+      router.push("/create/item");
+    }
   };
 
   const handleNotificationClick = () => {

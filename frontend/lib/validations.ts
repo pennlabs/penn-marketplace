@@ -1,3 +1,4 @@
+import { is } from "date-fns/locale";
 import { z } from "zod";
 
 export const phoneSchema = z.object({
@@ -60,3 +61,47 @@ export const offerSchema = z.object({
 });
 
 export type OfferFormData = z.infer<typeof offerSchema>;
+
+
+
+
+export const createItemSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
+  description: z.string().min(1, "Description is required").max(5000, "Description must be less than 5000 characters"),
+  price: z.string().min(1, "Price is required").refine(
+    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+    { message: "Price must be a positive number" }
+  ),
+  negotiable: z.boolean().default(false),
+  expires_at: z.string().min(1, "Expiration date is required"),
+  external_link: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  tags: z.array(z.string()).default([]),
+  condition: z.string().min(1, "Condition is required"),
+  category: z.string().min(1, "Category is required"),
+});
+
+export type CreateItemFormData = z.infer<typeof createItemSchema>;
+
+
+export const createSubletSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
+  description: z.string().min(1, "Description is required").max(5000, "Description must be less than 5000 characters"),
+  price: z.string().min(1, "Price is required").refine(
+    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+    { message: "Price must be a positive number" }
+  ),
+  negotiable: z.boolean().default(false),
+  expires_at: z.string().min(1, "Expiration date is required"),
+  external_link: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  tags: z.array(z.string()).default([]),
+  address: z.string().min(1, "Address is required"),
+  beds: z.string().min(1, "Number of beds is required"),
+  baths: z.string().min(1, "Number of baths is required"),
+  start_date: z.string().min(1, "Start date is required"),
+  end_date: z.string().min(1, "End date is required"),
+}).refine(
+  (data) => new Date(data.end_date) > new Date(data.start_date),
+  { message: "End date must be after start date", path: ["end_date"] }
+);
+
+export type CreateSubletFormData = z.infer<typeof createSubletSchema>;
