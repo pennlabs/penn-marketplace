@@ -113,7 +113,7 @@ export default function CreateItemPage() {
   const isLoading = isPending;
   return (
     <div className="w-full mx-auto container max-w-[96rem] px-12 pt-6 pb-12">
-      <Link href="/create">
+      <Link href="/items">
         <Button variant="secondary" size="sm" className="mb-4">
           Back
         </Button>
@@ -123,7 +123,9 @@ export default function CreateItemPage() {
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Form Fields */}
           <div className="space-y-6">
+            {/* Title */}
             <Controller
               name="title"
               control={control}
@@ -142,6 +144,7 @@ export default function CreateItemPage() {
               )}
             />
 
+            {/* Price */}
             <Controller
               name="price"
               control={control}
@@ -169,6 +172,7 @@ export default function CreateItemPage() {
               )}
             />
 
+            {/* Description */}
             <Controller
               name="description"
               control={control}
@@ -188,6 +192,7 @@ export default function CreateItemPage() {
               )}
             />
 
+            {/* Category */}
             <Controller
               name="category"
               control={control}
@@ -213,6 +218,7 @@ export default function CreateItemPage() {
               )}
             />
 
+            {/* Condition */}
             <Controller
               name="condition"
               control={control}
@@ -238,6 +244,7 @@ export default function CreateItemPage() {
               )}
             />
 
+            {/* Expiration Date */}
             <Controller
               name="expires_at"
               control={control}
@@ -257,6 +264,7 @@ export default function CreateItemPage() {
               )}
             />
 
+            {/* Negotiable */}
             <Controller
               name="negotiable"
               control={control}
@@ -277,6 +285,7 @@ export default function CreateItemPage() {
               )}
             />
 
+            {/* External Link */}
             <Controller
               name="external_link"
               control={control}
@@ -298,7 +307,9 @@ export default function CreateItemPage() {
             />
           </div>
 
+          {/* Right Column - Image Upload and Buttons */}
           <div className="space-y-6">
+            {/* Product Media */}
             <div>
               <label className="text-sm font-medium block mb-2">Product Media</label>
               <div
@@ -349,6 +360,7 @@ export default function CreateItemPage() {
               </div>
             </div>
 
+            {/* Action Buttons */}
             <div className="space-y-3 pt-4">
               <Button
                 type="button"

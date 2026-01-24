@@ -120,7 +120,7 @@ export default function CreateSubletPage() {
 
   return (
     <div className="w-full mx-auto container max-w-[96rem] px-12 pt-6 pb-12">
-      <Link href="/create">
+      <Link href="/sublets">
         <Button variant="secondary" size="sm" className="mb-4">
           Back
         </Button>
