@@ -53,7 +53,7 @@ export default function CreateSubletPage() {
     },
   });
 
-  const createListingMutation = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: createListing,
     onSuccess: (data) => {
       toast.success("Sublet listing created successfully!");
@@ -97,7 +97,7 @@ export default function CreateSubletPage() {
   );
 
   const onSubmit = (data: CreateSubletFormData) => {
-    createListingMutation.mutate({
+    mutate({
       title: data.title,
       description: data.description,
       price: data.price,
@@ -116,7 +116,7 @@ export default function CreateSubletPage() {
     });
   };
 
-  const isLoading = createListingMutation.isPending;
+  const isLoading = isPending;
 
   return (
     <div className="w-full mx-auto container max-w-[96rem] px-12 pt-6 pb-12">

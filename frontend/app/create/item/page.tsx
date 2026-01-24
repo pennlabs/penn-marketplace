@@ -50,7 +50,7 @@ export default function CreateItemPage() {
     },
   });
 
-  const createListingMutation = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: createListing,
     onSuccess: (data) => {
       toast.success("Listing created successfully!");
@@ -94,7 +94,7 @@ export default function CreateItemPage() {
   );
 
   const onSubmit = (data: CreateItemFormData) => {
-    createListingMutation.mutate({
+    mutate({
       title: data.title,
       description: data.description,
       price: data.price,
@@ -110,8 +110,7 @@ export default function CreateItemPage() {
     });
   };
 
-  const isLoading = createListingMutation.isPending;
-
+  const isLoading = isPending;
   return (
     <div className="w-full mx-auto container max-w-[96rem] px-12 pt-6 pb-12">
       <Link href="/create">
