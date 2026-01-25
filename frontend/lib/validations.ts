@@ -74,7 +74,13 @@ export const createItemSchema = z.object({
     .transform((s) => Number(s.replace(/[$,]/g, "")))
     .refine((n) => n > 0, { message: "Price must be a positive number" }),
   negotiable: z.boolean().default(false),
-  expires_at: z.string().min(1, "Expiration date is required"),
+  expires_at: z.string()
+    .datetime("Expiration must be a valid date/time")
+    .optional()
+    .refine(
+      (val) => !val || new Date(val).getTime() > Date.now(),
+      { message: "Expiration must be in the future" }
+    )
   external_link: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   tags: z.array(z.string()).default([]),
   condition: z.string().min(1, "Condition is required"),
