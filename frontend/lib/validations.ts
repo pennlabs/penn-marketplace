@@ -67,10 +67,12 @@ export type OfferFormData = z.infer<typeof offerSchema>;
 export const createItemSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
   description: z.string().min(1, "Description is required").max(5000, "Description must be less than 5000 characters"),
-  price: z.string().min(1, "Price is required").refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
-    { message: "Price must be a positive number" }
-  ),
+  price: z.string()
+    .trim()
+    .min(1, "Price is required")
+    .refine((s) => /^(\$?\d{1,3}(,\d{3})*|\$?\d+)(\.\d{1,2})?$/.test(s), { message: "Price must be a valid amount" })
+    .transform((s) => Number(s.replace(/[$,]/g, "")))
+    .refine((n) => n > 0, { message: "Price must be a positive number" }),
   negotiable: z.boolean().default(false),
   expires_at: z.string().min(1, "Expiration date is required"),
   external_link: z.string().url("Must be a valid URL").optional().or(z.literal("")),
