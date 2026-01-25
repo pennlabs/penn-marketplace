@@ -102,8 +102,8 @@ export const createSubletSchema = z.object({
   external_link: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   tags: z.array(z.string()).default([]),
   address: z.string().min(1, "Address is required"),
-  beds: z.string().min(1, "Number of beds is required"),
-  baths: z.string().min(1, "Number of baths is required"),
+  beds: z.coerce.number().int().min(0, "Beds must be 0 or more"),
+  baths: z.coerce.number().int().min(0, "Baths must be 0 or more"),
   start_date: z.string().min(1, "Start date is required"),
   end_date: z.string().min(1, "End date is required"),
 }).refine(
