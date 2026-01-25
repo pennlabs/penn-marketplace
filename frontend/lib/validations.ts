@@ -107,7 +107,10 @@ export const createSubletSchema = z.object({
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
 }).refine(
-  (data) => new Date(data.end_date) > new Date(data.start_date),
+  const start = Date.parse(data.start_date);
+  const end = Date.parse(data.end_date);
+  return Number.isFinite(start) && Number.isFinite(end) && end > start;
+
   { message: "End date must be after start date", path: ["end_date"] }
 );
 
