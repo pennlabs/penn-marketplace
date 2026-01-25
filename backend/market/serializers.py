@@ -129,6 +129,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             "images",
             "listing_type",
             "additional_data",
+            "status",
         ]
         read_only_fields = [
             "id",
@@ -140,6 +141,8 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         ]
 
     def validate(self, attrs):
+        if 'status' in attrs and not self.context['request'].user.is_superuser:
+            raise ValidationError({"status": "Only superusers can modify the status."})
         if not self.instance:
             listing_type = self.initial_data.get("listing_type")
             additional_data = self.initial_data.get("additional_data", {})
@@ -184,6 +187,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
     def create(self, validated_data):
         validated_data["seller"] = self.context["request"].user
+        validated_data["status"] = "pending"
         
         listing_type = self.initial_data.get("listing_type")
         additional_data = self.initial_data.get("additional_data", {})
@@ -252,6 +256,10 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
                 setattr(instance, attr, value)
             if tags:
                 instance.tags.set(tags)
+            
+            # updates to certain fields require reapproval
+            if any(field in self.validated_data for field in ["images", "title", "description"]):
+                instance.status = "pending"
             
             if listing_type and listing_type != self.get_listing_type(instance):
                 raise ValidationError({
