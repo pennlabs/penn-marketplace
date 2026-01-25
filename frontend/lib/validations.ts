@@ -104,8 +104,8 @@ export const createSubletSchema = z.object({
   address: z.string().min(1, "Address is required"),
   beds: z.coerce.number().int().min(0, "Beds must be 0 or more"),
   baths: z.coerce.number().int().min(0, "Baths must be 0 or more"),
-  start_date: z.string().min(1, "Start date is required"),
-  end_date: z.string().min(1, "End date is required"),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
 }).refine(
   (data) => new Date(data.end_date) > new Date(data.start_date),
   { message: "End date must be after start date", path: ["end_date"] }
