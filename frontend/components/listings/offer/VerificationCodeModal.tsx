@@ -20,12 +20,7 @@ interface Props {
   onVerified: () => void;
 }
 
-export function VerificationCodeModal({
-  isOpen,
-  onClose,
-  phoneNumber,
-  onVerified,
-}: Props) {
+export function VerificationCodeModal({ isOpen, onClose, phoneNumber, onVerified }: Props) {
   // countdown timer for resending code so user can't spam the button
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -106,11 +101,7 @@ export function VerificationCodeModal({
       }
     >
       <form onSubmit={handleSubmit(handleVerifyCode)} className="space-y-4">
-        <FormField
-          label=""
-          error={errors.code?.message}
-          touched={touchedFields.code}
-        >
+        <FormField label="" error={errors.code?.message} touched={touchedFields.code}>
           <Controller
             name="code"
             control={control}
@@ -126,8 +117,9 @@ export function VerificationCodeModal({
                 }}
                 onBlur={field.onBlur}
                 maxLength={6}
-                className={`text-center text-2xl tracking-widest font-mono ${errors.code && touchedFields.code ? "border-destructive" : ""
-                  }`}
+                className={`text-center font-mono text-2xl tracking-widest ${
+                  errors.code && touchedFields.code ? "border-destructive" : ""
+                }`}
                 disabled={isLoading}
                 autoFocus
                 aria-invalid={errors.code && touchedFields.code ? "true" : "false"}
@@ -138,7 +130,7 @@ export function VerificationCodeModal({
         <Button
           type="submit"
           disabled={isLoading || !isValid}
-          className="w-full bg-brand hover:bg-brand-hover text-white h-12"
+          className="bg-brand hover:bg-brand-hover h-12 w-full text-white"
         >
           {isLoading ? "Verifying..." : "Verify Code"}
         </Button>

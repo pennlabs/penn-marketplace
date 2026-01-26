@@ -11,7 +11,7 @@ type NavLink = {
   label: string;
   icon: LucideIcon;
   activePaths: string[];
-}
+};
 
 const NAV_LINKS: NavLink[] = [
   {
@@ -64,13 +64,10 @@ export const NavTabs = ({ variant = "desktop", onLinkClick }: Props = {}) => {
             key={href}
             href={href}
             onClick={onLinkClick}
-            className={cn(
-              styles.link,
-              isActive ? styles.active : styles.inactive
-            )}
+            className={cn(styles.link, isActive ? styles.active : styles.inactive)}
             aria-current={isActive ? "page" : undefined}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="h-4 w-4" />
             <span>{label}</span>
           </Link>
         );

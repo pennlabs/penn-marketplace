@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
-from phonenumber_field.serializerfields import PhoneNumberField
 from profanity_check import predict
 from rest_framework.serializers import (
     ImageField,
@@ -13,13 +12,22 @@ from rest_framework.serializers import (
 from market.mixins import ListingTypeMixin
 from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, Tag
 
+
 User = get_user_model()
 
 
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "phone_number", "phone_verified"]
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "phone_verified",
+        ]
         read_only_fields = fields
 
 
@@ -77,11 +85,11 @@ class ListingImageURLSerializer(ModelSerializer):
 class ItemDataSerializer(ModelSerializer):
     category = SlugRelatedField(slug_field="name", read_only=True)
     condition = SerializerMethodField()
-    
+
     class Meta:
         model = Item
-        fields = ['condition', 'category']
-    
+        fields = ["condition", "category"]
+
     def get_condition(self, obj):
         return obj.get_condition_display()
 
@@ -89,7 +97,7 @@ class ItemDataSerializer(ModelSerializer):
 class SubletDataSerializer(ModelSerializer):
     class Meta:
         model = Sublet
-        fields = ['address', 'beds', 'baths', 'start_date', 'end_date']
+        fields = ["address", "beds", "baths", "start_date", "end_date"]
 
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
@@ -143,30 +151,31 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         if not self.instance:
             listing_type = self.initial_data.get("listing_type")
             additional_data = self.initial_data.get("additional_data", {})
-            
+
             if not listing_type:
-                raise ValidationError({
-                    "listing_type": "This field is required for creating a listing."
-                })
+                raise ValidationError(
+                    {"listing_type": "This field is required for creating a listing."}
+                )
 
             if listing_type not in self.LISTING_TYPE_CONFIG:
                 valid_types = ", ".join(self.LISTING_TYPE_CONFIG.keys())
-                raise ValidationError({
-                    "listing_type": f"Must be one of: {valid_types}"
-                })
-            
+                raise ValidationError(
+                    {"listing_type": f"Must be one of: {valid_types}"}
+                )
+
             config = self.LISTING_TYPE_CONFIG[listing_type]
             required_fields = config["required_fields"]
-            
+
             missing_fields = [f for f in required_fields if f not in additional_data]
             if missing_fields:
-                raise ValidationError({
-                    "additional_data": {
-                        f: f"This field is required for {listing_type}"
-                        for f in missing_fields
+                raise ValidationError(
+                    {
+                        "additional_data": dict.fromkeys(
+                            missing_fields, f"This field is required for {listing_type}"
+                        )
                     }
-                })
-        
+                )
+
         return super().validate(attrs)
 
     def validate_title(self, value):
@@ -184,34 +193,36 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
     def create(self, validated_data):
         validated_data["seller"] = self.context["request"].user
-        
+
         listing_type = self.initial_data.get("listing_type")
         additional_data = self.initial_data.get("additional_data", {})
-        
+
         create_method_name = f"_create_{listing_type}"
         create_method = getattr(self, create_method_name, None)
-        
+
         if not create_method:
             valid_types = ", ".join(self.LISTING_TYPE_CONFIG.keys())
-            raise ValidationError({
-                "listing_type": f"Must be one of: {valid_types}"
-            })
-        
+            raise ValidationError({"listing_type": f"Must be one of: {valid_types}"})
+
         try:
             return create_method(validated_data, additional_data)
         except ModelValidationError as e:
-            raise ValidationError(e.message_dict if hasattr(e, "message_dict") else e.messages)
-    
+            raise ValidationError(
+                e.message_dict if hasattr(e, "message_dict") else e.messages
+            ) from e
+
     def _create_item(self, validated_data, additional_data):
         category_name = additional_data.get("category")
         category = Category.objects.filter(name=category_name).first()
         if not category:
-            raise ValidationError({
-                "additional_data": {
-                    "category": f"Category '{category_name}' does not exist."
+            raise ValidationError(
+                {
+                    "additional_data": {
+                        "category": f"Category '{category_name}' does not exist."
+                    }
                 }
-            })
-        
+            )
+
         tags = validated_data.pop("tags", None)
 
         item = Item.objects.create(
@@ -224,19 +235,19 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             item.tags.set(tags)
 
         return item
-    
+
     def _create_sublet(self, validated_data, additional_data):
         tags = validated_data.pop("tags", None)
-        
+
         sublet = Sublet.objects.create(
             address=additional_data.get("address"),
             beds=additional_data.get("beds"),
             baths=additional_data.get("baths"),
             start_date=additional_data.get("start_date"),
             end_date=additional_data.get("end_date"),
-            **validated_data
+            **validated_data,
         )
-    
+
         if tags:
             sublet.tags.set(tags)
 
@@ -245,43 +256,45 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
     def update(self, instance, validated_data):
         listing_type = self.initial_data.get("listing_type")
         additional_data = self.initial_data.get("additional_data", {})
-        
+
         try:
             tags = validated_data.pop("tags", None)
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
             if tags:
                 instance.tags.set(tags)
-            
+
             if listing_type and listing_type != self.get_listing_type(instance):
-                raise ValidationError({
-                    "listing_type": "Cannot change listing type on update."
-                })
+                raise ValidationError(
+                    {"listing_type": "Cannot change listing type on update."}
+                )
 
             if additional_data:
                 if self.get_listing_type(instance) == "item":
                     self._update_item(instance, additional_data)
                 elif self.get_listing_type(instance) == "sublet":
                     self._update_sublet(instance, additional_data)
-            
+
             instance.save()
             return instance
-            
+
         except ModelValidationError as e:
-            raise ValidationError(e.message_dict if hasattr(e, "message_dict") else e.messages)
-    
+            raise ValidationError(
+                e.message_dict if hasattr(e, "message_dict") else e.messages
+            ) from e
+
     def _update_item(self, instance, additional_data):
         item = instance.item
         if "condition" in additional_data:
             item.condition = additional_data["condition"]
-        
+
         if "category" in additional_data:
             category = Category.objects.filter(name=additional_data["category"]).first()
             if category:
                 item.category = category
         item.full_clean()
         item.save()
-    
+
     def _update_sublet(self, instance, additional_data):
         sublet = instance.sublet
         sublet_fields = ["address", "beds", "baths", "start_date", "end_date"]

@@ -7,6 +7,8 @@ from django.contrib.auth import get_user_model
 from django.core.files.storage import Storage
 from django.test import TestCase
 from django.utils.timezone import now
+from rest_framework.test import APIClient
+
 from market.models import (
     Category,
     Item,
@@ -16,7 +18,7 @@ from market.models import (
     Sublet,
     Tag,
 )
-from rest_framework.test import APIClient
+
 
 User = get_user_model()
 
@@ -59,9 +61,7 @@ class BaseMarketTest(TestCase):
         )
         return category_objects
 
-    def load_user(
-        self, username, email=None, password=None, is_self=False, auth=False
-    ):
+    def load_user(self, username, email=None, password=None, is_self=False, auth=False):
         user = User.objects.create_user(username, email, password)
         if is_self:
             self.user = user
@@ -86,9 +86,7 @@ class BaseMarketTest(TestCase):
                     external_link=item["external_link"],
                     condition=item["condition"],
                 )
-                created_item.tags.set(
-                    Tag.objects.filter(name__in=item["tags"])
-                )
+                created_item.tags.set(Tag.objects.filter(name__in=item["tags"]))
                 created_item.save()
                 items.append(created_item)
         return items
@@ -113,9 +111,7 @@ class BaseMarketTest(TestCase):
                     start_date=sublet["start_date"],
                     end_date=sublet["end_date"],
                 )
-                created_sublet.tags.set(
-                    Tag.objects.filter(name__in=sublet["tags"])
-                )
+                created_sublet.tags.set(Tag.objects.filter(name__in=sublet["tags"]))
                 created_sublet.save()
                 sublets.append(created_sublet)
         return sublets
@@ -186,9 +182,7 @@ class TestItemGet(BaseMarketTest):
         self.items = (
             self.load_items("tests/market/self_user_items.json", self.users[0])
             + self.load_items("tests/market/user_1_items.json", self.users[1])
-            + self.load_sublets(
-                "tests/market/user_1_sublets.json", self.users[1]
-            )
+            + self.load_sublets("tests/market/user_1_sublets.json", self.users[1])
         )
 
     def test_get_items(self):
@@ -349,7 +343,6 @@ class TestItemGet(BaseMarketTest):
 
 
 class TestItemPost(BaseMarketTest):
-
     def setUp(self):
         super().setUp()
 
@@ -370,9 +363,7 @@ class TestItemPost(BaseMarketTest):
             "additional_data": {"condition": "NEW", "category": "Book"},
             "images": [],
         }
-        response = self.client.post(
-            "/market/listings/", payload, format="json"
-        )
+        response = self.client.post("/market/listings/", payload, format="json")
         expected_response = {
             "id": int(f"{response.json()['id']}"),
             "seller": 1,
@@ -405,9 +396,7 @@ class TestItemPost(BaseMarketTest):
             ),
             datetime.timedelta(minutes=10),
         )
-        response = self.client.get(
-            f"/market/listings/{response.json()['id']}/"
-        )
+        response = self.client.get(f"/market/listings/{response.json()['id']}/")
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
             response.json(),
@@ -434,9 +423,7 @@ class TestItemPost(BaseMarketTest):
             "listing_type": "item",
             "additional_data": {"condition": "NEW", "category": "Book"},
         }
-        response = self.client.post(
-            "/market/listings/", payload, format="json"
-        )
+        response = self.client.post("/market/listings/", payload, format="json")
         expected_response = {
             "id": int(f"{response.json()['id']}"),
             "seller": 1,
@@ -469,9 +456,7 @@ class TestItemPost(BaseMarketTest):
             ),
             datetime.timedelta(minutes=10),
         )
-        response = self.client.get(
-            f"/market/listings/{response.json()['id']}/"
-        )
+        response = self.client.get(f"/market/listings/{response.json()['id']}/")
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
             response.json(),
@@ -498,9 +483,7 @@ class TestItemPost(BaseMarketTest):
         }
         response = self.client.post("/market/listings/", payload)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.json(), {"title": ["This field is required."]}
-        )
+        self.assertEqual(response.json(), {"title": ["This field is required."]})
 
     def test_create_item_invalid_category(self):
         payload = {
@@ -514,18 +497,12 @@ class TestItemPost(BaseMarketTest):
             "listing_type": "item",
             "additional_data": {"condition": "NEW", "category": "Textbook"},
         }
-        response = self.client.post(
-            "/market/listings/", payload, format="json"
-        )
+        response = self.client.post("/market/listings/", payload, format="json")
         res_json = json.loads(response.content)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             res_json,
-            {
-                "additional_data": {
-                    "category": "Category 'Textbook' does not exist."
-                }
-            },
+            {"additional_data": {"category": "Category 'Textbook' does not exist."}},
         )
 
     def test_create_item_missing_required_additional_data(self):
@@ -540,9 +517,7 @@ class TestItemPost(BaseMarketTest):
             "listing_type": "item",
             "additional_data": {"condition": "NEW"},
         }
-        response = self.client.post(
-            "/market/listings/", payload, format="json"
-        )
+        response = self.client.post("/market/listings/", payload, format="json")
         expected_response = {
             "additional_data": {"category": "This field is required for item"}
         }
@@ -589,9 +564,7 @@ class TestItemPatch(BaseMarketTest):
             "price": 25.0,
             "expires_at": "3000-12-13T00:00:00-05:00",
         }
-        response = self.client.patch(
-            f"/market/listings/{self.items[0].id}/", payload
-        )
+        response = self.client.patch(f"/market/listings/{self.items[0].id}/", payload)
         expected_response = {
             "id": self.items[0].id,
             "seller": self.users[0].id,
@@ -739,9 +712,7 @@ class TestItemPatch(BaseMarketTest):
             "price": 25.0,
             "expires_at": "3000-12-13T00:00:00-05:00",
         }
-        response = self.client.patch(
-            f"/market/listings/{self.items[0].id}/", payload
-        )
+        response = self.client.patch(f"/market/listings/{self.items[0].id}/", payload)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
@@ -788,9 +759,7 @@ class TestSubletGet(BaseMarketTest):
         sublets1 = self.load_sublets(
             "tests/market/self_user_sublets.json", self.users[0]
         )
-        sublets2 = self.load_sublets(
-            "tests/market/user_1_sublets.json", self.users[1]
-        )
+        sublets2 = self.load_sublets("tests/market/user_1_sublets.json", self.users[1])
         self.sublets = sublets1 + sublets2
 
     def test_get_sublets(self):
@@ -859,7 +828,10 @@ class TestSubletGet(BaseMarketTest):
             "tags": ["New"],
             "favorites": [],
             "title": "Cira Green Sublet",
-            "description": "Fully furnished 3-bedroom apartment available for sublet with all amenities included.",
+            "description": (
+                "Fully furnished 3-bedroom apartment available for sublet "
+                "with all amenities included."
+            ),
             "external_link": "https://example.com/cira-green",
             "price": 1350.0,
             "negotiable": False,
@@ -899,7 +871,10 @@ class TestSubletGet(BaseMarketTest):
             "buyer_count": 0,
             "tags": ["New"],
             "title": "Rodin Quad",
-            "description": "Fully furnished 4-bedroom apartment available for sublet with all amenities included.",
+            "description": (
+                "Fully furnished 4-bedroom apartment available for sublet "
+                "with all amenities included."
+            ),
             "external_link": "https://example.com/rodin-quad",
             "price": 1350.0,
             "negotiable": False,
@@ -923,7 +898,7 @@ class TestSubletGet(BaseMarketTest):
         )
 
     def test_get_single_sublet_invalid_id(self):
-        response = self.client.get(f"/market/listings/{self.sublets[1].id+1}/")
+        response = self.client.get(f"/market/listings/{self.sublets[1].id + 1}/")
         self.assertEqual(response.status_code, 404)
 
 
@@ -958,15 +933,15 @@ class TestSubletPost(BaseMarketTest):
                 "end_date": "3000-05-31",
             },
         }
-        response = self.client.post(
-            "/market/listings/", payload, format="json"
-        )
+        response = self.client.post("/market/listings/", payload, format="json")
         expected_response = {
             "id": response.json()["id"],
             "images": [],
             "title": "Cira Green Sublet 2",
-            "description": "Fully furnished 3-bedroom apartment available for sublet with all"
-            + " amenities included.",
+            "description": (
+                "Fully furnished 3-bedroom apartment available for sublet "
+                "with all amenities included."
+            ),
             "external_link": "https://example.com/listing",
             "price": 1350.0,
             "negotiable": False,
@@ -999,9 +974,7 @@ class TestSubletPost(BaseMarketTest):
             ),
             datetime.timedelta(minutes=10),
         )
-        response = self.client.get(
-            f"/market/listings/{response.json()['id']}/"
-        )
+        response = self.client.get(f"/market/listings/{response.json()['id']}/")
         self.assertEqual(response.status_code, 200)
         self.assert_dict_equal_ignoring_keys(
             response.json(),
@@ -1024,9 +997,7 @@ class TestSubletPatchDelete(BaseMarketTest):
         sublets1 = self.load_sublets(
             "tests/market/self_user_sublets.json", self.users[0]
         )
-        sublets2 = self.load_sublets(
-            "tests/market/user_1_sublets.json", self.users[1]
-        )
+        sublets2 = self.load_sublets("tests/market/user_1_sublets.json", self.users[1])
         self.sublets = sublets1 + sublets2
 
     def test_update_sublet(self):
@@ -1065,7 +1036,10 @@ class TestSubletPatchDelete(BaseMarketTest):
             "tags": ["Used", "Apartment"],
             "favorites": [],
             "title": "Cira Green Sublet 2",
-            "description": "Fully furnished 3-bedroom apartment available for sublet with all amenities included.",
+            "description": (
+                "Fully furnished 3-bedroom apartment available for sublet "
+                "with all amenities included."
+            ),
             "external_link": "https://example.com/listing",
             "price": 1450.0,
             "negotiable": False,
@@ -1119,7 +1093,10 @@ class TestSubletPatchDelete(BaseMarketTest):
             "tags": ["Used", "Apartment"],
             "favorites": [],
             "title": "Cira Green Sublet 2",
-            "description": "Fully furnished 3-bedroom apartment available for sublet with all amenities included.",
+            "description": (
+                "Fully furnished 3-bedroom apartment available for sublet "
+                "with all amenities included."
+            ),
             "external_link": "https://example.com/listing",
             "price": 1450.0,
             "negotiable": False,
@@ -1152,7 +1129,10 @@ class TestSubletPatchDelete(BaseMarketTest):
             "tags": ["Used", "Apartment"],
             "favorites": [],
             "title": "Cira Green Sublet 2",
-            "description": "Fully furnished 3-bedroom apartment available for sublet with all amenities included.",
+            "description": (
+                "Fully furnished 3-bedroom apartment available for sublet "
+                "with all amenities included."
+            ),
             "external_link": "https://example.com/listing",
             "price": 1450.0,
             "negotiable": False,
@@ -1177,18 +1157,12 @@ class TestSubletPatchDelete(BaseMarketTest):
 
     def test_delete_sublet(self):
         self.assertTrue(Listing.objects.filter(id=self.sublets[0].id).exists())
-        response = self.client.delete(
-            f"/market/listings/{self.sublets[0].id}/"
-        )
+        response = self.client.delete(f"/market/listings/{self.sublets[0].id}/")
         self.assertEqual(response.status_code, 204)
-        self.assertFalse(
-            Listing.objects.filter(id=self.sublets[0].id).exists()
-        )
+        self.assertFalse(Listing.objects.filter(id=self.sublets[0].id).exists())
 
     def test_delete_sublet_not_owned(self):
-        response = self.client.delete(
-            f"/market/listings/{self.sublets[1].id}/"
-        )
+        response = self.client.delete(f"/market/listings/{self.sublets[1].id}/")
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
             response.json(),
@@ -1214,9 +1188,7 @@ class TestOffer(BaseMarketTest):
         ) + self.load_items("tests/market/user_1_items.json", self.users[1])
         self.sublets = self.load_sublets(
             "tests/market/self_user_sublets.json", self.users[0]
-        ) + self.load_sublets(
-            "tests/market/user_1_sublets.json", self.users[1]
-        )
+        ) + self.load_sublets("tests/market/user_1_sublets.json", self.users[1])
         self.offers = [
             Offer.objects.create(
                 user=self.users[0],
@@ -1283,9 +1255,7 @@ class TestOffer(BaseMarketTest):
             )
 
     def test_list_item_offers(self):
-        response = self.client.get(
-            f"/market/listings/{self.items[0].id}/offers/"
-        )
+        response = self.client.get(f"/market/listings/{self.items[0].id}/offers/")
         expected = {
             "count": 1,
             "next": None,
@@ -1309,12 +1279,8 @@ class TestOffer(BaseMarketTest):
         )
 
     def test_get_offer_other(self):
-        response = self.client.get(
-            f"/market/listings/{self.items[1].id}/offers/"
-        )
-        expected = {
-            "detail": "You do not have permission to perform this action."
-        }
+        response = self.client.get(f"/market/listings/{self.items[1].id}/offers/")
+        expected = {"detail": "You do not have permission to perform this action."}
         self.assertEqual(response.status_code, 403)
         self.assert_dict_equal_ignoring_keys(
             response.json(), expected, ["created_at"], [""]
@@ -1402,9 +1368,7 @@ class TestOffer(BaseMarketTest):
 
     def test_delete_offer(self):
         self.assertTrue(Offer.objects.filter(id=self.offers[0].id).exists())
-        response = self.client.delete(
-            f"/market/listings/{self.items[1].id}/offers/"
-        )
+        response = self.client.delete(f"/market/listings/{self.items[1].id}/offers/")
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Offer.objects.filter(id=self.offers[0].id).exists())
 
@@ -1479,56 +1443,36 @@ class TestFavorites(BaseMarketTest):
         )
 
     def test_post_favorite(self):
-        response = self.client.post(
-            f"/market/listings/{self.items[2].id}/favorites/"
-        )
+        response = self.client.post(f"/market/listings/{self.items[2].id}/favorites/")
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(
-            Item.objects.get(id=self.items[2].id).favorites.count(), 1
-        )
+        self.assertEqual(Item.objects.get(id=self.items[2].id).favorites.count(), 1)
         self.assertEqual(
             Item.objects.get(id=self.items[2].id).favorites.first(),
             self.users[0],
         )
 
     def test_post_favorite_existing(self):
-        response = self.client.post(
-            f"/market/listings/{self.items[1].id}/favorites/"
-        )
+        response = self.client.post(f"/market/listings/{self.items[1].id}/favorites/")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), ["Favorite already exists"])
-        self.assertEqual(
-            Item.objects.get(id=self.items[1].id).favorites.count(), 1
-        )
+        self.assertEqual(Item.objects.get(id=self.items[1].id).favorites.count(), 1)
 
     def test_delete_favorite(self):
-        response = self.client.delete(
-            f"/market/listings/{self.items[1].id}/favorites/"
-        )
+        response = self.client.delete(f"/market/listings/{self.items[1].id}/favorites/")
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(
-            Item.objects.get(id=self.items[1].id).favorites.count(), 0
-        )
+        self.assertEqual(Item.objects.get(id=self.items[1].id).favorites.count(), 0)
 
     def test_delete_nonexistent_favorite(self):
-        response = self.client.delete(
-            f"/market/listings/{self.items[2].id}/favorites/"
-        )
+        response = self.client.delete(f"/market/listings/{self.items[2].id}/favorites/")
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(
-            Item.objects.get(id=self.items[2].id).favorites.count(), 0
-        )
-        self.assertEqual(
-            response.json(), {"detail": "Favorite does not exist."}
-        )
+        self.assertEqual(Item.objects.get(id=self.items[2].id).favorites.count(), 0)
+        self.assertEqual(response.json(), {"detail": "Favorite does not exist."})
 
     def test_delete_favorite_nonexistent_item(self):
         invalid_id = 1
         while Listing.objects.filter(id=invalid_id).exists():
             invalid_id += 1
-        response = self.client.delete(
-            f"/market/listings/{invalid_id}/favorites/"
-        )
+        response = self.client.delete(f"/market/listings/{invalid_id}/favorites/")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.json(), {"detail": "No Listing matches the given query."}
@@ -1544,26 +1488,20 @@ class TestImages(BaseMarketTest):
 
         storage_mock = MagicMock(spec=Storage, name="StorageMock")
         storage_mock.generate_filename = lambda filename: filename
-        storage_mock.save = MagicMock(
-            side_effect=lambda name, *args, **kwargs: name
-        )
+        storage_mock.save = MagicMock(side_effect=lambda name, *args, **kwargs: name)
         storage_mock.url = MagicMock(name="url")
         storage_mock.url.return_value = "http://penn-mobile.com/mock-image.png"
         ListingImage._meta.get_field("image").storage = storage_mock
 
     def test_create_image(self):
         with open("tests/market/mock_image.jpg", "rb") as image:
-            self.assertEqual(
-                Item.objects.get(id=self.items[0].id).images.count(), 0
-            )
+            self.assertEqual(Item.objects.get(id=self.items[0].id).images.count(), 0)
             response = self.client.post(
                 f"/market/listings/{self.items[0].id}/images/",
                 {"images": image},
             )
             self.assertEqual(response.status_code, 201)
-            self.assertEqual(
-                Item.objects.get(id=self.items[0].id).images.count(), 1
-            )
+            self.assertEqual(Item.objects.get(id=self.items[0].id).images.count(), 1)
             img = Item.objects.get(id=self.items[0].id).images.first()
             self.assertIsNotNone(img)
 
@@ -1576,9 +1514,7 @@ class TestImages(BaseMarketTest):
             self.assertEqual(response.status_code, 403)
             self.assertEqual(
                 response.json(),
-                {
-                    "detail": "You do not have permission to perform this action."
-                },
+                {"detail": "You do not have permission to perform this action."},
             )
 
     def test_create_delete_images(self):
@@ -1600,13 +1536,9 @@ class TestImages(BaseMarketTest):
                 )
                 self.assertEqual(response.status_code, 204)
                 self.assertFalse(
-                    ListingImage.objects.filter(
-                        id=saved_images[0]["id"]
-                    ).exists()
+                    ListingImage.objects.filter(id=saved_images[0]["id"]).exists()
                 )
                 self.assertTrue(
-                    ListingImage.objects.filter(
-                        id=saved_images[1]["id"]
-                    ).exists()
+                    ListingImage.objects.filter(id=saved_images[1]["id"]).exists()
                 )
                 self.assertEqual(1, ListingImage.objects.all().count())

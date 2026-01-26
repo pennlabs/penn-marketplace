@@ -40,8 +40,7 @@ export async function GET(request: NextRequest) {
       return ErrorResponses.tokenExchangeFailed();
     }
 
-    const { id_token, access_token, refresh_token, expires_in } =
-      await res.json();
+    const { id_token, access_token, refresh_token, expires_in } = await res.json();
     const redirectUrl = state || "/";
     const response = NextResponse.redirect(new URL(redirectUrl, request.url));
 
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch {
     return ErrorResponses.internalServer();
   }
 }

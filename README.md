@@ -4,14 +4,22 @@ A secure platform where Penn students can buy/sell items and browse/post sublet 
 
 ## 1. Requirements
 
-This project uses **Docker** for the entire development environment.
+**App runtime is Docker-first.**
 
-Install:
+You do not need Python, Node, Postgres, or Redis installed locally to run the app.
 
-- Docker Desktop  
-- Git  
+### Required for Development
 
-You **do not** need Python, Node, Postgres, or Redis installed locally. It is also **not** a requirement that you have `pnpm` and `uv` (our dependency managers for frontend and backend, respectively) installed locally. All of these are not required *as long as* you are running all commands inside Docker containers using `docker compose exec <service> <cmd>` (more explained below).
+- **Docker Desktop** - For running the app
+- **Git** - Version control
+
+### Recommended for Local Development
+
+We use pre-commit hooks to automatically run formatters, linters, and type checks before every commit.
+To use them, you must install these tools locally:
+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) - Python package manager
+- [pnpm](https://pnpm.io/installation) - Node.js package manager
 
 ### Environment Variables
 
@@ -20,8 +28,7 @@ You will need environment variable files for both the backend and frontend:
 - `backend/.env`
 - `frontend/.env`
 
-Make sure these files are configured before running the application. If you are a member of PennLabs, you can
-reach out to one of them for the credentials.
+Make sure these files are configured before running the application. If you are a member of PennLabs, you can reach out to one of them for the credentials.
 
 ## 2. Clone the Repository
 
@@ -30,8 +37,23 @@ git clone https://github.com/pennlabs/penn-marketplace.git
 cd penn-marketplace
 ```
 
+## 3. Setup (One Time)
 
-## 3. Start the Development Environment
+**Run this on your local machine (not in Docker):**
+
+```bash
+./scripts/setup.sh
+```
+
+**What this does:**
+1. Checks if you have `uv` and `pnpm` installed locally
+2. Installs backend Python dependencies locally (creates `backend/.venv/`)
+3. Installs frontend Node dependencies locally (creates `frontend/node_modules/`)
+4. Installs pre-commit hooks in your local `.git/hooks/` directory
+
+**Note:** If you don't have `uv` or `pnpm` installed locally, the script will tell you how to install them.
+
+## 4. Start the Development Environment
 
 ```bash
 docker compose up --build
@@ -39,12 +61,12 @@ docker compose up --build
 
 This will:
 
-- Build backend & frontend Docker images  
-- Start Postgres + Redis  
-- Run Django migrations  
+- Build backend & frontend Docker images
+- Start Postgres + Redis
+- Run Django migrations
 - Launch:
-  - Frontend → http://localhost:3000  
-  - Backend → http://localhost:8000  
+  - Frontend → http://localhost:3000
+  - Backend → http://localhost:8000
 
 Stop:
 
@@ -59,8 +81,45 @@ Remove DB/storage volumes:
 docker compose down -v
 ```
 
+## 5. Code Quality
 
-## 4. Generating Test Data (optional)
+### Running Checks
+
+You can run the full check script by:
+
+```bash
+./scripts/check.sh
+```
+
+To auto-fix formatting issues:
+
+```bash
+./scripts/check.sh --fix
+```
+
+### What Gets Checked
+
+| Area | Checks |
+|------|--------|
+| **Frontend** | Lint (pnpm), TypeScript typecheck |
+| **Backend** | ruff check, ruff format |
+
+### Pre-Commit Hooks
+
+If you ran `./scripts/setup.sh`, pre-commit hooks are installed. They automatically format and lint your code when you run `git commit`.
+
+**What hooks do:**
+- Auto-fix Python code formatting (ruff format)
+- Auto-fix Python code linting (ruff check --fix)
+- Auto-fix TypeScript/JavaScript code formatting (Prettier)
+- Auto-fix TypeScript/JavaScript code linting (ESLint --fix)
+- Check TypeScript types (pnpm typecheck)
+- Auto-fix trailing whitespace, file endings
+
+**Note:** Hooks auto-fix issues when possible. TypeScript type checking can't be auto-fixed, so the commit is blocked if there are type errors.
+
+## 6. Generating Test Data (optional)
+
 To populate the database with random sample listings for testing:
 ```bash
 docker compose exec backend python manage.py generate_listings
@@ -75,21 +134,20 @@ Use this to quickly test the marketplace UI and features with realistic data.
 
 **Note:** Make sure `docker compose up` is running before executing this command, as you need the backend container and database to be active.
 
-
-## 5. Hot Reload
+## 7. Hot Reload
 
 ### Frontend (Next.js)
 
-- Edit files in `frontend/`  
-- Next.js refreshes automatically  
+- Edit files in `frontend/`
+- Next.js refreshes automatically
 
 ### Backend (Django)
 
-- Edit files in `backend/`  
-- Django dev server auto-reloads  
+- Edit files in `backend/`
+- Django dev server auto-reloads
 
 
-## 6. Running Migrations
+## 8. Running Migrations
 
 ### When YOU change models in `models.py`:
 
@@ -112,12 +170,12 @@ docker compose up
 
 Migrations are applied automatically on startup.
 
-> ⚠️ **You must run BOTH commands when changing models.**  
+> ⚠️ **You must run BOTH commands when changing models.**
 > `makemigrations` creates the migration file, `migrate` applies it to the database.
 
 
 
-## 7. Installing New Packages
+## 9. Installing New Packages
 
 ### Backend (Python • uv)
 
@@ -148,21 +206,15 @@ docker compose up
 ```
 
 **Option 3: Use uv CLI (if you have uv installed locally)**
-
-1. Install package:
 ```bash
-   cd backend
-   uv add <package>
-   cd ..
+cd backend
+uv add <package>
+cd ..
+docker compose build backend
+docker compose up
 ```
 
-2. Rebuild container:
-```bash
-   docker compose build backend
-   docker compose up
-```
-
-> ⚠️ **Always rebuild after changing dependencies.**  
+> ⚠️ **Always rebuild after changing dependencies.**
 > The `uv.lock` file must be synchronized with your Docker image.
 
 ### Frontend (Node • pnpm)

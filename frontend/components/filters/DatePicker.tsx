@@ -12,11 +12,7 @@ interface Props {
   onDateChange: (date: Date | undefined) => void;
 }
 
-export const DatePicker = ({
-  label,
-  date,
-  onDateChange
-}: Props) => {
+export const DatePicker = ({ label, date, onDateChange }: Props) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -45,17 +41,17 @@ export const DatePicker = ({
           type="button"
           variant="outline"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full h-10 justify-start font-normal pl-12 bg-background"
+          className="bg-background h-10 w-full justify-start pl-12 font-normal"
         >
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             {date ? format(date, "MMM d, yyyy") : label}
           </span>
         </Button>
-        <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 pointer-events-none z-10" />
+        <CalendarIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 z-10 h-5 w-5 -translate-y-1/2 transform" />
         {date && (
           <button
             onClick={handleClear}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-20"
+            className="absolute top-1/2 right-4 z-20 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             aria-label="Clear date"
           >
             <X className="h-4 w-4" />
@@ -64,7 +60,7 @@ export const DatePicker = ({
       </div>
       {isOpen && (
         <Calendar
-          className="absolute top-full left-0 mt-2 z-50 rounded-md border shadow-sm shadow-lg"
+          className="absolute top-full left-0 z-50 mt-2 rounded-md border shadow-lg shadow-sm"
           mode="single"
           selected={date}
           onSelect={(selectedDate) => {

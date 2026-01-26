@@ -16,7 +16,7 @@ export function formatPrice(price: number, showMonthly: boolean = false) {
 
 export function formatDate(dateString: string) {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 // format phone number as (XXX) XXX-XXXX
@@ -31,11 +31,11 @@ export function formatPhoneNumber(value: string): string {
 // format condition for display
 export function formatCondition(condition: string): string {
   const conditionMap: Record<string, string> = {
-    "NEW": "New",
-    "LIKE_NEW": "Like New",
-    "GOOD": "Good",
-    "FAIR": "Fair",
+    NEW: "New",
+    LIKE_NEW: "Like New",
+    GOOD: "Good",
+    FAIR: "Fair",
   };
 
   return conditionMap[condition] || condition;
-};
+}
