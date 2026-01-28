@@ -7,7 +7,7 @@ jobs:
     name: Backend Checks
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/astral-sh/uv:latest-python3.11-bookworm
+      image: ghcr.io/astral-sh/uv:python3.11-bookworm
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
@@ -37,6 +37,7 @@ jobs:
         with:
           node-version: 24
           cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Install dependencies
         run: |-
           cd frontend
