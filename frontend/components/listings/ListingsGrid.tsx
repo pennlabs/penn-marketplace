@@ -9,15 +9,15 @@ import { Item, PaginatedResponse, Sublet, User } from "@/lib/types";
 
 type Props =
   | {
-    type: "items";
-    listings: PaginatedResponse<Item>;
-    currentUser: User;
-  }
+      type: "items";
+      listings: PaginatedResponse<Item>;
+      currentUser: User;
+    }
   | {
-    type: "sublets";
-    listings: PaginatedResponse<Sublet>;
-    currentUser: User;
-  };
+      type: "sublets";
+      listings: PaginatedResponse<Sublet>;
+      currentUser: User;
+    };
 
 export const ListingsGrid = ({ type, listings, currentUser }: Props) => {
   const { data, isFetchingNextPage, hasNextPage, ref } = useListings({ type, listings });
@@ -26,17 +26,16 @@ export const ListingsGrid = ({ type, listings, currentUser }: Props) => {
   const isEmpty = totalResults === 0;
 
   return (
-    <div className="flex flex-col items-center w-full space-y-4">
+    <div className="flex w-full flex-col items-center space-y-4">
       <div className="w-full">
         {isEmpty && <NoListingsFound type={type} />}
         {!isEmpty && (
-          <div className="grid gap-x-6 gap-y-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {data?.pages.map((group, i) => (
               <React.Fragment key={i}>
                 {group.results.map((post) => {
-                  const previewImageUrl = post.images && post.images.length > 0
-                    ? post.images[0]
-                    : undefined;
+                  const previewImageUrl =
+                    post.images && post.images.length > 0 ? post.images[0] : undefined;
 
                   return (
                     <ListingsCard
@@ -53,10 +52,8 @@ export const ListingsGrid = ({ type, listings, currentUser }: Props) => {
           </div>
         )}
       </div>
-      <div className="min-h-4 flex items-center justify-center">
-        {isFetchingNextPage && hasNextPage && (
-          <Spinner />
-        )}
+      <div className="flex min-h-4 items-center justify-center">
+        {isFetchingNextPage && hasNextPage && <Spinner />}
       </div>
       <div ref={ref} />
     </div>

@@ -5,10 +5,10 @@ from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, 
 
 
 class ListingAdmin(admin.ModelAdmin):
-
     def image_tag(self, instance):
         images = [
-            '<img src="%s" height="150" />' % image.image.url for image in instance.images.all()
+            f'<img src="{image.image.url}" height="150" />'
+            for image in instance.images.all()
         ]
         return mark_safe("<br>".join(images))
 

@@ -19,11 +19,7 @@ export type User = {
 // ------------------------------------------------------------
 // additional data types (from API)
 // ------------------------------------------------------------
-export type ItemCondition =
-  | "NEW"
-  | "LIKE_NEW"
-  | "GOOD"
-  | "FAIR";
+export type ItemCondition = "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
 
 export type ItemCategory =
   | "Art"

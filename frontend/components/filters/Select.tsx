@@ -27,16 +27,16 @@ export const Select = ({
   placeholder,
   label,
   allowClear = true,
-  triggerClassName
+  triggerClassName,
 }: Props) => {
   return (
     <div className="flex items-center gap-2">
-      {label && <span className="text-sm text-gray-600 whitespace-nowrap">{label}</span>}
+      {label && <span className="text-sm whitespace-nowrap text-gray-600">{label}</span>}
       <div className="relative w-full">
         <SelectShadcn value={value} onValueChange={onValueChange}>
           <SelectTrigger
             className={cn(
-              "w-[180px] h-10 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input bg-background",
+              "focus-visible:border-input bg-background h-10 w-[180px] focus-visible:ring-0 focus-visible:ring-offset-0",
               triggerClassName
             )}
           >
@@ -56,7 +56,7 @@ export const Select = ({
               e.stopPropagation();
               onValueChange("");
             }}
-            className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute top-1/2 right-8 -translate-y-1/2 text-gray-400 hover:text-gray-600"
           >
             <X className="h-4 w-4" />
           </button>
@@ -64,4 +64,4 @@ export const Select = ({
       </div>
     </div>
   );
-}
+};

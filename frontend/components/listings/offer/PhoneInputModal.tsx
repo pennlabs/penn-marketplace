@@ -65,7 +65,6 @@ export function PhoneInputModal({
     }
   }, [isOpen, initialPhoneNumber, reset]);
 
-
   return (
     <FormDialog
       isOpen={isOpen}
@@ -80,7 +79,7 @@ export function PhoneInputModal({
           touched={touchedFields.phoneNumber}
         >
           <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Phone className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Controller
               name="phoneNumber"
               control={control}
@@ -108,11 +107,11 @@ export function PhoneInputModal({
         <Button
           type="submit"
           disabled={isLoading || !isValid}
-          className="w-full bg-brand hover:bg-brand-hover text-white h-12 cursor-pointer"
+          className="bg-brand hover:bg-brand-hover h-12 w-full cursor-pointer text-white"
         >
           {isLoading ? "Sending..." : "Send Verification Code"}
         </Button>
       </form>
-    </FormDialog >
+    </FormDialog>
   );
 }

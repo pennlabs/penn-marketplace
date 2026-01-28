@@ -6,20 +6,20 @@ interface Props {
 
 export const NoListingsFound = ({ type }: Props) => {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="rounded-full bg-gray-100 p-6 mb-4">
+    <div className="flex flex-col items-center justify-center px-4 py-16">
+      <div className="mb-4 rounded-full bg-gray-100 p-6">
         {type === "items" ? (
-          <Package className="w-12 h-12 text-gray-400" />
+          <Package className="h-12 w-12 text-gray-400" />
         ) : (
-          <Home className="w-12 h-12 text-gray-400" />
+          <Home className="h-12 w-12 text-gray-400" />
         )}
       </div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+      <h3 className="mb-2 text-xl font-semibold text-gray-900">
         No {type === "items" ? "items" : "sublets"} found
       </h3>
-      <p className="text-gray-600 text-center max-w-md">
+      <p className="max-w-md text-center text-gray-600">
         {`Try adjusting your filters or check back later for new ${type}`}
       </p>
     </div>
   );
-}
+};

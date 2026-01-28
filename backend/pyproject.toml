@@ -1,14 +1,14 @@
 [project]
 name = ""
 version = "0.0.1"
-requires-python = "~=3.11"
+requires-python = "==3.11.4"
 dependencies = [
     "beautifulsoup4",
     "dj-database-url",
     "djangorestframework",
     "pandas",
     "html5lib",
-    "psycopg2",
+    "psycopg[binary]",
     "sentry-sdk",
     "django==5.0.2",
     "django-cors-headers",
@@ -51,6 +51,7 @@ dev = [
     "pytest",
     "tblib",
     "coverage",
+    "ruff>=0.8.0",
 ]
 
 [tool.uv]
@@ -59,3 +60,24 @@ package = false
 [[tool.uv.index]]
 name = "pypi"
 url = "https://pypi.org/simple"
+
+[tool.ruff]
+exclude = [".venv", "migrations"]
+line-length = 88
+
+[tool.ruff.lint]
+ignore = ["E203", "F403", "F405"]
+select = [
+    "E",
+    "F",
+    "Q",
+    "W",
+    "I",
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+
+[tool.ruff.lint.isort]
+known-first-party = ["pennclubs", "clubs"]
+lines-after-imports = 2

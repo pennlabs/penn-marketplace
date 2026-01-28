@@ -24,13 +24,20 @@ const FiltersContext = createContext<FiltersContextType | undefined>(undefined);
 export default function FiltersProvider({ children }: { children: ReactNode }) {
   const [itemFilters, setItemFilters] = useState<ItemFilters>(DEFAULT_FILTERS.items);
   const [subletFilters, setSubletFilters] = useState<SubletFilters>(DEFAULT_FILTERS.sublets);
-  const [debouncedItemFilters, setDebouncedItemFilters] = useState<ItemFilters>(DEFAULT_FILTERS.items);
-  const [debouncedSubletFilters, setDebouncedSubletFilters] = useState<SubletFilters>(DEFAULT_FILTERS.sublets);
+  const [debouncedItemFilters, setDebouncedItemFilters] = useState<ItemFilters>(
+    DEFAULT_FILTERS.items
+  );
+  const [debouncedSubletFilters, setDebouncedSubletFilters] = useState<SubletFilters>(
+    DEFAULT_FILTERS.sublets
+  );
 
-  const settersMap: FilterSetters = useMemo(() => ({
-    items: setItemFilters,
-    sublets: setSubletFilters,
-  }), []);
+  const settersMap: FilterSetters = useMemo(
+    () => ({
+      items: setItemFilters,
+      sublets: setSubletFilters,
+    }),
+    []
+  );
 
   const updateFilter = <T extends ListingTypes, K extends keyof ListingFiltersMap[T]>(
     type: T,
@@ -46,15 +53,21 @@ export default function FiltersProvider({ children }: { children: ReactNode }) {
     setter(DEFAULT_FILTERS[type]);
   };
 
-  const filters = useMemo<ListingFiltersMap>(() => ({
-    items: itemFilters,
-    sublets: subletFilters,
-  }), [itemFilters, subletFilters]);
+  const filters = useMemo<ListingFiltersMap>(
+    () => ({
+      items: itemFilters,
+      sublets: subletFilters,
+    }),
+    [itemFilters, subletFilters]
+  );
 
-  const debouncedFilters = useMemo<ListingFiltersMap>(() => ({
-    items: debouncedItemFilters,
-    sublets: debouncedSubletFilters,
-  }), [debouncedItemFilters, debouncedSubletFilters]);
+  const debouncedFilters = useMemo<ListingFiltersMap>(
+    () => ({
+      items: debouncedItemFilters,
+      sublets: debouncedSubletFilters,
+    }),
+    [debouncedItemFilters, debouncedSubletFilters]
+  );
 
   // debounce item filters
   useEffect(() => {

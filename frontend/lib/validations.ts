@@ -5,12 +5,9 @@ export const phoneSchema = z.object({
     .string()
     .min(1, "Phone number is required")
     .transform((val) => val.replace(/\D/g, "")) // strip non-digits
-    .refine(
-      (val) => val.length === 10 || (val.length === 11 && val.startsWith("1")),
-      {
-        message: "Please enter a valid phone number",
-      }
-    )
+    .refine((val) => val.length === 10 || (val.length === 11 && val.startsWith("1")), {
+      message: "Please enter a valid phone number",
+    })
     .transform((val) => (val.startsWith("1") ? val.slice(1) : val)), // remove leading 1 if present
 });
 
@@ -53,10 +50,7 @@ export const offerSchema = z.object({
       },
       { message: "Maximum 2 decimal places allowed" }
     ),
-  message: z
-    .string()
-    .max(500, "Message must be at most 500 characters")
-    .optional(),
+  message: z.string().max(500, "Message must be at most 500 characters").optional(),
 });
 
 export type OfferFormData = z.infer<typeof offerSchema>;

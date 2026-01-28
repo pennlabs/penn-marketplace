@@ -31,14 +31,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`}
+        className={`${geistSans.variable} ${geistMono.variable} bg-background flex min-h-screen flex-col antialiased`}
       >
         <TanstackQueryProvider>
           <FiltersProvider>
             <Navbar />
-            <div className="pt-16 flex-grow">
-              {children}
-            </div>
+            <div className="flex-grow pt-16">{children}</div>
             <Footer />
           </FiltersProvider>
           <ReactQueryDevtools />

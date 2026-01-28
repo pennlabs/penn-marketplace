@@ -7,9 +7,9 @@ interface Props {
 
 export const Logo = ({ onLogoClick }: Props) => {
   return (
-    <Link 
-      href="/" 
-      className="flex-shrink-0 flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity" 
+    <Link
+      href="/"
+      className="flex flex-shrink-0 items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3"
       onClick={onLogoClick}
       aria-label="Penn Marketplace home"
     >
@@ -20,9 +20,7 @@ export const Logo = ({ onLogoClick }: Props) => {
         height={36}
         className="object-contain"
       />
-      <span className="hidden sm:inline text-xl font-bold text-foreground">
-        Penn Marketplace
-      </span>
+      <span className="text-foreground hidden text-xl font-bold sm:inline">Penn Marketplace</span>
     </Link>
   );
 };

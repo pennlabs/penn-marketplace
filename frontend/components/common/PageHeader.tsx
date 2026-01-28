@@ -6,8 +6,8 @@ interface Props {
 export const PageHeader = ({ title, description }: Props) => {
   return (
     <>
-      <h1 className="text-2xl font-bold mb-2">{title}</h1>
-      <p className="text-gray-600 mb-6">{description}</p>
+      <h1 className="mb-2 text-2xl font-bold">{title}</h1>
+      <p className="mb-6 text-gray-600">{description}</p>
     </>
   );
-}
+};

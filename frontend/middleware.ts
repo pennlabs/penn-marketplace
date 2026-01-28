@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getLoginUrl } from "@/lib/auth";
-import {
-  CLIENT_ID,
-  CLIENT_SECRET,
-  OIDC_TOKEN_ENDPOINT,
-  COOKIE_OPTIONS,
-} from "@/lib/constants";
+import { CLIENT_ID, CLIENT_SECRET, OIDC_TOKEN_ENDPOINT, COOKIE_OPTIONS } from "@/lib/constants";
 import { ErrorResponses } from "@/lib/errors";
 
 export async function middleware(request: NextRequest) {
@@ -19,14 +14,13 @@ export async function middleware(request: NextRequest) {
     try {
       const loginUrl = getLoginUrl(pathname);
       return NextResponse.redirect(loginUrl);
-    } catch (error) {
+    } catch {
       return ErrorResponses.missingClientId();
     }
   }
 
   // check if token expired (with 5 min buffer)
-  const isExpired =
-    expiresIn && Date.now() >= parseInt(expiresIn) - 5 * 60 * 1000;
+  const isExpired = expiresIn && Date.now() >= parseInt(expiresIn) - 5 * 60 * 1000;
 
   // refresh token if expired
   if (isExpired && refreshToken) {
@@ -76,7 +70,7 @@ export async function middleware(request: NextRequest) {
         const loginUrl = getLoginUrl(pathname);
         return NextResponse.redirect(loginUrl);
       }
-    } catch (error) {
+    } catch {
       return ErrorResponses.internalServer();
     }
   }

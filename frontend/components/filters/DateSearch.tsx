@@ -11,11 +11,11 @@ export const DateSearch = () => {
   const endDate = endDateStr ? new Date(endDateStr) : undefined;
 
   const handleDateChange = (date: Date | undefined, type: "startDate" | "endDate") => {
-    updateFilter("sublets", type, date ? date.toISOString().split('T')[0] : undefined);
+    updateFilter("sublets", type, date ? date.toISOString().split("T")[0] : undefined);
   };
 
   return (
-    <div className="w-full md:max-w-2xl flex flex-col sm:flex-row gap-2">
+    <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-2xl">
       <DatePicker
         label="Start Date"
         date={startDate}

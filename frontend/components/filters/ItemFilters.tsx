@@ -26,7 +26,6 @@ export const ItemFilters = () => {
     setIsMobileModalOpen(false);
   };
 
-
   const handleResetFilters = () => {
     resetFilters("items");
     setTempFilters(filters.items);
@@ -74,37 +73,32 @@ export const ItemFilters = () => {
       </div>
 
       {/* mobile view */}
-      <div className="md:hidden flex items-center gap-2">
+      <div className="flex items-center gap-2 md:hidden">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-4 z-10 pointer-events-none" />
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 z-10 h-4 w-5 -translate-y-1/2 transform" />
           <Input
             type="text"
             placeholder="Search items..."
             value={filters.items.search}
             onChange={(e) => updateFilter("items", "search", e.target.value)}
-            className="pl-11 h-10 w-full text-sm bg-background focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input"
+            className="bg-background focus-visible:border-input h-10 w-full pl-11 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleOpenModal}
-          aria-label="Open filters"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
+        <Button variant="outline" size="icon" onClick={handleOpenModal} aria-label="Open filters">
+          <SlidersHorizontal className="h-4 w-4" />
         </Button>
       </div>
 
       {/* mobile modal */}
       {isMobileModalOpen && (
-        <div className="md:hidden fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="absolute inset-0 bg-black/50 animate-in fade-in"
+            className="animate-in fade-in absolute inset-0 bg-black/50"
             onClick={handleCloseModal}
           />
 
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg animate-in slide-in-from-bottom">
-            <div className="flex items-center justify-between p-4 border-b">
+          <div className="animate-in slide-in-from-bottom absolute right-0 bottom-0 left-0 rounded-t-2xl bg-white shadow-lg">
+            <div className="flex items-center justify-between border-b p-4">
               <h2 className="text-lg font-semibold">Filters</h2>
               <Button
                 variant="ghost"
@@ -112,57 +106,60 @@ export const ItemFilters = () => {
                 onClick={handleCloseModal}
                 aria-label="Close filters"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
 
-            <div className="p-4 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto p-4">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Category</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Category</label>
                   <Select
                     value={tempFilters.category || ""}
-                    onValueChange={(value) => setTempFilters({ ...tempFilters, category: value || undefined })}
+                    onValueChange={(value) =>
+                      setTempFilters({ ...tempFilters, category: value || undefined })
+                    }
                     options={CATEGORY_OPTIONS}
                     placeholder="All Categories"
                     triggerClassName="w-full"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Condition</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Condition</label>
                   <Select
                     value={tempFilters.condition || ""}
-                    onValueChange={(value) => setTempFilters({ ...tempFilters, condition: value || undefined })}
+                    onValueChange={(value) =>
+                      setTempFilters({ ...tempFilters, condition: value || undefined })
+                    }
                     options={CONDITION_OPTIONS}
                     placeholder="Any Condition"
                     triggerClassName="w-full"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Price Range</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Price Range
+                  </label>
                   <PriceRangeInput
                     minValue={tempFilters.minPrice || ""}
                     maxValue={tempFilters.maxPrice || ""}
-                    onMinChange={(value) => setTempFilters({ ...tempFilters, minPrice: value || undefined })}
-                    onMaxChange={(value) => setTempFilters({ ...tempFilters, maxPrice: value || undefined })}
+                    onMinChange={(value) =>
+                      setTempFilters({ ...tempFilters, minPrice: value || undefined })
+                    }
+                    onMaxChange={(value) =>
+                      setTempFilters({ ...tempFilters, maxPrice: value || undefined })
+                    }
                     inputClassName="w-full"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 p-4 border-t">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={handleResetFilters}
-              >
+            <div className="flex gap-3 border-t p-4">
+              <Button variant="outline" className="flex-1" onClick={handleResetFilters}>
                 Reset
               </Button>
-              <Button
-                className="flex-1"
-                onClick={handleMobileApplyFilters}
-              >
+              <Button className="flex-1" onClick={handleMobileApplyFilters}>
                 Apply Filters
               </Button>
             </div>
