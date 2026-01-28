@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import defaultImage from "@/public/images/default-image.jpg";
 import { cn } from "@/lib/utils";
+
+const DEFAULT_IMAGE = "/images/default-image.jpg";
 
 interface Props {
   images: string[];
@@ -17,7 +18,7 @@ export const ListingImageGallery = ({ images }: Props) => {
       <div className="relative h-[400px] overflow-hidden rounded-2xl md:h-[450px] lg:h-[500px]">
         {/* blurred background */}
         <Image
-          src={images[selectedImage] || defaultImage}
+          src={images[selectedImage] || DEFAULT_IMAGE}
           alt="Background"
           fill
           className="scale-110 object-cover opacity-50 blur-2xl"
@@ -27,7 +28,7 @@ export const ListingImageGallery = ({ images }: Props) => {
         {/* main selected image */}
         <div className="relative flex h-full w-full items-center justify-center">
           <Image
-            src={images[selectedImage] || defaultImage}
+            src={images[selectedImage] || DEFAULT_IMAGE}
             alt="Listing image"
             fill
             className="object-contain"
