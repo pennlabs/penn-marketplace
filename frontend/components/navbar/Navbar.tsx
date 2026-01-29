@@ -11,10 +11,10 @@ const ALL_LISTINGS_PAGES = ["/", "/items", "/sublets"] as const;
 
 type AllListingsPagePath = (typeof ALL_LISTINGS_PAGES)[number];
 
-const ALL_LISTINGS_PAGES_CREATE_NEW_TEXT: Record<AllListingsPagePath, string> = {
-  "/": "New Item",
-  "/items": "New Item",
-  "/sublets": "New Sublet",
+const ALL_LISTINGS_PAGES_CONFIG: Record<AllListingsPagePath, { text: string; href: string }> = {
+  "/": { text: "New Item", href: "/create/item" },
+  "/items": { text: "New Item", href: "/create/item" },
+  "/sublets": { text: "New Sublet", href: "/create/sublet" },
 } as const;
 
 const isAllListingsPage = (path: string): path is AllListingsPagePath => {
@@ -26,8 +26,8 @@ export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const showListingsTabs = isAllListingsPage(pathname);
-  const createNewText = showListingsTabs
-    ? ALL_LISTINGS_PAGES_CREATE_NEW_TEXT[pathname]
+  const createNewConfig = showListingsTabs
+    ? ALL_LISTINGS_PAGES_CONFIG[pathname]
     : undefined;
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -49,7 +49,8 @@ export const Navbar = () => {
             )}
 
             <NavbarActions
-              createNewText={createNewText}
+              createNewText={createNewConfig?.text}
+              createNewHref={createNewConfig?.href}
               mobileShowHamburger={showListingsTabs}
               isMobileMenuOpen={isMobileMenuOpen}
               onToggleMobileMenu={toggleMobileMenu}

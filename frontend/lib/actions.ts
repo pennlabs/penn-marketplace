@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
-import { AuthTokens, Item, PaginatedResponse, Sublet, User } from "@/lib/types";
+import { AuthTokens, CreateItemPayload, CreateSubletPayload, Item, Listing, PaginatedResponse, Sublet, User } from "@/lib/types";
 
 async function getTokensFromCookies(): Promise<AuthTokens | null> {
   try {
@@ -218,38 +218,7 @@ export async function verifyPhoneCode(phoneNumber: string, code: string) {
 // creating new listings
 // ------------------------------------------------------------
 
-type CreateItemPayload = {
-  title: string;
-  description: string;
-  price: string;
-  negotiable: boolean;
-  expires_at: string;
-  external_link?: string;
-  tags: string[];
-  listing_type: "item";
-  additional_data: {
-    condition: string;
-    category: string;
-  };
-};
 
-type CreateSubletPayload = {
-  title: string;
-  description: string;
-  price: string;
-  negotiable: boolean;
-  expires_at: string;
-  external_link?: string;
-  tags: string[];
-  listing_type: "sublet";
-  additional_data: {
-    address: string;
-    beds: number;
-    baths: number;
-    start_date: string;
-    end_date: string;
-  };
-};
 
 export type CreateListingPayload = CreateItemPayload | CreateSubletPayload;
 

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Bell, Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { usePathname , useRouter} from "next/navigation";
 
 interface Props {
   createNewText?: string;
+  createNewHref?: string;
   mobileShowHamburger: boolean;
   isMobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
@@ -13,21 +14,12 @@ interface Props {
 
 export const NavbarActions = ({
   createNewText,
+  createNewHref,
   mobileShowHamburger,
   isMobileMenuOpen,
   onToggleMobileMenu,
 }: Props) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
-  const pathName = usePathname();
-  const router = useRouter();
-
-  const handleCreateNew = () => {
-    if (pathName.startsWith("/sublet")) {
-      router.push("/create/sublet");
-    } else {
-      router.push("/create/item");
-    }
-  };
 
   const handleNotificationClick = () => {
     // TODO
@@ -40,28 +32,30 @@ export const NavbarActions = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3">
       {/* desktop only new listing button */}
-      {createNewText && (
+      {createNewText && createNewHref && (
         <Button
           variant="outline"
           className="hidden md:flex gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-          onClick={handleCreateNew}
-          aria-label={createNewText}
+          asChild
         >
-          <Plus className="w-4 h-4" />
-          <span>{createNewText}</span>
+          <Link href={createNewHref} aria-label={createNewText}>
+            <Plus className="w-4 h-4" />
+            <span>{createNewText}</span>
+          </Link>
         </Button>
       )}
 
       {/* mobile only new listing button (icon only) */}
-      {createNewText && (
+      {createNewText && createNewHref && (
         <Button
           variant="outline"
           size="icon"
           className="md:hidden border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-          onClick={handleCreateNew}
-          aria-label={createNewText}
+          asChild
         >
-          <Plus className="w-4 h-4" />
+          <Link href={createNewHref} aria-label={createNewText}>
+            <Plus className="w-4 h-4" />
+          </Link>
         </Button>
       )}
 
