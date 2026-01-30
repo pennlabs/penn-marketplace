@@ -1,10 +1,12 @@
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Bell, Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  createNewText?: string;
+  createNewText: string;
+  createNewHref: string;
   mobileShowHamburger: boolean;
   isMobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
@@ -12,15 +14,12 @@ interface Props {
 
 export const NavbarActions = ({
   createNewText,
+  createNewHref,
   mobileShowHamburger,
   isMobileMenuOpen,
   onToggleMobileMenu,
 }: Props) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
-
-  const handleCreateNew = () => {
-    // TODO
-  };
 
   const handleNotificationClick = () => {
     // TODO
@@ -34,30 +33,30 @@ export const NavbarActions = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3">
       {/* desktop only new listing button */}
-      {createNewText && (
-        <Button
+      {<Button
           variant="outline"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden gap-2 md:flex"
-          onClick={handleCreateNew}
-          aria-label={createNewText}
+          className="hidden md:flex gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          asChild
         >
-          <Plus className="h-4 w-4" />
-          <span>{createNewText}</span>
+          <Link href={createNewHref} aria-label={createNewText}>
+            <Plus className="w-4 h-4" />
+            <span>{createNewText}</span>
+          </Link>
         </Button>
-      )}
+      }
 
       {/* mobile only new listing button (icon only) */}
-      {createNewText && (
-        <Button
+      {<Button
           variant="outline"
           size="icon"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground md:hidden"
-          onClick={handleCreateNew}
-          aria-label={createNewText}
+          className="md:hidden border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          asChild
         >
-          <Plus className="h-4 w-4" />
+          <Link href={createNewHref} aria-label={createNewText}>
+            <Plus className="w-4 h-4" />
+          </Link>
         </Button>
-      )}
+      }
 
       {/* notification bell */}
       <Button
