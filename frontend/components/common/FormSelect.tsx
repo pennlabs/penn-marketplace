@@ -66,7 +66,6 @@ export function FormSelect(props: FormSelectProps) {
       label={label}
       error={error}
       touched={touched}
-      required={required}
       optional={optional}
       helperText={helperText}
     >
