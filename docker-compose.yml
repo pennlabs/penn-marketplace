@@ -1,8 +1,8 @@
-name: penn-marketplace
-
 services:
   db:
     image: postgres:15.8
+    env_file:
+      - ./backend/.env
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - penn-marketplace-postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -41,7 +41,9 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - /app/__pycache__
+      - penn-marketplace-backend-venv:/app/.venv
+    env_file:
+      - ./backend/.env
     environment:
       - PYTHONUNBUFFERED=1
       - DJANGO_SETTINGS_MODULE=config.settings.development
@@ -60,11 +62,14 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+      - penn-marketplace-frontend-node-modules:/app/node_modules
+      - penn-marketplace-frontend-next:/app/.next
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8000
 
 volumes:
-  postgres_data:
+  penn-marketplace-postgres-data:
+  penn-marketplace-backend-venv:
+  penn-marketplace-frontend-node-modules:
+  penn-marketplace-frontend-next:
