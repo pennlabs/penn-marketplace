@@ -9,7 +9,7 @@ export default function CreateSubletPage() {
         <BackButton />
       </Link>
 
-      <h1 className="text-3xl font-bold mb-8">New Sublet Listing</h1>
+      <h1 className="text-3xl font-bold pt-2 mb-8">New Sublet</h1>
 
       <ListingForm listingType="sublet" />
     </div>

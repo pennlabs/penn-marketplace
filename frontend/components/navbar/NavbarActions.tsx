@@ -5,8 +5,8 @@ import { Bell, Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  createNewText?: string;
-  createNewHref?: string;
+  createNewText: string;
+  createNewHref: string;
   mobileShowHamburger: boolean;
   isMobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
@@ -32,8 +32,7 @@ export const NavbarActions = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3">
       {/* desktop only new listing button */}
-      {createNewText && createNewHref && (
-        <Button
+      {<Button
           variant="outline"
           className="hidden md:flex gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
           asChild
@@ -43,11 +42,10 @@ export const NavbarActions = ({
             <span>{createNewText}</span>
           </Link>
         </Button>
-      )}
+      }
 
       {/* mobile only new listing button (icon only) */}
-      {createNewText && createNewHref && (
-        <Button
+      {<Button
           variant="outline"
           size="icon"
           className="md:hidden border-primary text-primary hover:bg-primary hover:text-primary-foreground"
@@ -57,7 +55,7 @@ export const NavbarActions = ({
             <Plus className="w-4 h-4" />
           </Link>
         </Button>
-      )}
+      }
 
       {/* notification bell */}
       <Button

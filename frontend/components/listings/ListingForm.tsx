@@ -10,14 +10,8 @@ import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { FormField } from "@/components/common/FormField";
+import { FormSelect } from "@/components/common/FormSelect";
 import {
   CATEGORY_OPTIONS,
   CONDITION_OPTIONS,
@@ -237,11 +231,11 @@ export function ListingForm({ listingType }: ListingFormProps) {
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    className="pl-7"
+                    className={`pl-7 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${!isItem ? "pr-12" : ""}`}
                     aria-invalid={!!errors.price}
                   />
                   {!isItem && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
                       /mo
                     </span>
                   )}
@@ -278,27 +272,16 @@ export function ListingForm({ listingType }: ListingFormProps) {
                 name="beds"
                 control={control}
                 render={({ field }) => (
-                  <FormField
+                  <FormSelect
                     label="Bedrooms"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={BEDS_OPTIONS}
+                    placeholder="Beds"
                     error={errors.beds?.message}
                     touched={touchedFields.beds}
-                  >
-                    <Select
-                      value={field.value ? String(field.value) : ""}
-                      onValueChange={(val) => field.onChange(Number(val))}
-                    >
-                      <SelectTrigger className="w-full" aria-invalid={!!errors.beds}>
-                        <SelectValue placeholder="Beds" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {BEDS_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormField>
+                    asNumber
+                  />
                 )}
               />
 
@@ -306,27 +289,16 @@ export function ListingForm({ listingType }: ListingFormProps) {
                 name="baths"
                 control={control}
                 render={({ field }) => (
-                  <FormField
+                  <FormSelect
                     label="Bathrooms"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={BATHS_OPTIONS}
+                    placeholder="Baths"
                     error={errors.baths?.message}
                     touched={touchedFields.baths}
-                  >
-                    <Select
-                      value={field.value ? String(field.value) : ""}
-                      onValueChange={(val) => field.onChange(Number(val))}
-                    >
-                      <SelectTrigger className="w-full" aria-invalid={!!errors.baths}>
-                        <SelectValue placeholder="Baths" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {BATHS_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormField>
+                    asNumber
+                  />
                 )}
               />
             </div>
@@ -398,24 +370,15 @@ export function ListingForm({ listingType }: ListingFormProps) {
               name="category"
               control={control}
               render={({ field }) => (
-                <FormField
+                <FormSelect
                   label="Product Category"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={CATEGORY_OPTIONS}
+                  placeholder="Select Category"
                   error={errors.category?.message}
                   touched={touchedFields.category}
-                >
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full" aria-invalid={!!errors.category}>
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormField>
+                />
               )}
             />
           )}
@@ -426,46 +389,19 @@ export function ListingForm({ listingType }: ListingFormProps) {
               name="condition"
               control={control}
               render={({ field }) => (
-                <FormField
+                <FormSelect
                   label="Condition"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={CONDITION_OPTIONS}
+                  placeholder="Select Condition"
                   error={errors.condition?.message}
                   touched={touchedFields.condition}
-                >
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full" aria-invalid={!!errors.condition}>
-                      <SelectValue placeholder="Select Condition" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CONDITION_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormField>
+                />
               )}
             />
           )}
 
-          <Controller
-            name="expires_at"
-            control={control}
-            render={({ field }) => (
-              <FormField
-                label="Listing Expiration Date"
-                error={errors.expires_at?.message}
-                touched={touchedFields.expires_at}
-              >
-                <Input
-                  {...field}
-                  type="date"
-                  min={new Date().toISOString().split("T")[0]}
-                  aria-invalid={!!errors.expires_at}
-                />
-              </FormField>
-            )}
-          />
         </div>
 
         <div className="space-y-6">
