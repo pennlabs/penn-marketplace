@@ -4,8 +4,8 @@ interface Props {
 
 export const FilterBar = ({ children }: Props) => {
   return (
-    <div className="flex items-center gap-3 w-full flex-wrap bg-white rounded-lg p-4 shadow-sm">
+    <div className="flex w-full flex-wrap items-center gap-3 rounded-lg bg-white p-4 shadow-sm">
       {children}
     </div>
   );
-}
+};

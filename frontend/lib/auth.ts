@@ -1,9 +1,5 @@
 import { cookies } from "next/headers";
-import {
-  CLIENT_ID,
-  OIDC_AUTHORIZATION_ENDPOINT,
-  OIDC_REDIRECT_URI,
-} from "@/lib/constants";
+import { CLIENT_ID, OIDC_AUTHORIZATION_ENDPOINT, OIDC_REDIRECT_URI } from "@/lib/constants";
 import { ErrorMessages } from "@/lib/errors";
 
 export interface AuthTokens {

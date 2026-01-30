@@ -15,7 +15,10 @@ export const ErrorMessages = {
 
 // custom error class with status code
 export class APIError extends Error {
-  constructor(message: string, public status: number) {
+  constructor(
+    message: string,
+    public status: number
+  ) {
     super(message);
     this.name = "APIError";
   }
@@ -28,23 +31,18 @@ function createErrorResponse(message: string, status: number) {
 
 // All error responses
 export const ErrorResponses = {
-  missingClientId: () =>
-    createErrorResponse(ErrorMessages.MISSING_CLIENT_ID, 500),
+  missingClientId: () => createErrorResponse(ErrorMessages.MISSING_CLIENT_ID, 500),
 
   missingClientCredentials: () =>
     createErrorResponse(ErrorMessages.MISSING_CLIENT_CREDENTIALS, 500),
 
-  serverConfiguration: () =>
-    createErrorResponse(ErrorMessages.SERVER_CONFIGURATION, 500),
+  serverConfiguration: () => createErrorResponse(ErrorMessages.SERVER_CONFIGURATION, 500),
 
   internalServer: () => createErrorResponse(ErrorMessages.INTERNAL_SERVER, 500),
 
-  noAuthorizationCode: () =>
-    createErrorResponse(ErrorMessages.NO_AUTHORIZATION_CODE, 401),
+  noAuthorizationCode: () => createErrorResponse(ErrorMessages.NO_AUTHORIZATION_CODE, 401),
 
-  tokenExchangeFailed: () =>
-    createErrorResponse(ErrorMessages.TOKEN_EXCHANGE_FAILED, 401),
+  tokenExchangeFailed: () => createErrorResponse(ErrorMessages.TOKEN_EXCHANGE_FAILED, 401),
 
-  authenticationFailed: () =>
-    createErrorResponse(ErrorMessages.AUTHENTICATION_FAILED, 401),
+  authenticationFailed: () => createErrorResponse(ErrorMessages.AUTHENTICATION_FAILED, 401),
 } as const;

@@ -6,7 +6,11 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class User(AbstractUser):
-    """This extends the User model from django-labs-account to add phonenumber related fields"""
+    """
+    This extends the User model from django-labs-account
+    to add phonenumber related fields
+    """
+
     phone_number = PhoneNumberField(null=True, blank=True)
     phone_verified = models.BooleanField(default=False)
     phone_verified_at = models.DateTimeField(null=True, blank=True)
@@ -15,7 +19,9 @@ class User(AbstractUser):
 class Offer(models.Model):
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["user", "listing"], name="unique_offer_market")
+            models.UniqueConstraint(
+                fields=["user", "listing"], name="unique_offer_market"
+            )
         ]
         indexes = [
             models.Index(fields=["user"]),
@@ -24,11 +30,11 @@ class Offer(models.Model):
         ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers")
-    listing = models.ForeignKey("Listing", on_delete=models.CASCADE, related_name="offers_received")
+    listing = models.ForeignKey(
+        "Listing", on_delete=models.CASCADE, related_name="offers_received"
+    )
     offered_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0)]
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
     message = models.TextField(max_length=500, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -39,10 +45,10 @@ class Offer(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    
+
     class Meta:
         verbose_name_plural = "Categories"
-    
+
     def __str__(self):
         return self.name
 
@@ -64,20 +70,22 @@ class Listing(models.Model):
             models.Index(fields=["negotiable"]),
         ]
 
-    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="listings_created")
+    seller = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="listings_created"
+    )
     buyers = models.ManyToManyField(
         User, through=Offer, related_name="listings_offered", blank=True
     )
     tags = models.ManyToManyField(Tag, blank=True)
-    favorites = models.ManyToManyField(User, related_name="listings_favorited", blank=True)
+    favorites = models.ManyToManyField(
+        User, related_name="listings_favorited", blank=True
+    )
 
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     external_link = models.URLField(max_length=255, null=True, blank=True)
     price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0)]
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
     negotiable = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -88,12 +96,14 @@ class Listing(models.Model):
 
 
 class ListingImage(models.Model):
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="images")
+    listing = models.ForeignKey(
+        Listing, on_delete=models.CASCADE, related_name="images"
+    )
     image = models.ImageField(upload_to="marketplace/images")
     order = models.PositiveIntegerField(default=0)
-    
+
     class Meta:
-        ordering = ['order']
+        ordering = ["order"]
 
     def __str__(self):
         return f"Image for {self.listing}"
@@ -105,11 +115,9 @@ class Item(Listing):
         LIKE_NEW = "LIKE_NEW", "Used - Like New"
         GOOD = "GOOD", "Used - Good"
         FAIR = "FAIR", "Used - Fair"
-    
+
     condition = models.CharField(
-        max_length=50,
-        choices=Condition.choices,
-        default=Condition.NEW
+        max_length=50, choices=Condition.choices, default=Condition.NEW
     )
     category = models.ForeignKey(
         Category, on_delete=models.PROTECT, related_name="items"

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { DollarSign } from "lucide-react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MakeOfferModal } from "@/components/listings/offer/MakeOfferModal";
 import { PhoneInputModal } from "@/components/listings/offer/PhoneInputModal";
 import { VerificationCodeModal } from "@/components/listings/offer/VerificationCodeModal";
@@ -13,7 +12,6 @@ import { getPhoneStatus } from "@/lib/actions";
 interface Props {
   listingId: number;
   listingPrice: number;
-  listingTitle: string;
   listingOwnerLabel: string;
   priceLabel?: string;
 }
@@ -23,9 +21,8 @@ type ModalState = "none" | "phone-input" | "verification" | "offer";
 export const ListingActions = ({
   listingId,
   listingPrice,
-  listingTitle,
   priceLabel,
-  listingOwnerLabel
+  listingOwnerLabel,
 }: Props) => {
   const [modalState, setModalState] = useState<ModalState>("none");
   const [pendingPhoneNumber, setPendingPhoneNumber] = useState<string>("");
@@ -76,9 +73,9 @@ export const ListingActions = ({
     <>
       <Button
         onClick={handleMakeOfferClick}
-        className="w-full bg-brand hover:bg-brand-hover text-white h-12 text-base cursor-pointer"
+        className="bg-brand hover:bg-brand-hover h-12 w-full cursor-pointer text-base text-white"
       >
-        <DollarSign className="w-5 h-5 mr-2" />
+        <DollarSign className="mr-2 h-5 w-5" />
         Make an Offer
       </Button>
 
@@ -87,7 +84,7 @@ export const ListingActions = ({
         onClose={() => setModalState("none")}
         onCodeSent={handlePhoneCodeSent}
         listingOwnerLabel={listingOwnerLabel}
-        initialPhoneNumber={isChangingPhone ? "" : (phoneStatus?.phone_number || "")}
+        initialPhoneNumber={isChangingPhone ? "" : phoneStatus?.phone_number || ""}
       />
 
       <VerificationCodeModal
@@ -102,11 +99,10 @@ export const ListingActions = ({
         onClose={() => setModalState("none")}
         listingId={listingId}
         listingPrice={listingPrice}
-        listingTitle={listingTitle}
         listingOwnerLabel={listingOwnerLabel}
         priceLabel={priceLabel}
         onChangePhone={handleChangePhone}
       />
     </>
   );
-}
+};

@@ -14,18 +14,18 @@ export const ListingImageGallery = ({ images }: Props) => {
 
   return (
     <div className="space-y-4">
-      <div className="relative h-[400px] md:h-[450px] lg:h-[500px] rounded-2xl overflow-hidden">
+      <div className="relative h-[400px] overflow-hidden rounded-2xl md:h-[450px] lg:h-[500px]">
         {/* blurred background */}
         <Image
           src={images[selectedImage] || defaultImage}
           alt="Background"
           fill
-          className="object-cover blur-2xl scale-110 opacity-50"
+          className="scale-110 object-cover opacity-50 blur-2xl"
           aria-hidden="true"
         />
 
         {/* main selected image */}
-        <div className="relative w-full h-full flex items-center justify-center">
+        <div className="relative flex h-full w-full items-center justify-center">
           <Image
             src={images[selectedImage] || defaultImage}
             alt="Listing image"
@@ -42,7 +42,7 @@ export const ListingImageGallery = ({ images }: Props) => {
             key={idx}
             onClick={() => setSelectedImage(idx)}
             className={cn(
-              "relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden border-2",
+              "relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg border-2",
               selectedImage === idx ? "border-primary" : "border-transparent"
             )}
           >
@@ -52,4 +52,4 @@ export const ListingImageGallery = ({ images }: Props) => {
       </div>
     </div>
   );
-}
+};

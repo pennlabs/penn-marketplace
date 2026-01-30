@@ -30,10 +30,7 @@ async function getTokensFromCookies(): Promise<AuthTokens | null> {
 }
 
 // base fetch function for server actions
-async function serverFetch<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
   const tokens = await getTokensFromCookies();
@@ -109,9 +106,7 @@ export async function getItems({
   if (minPrice !== undefined) params.append("min_price", minPrice.toString());
   if (maxPrice !== undefined) params.append("max_price", maxPrice.toString());
 
-  return await serverFetch<PaginatedResponse<Item>>(
-    `/market/listings/?${params.toString()}`
-  );
+  return await serverFetch<PaginatedResponse<Item>>(`/market/listings/?${params.toString()}`);
 }
 
 // ------------------------------------------------------------
@@ -149,9 +144,7 @@ export async function getSublets({
   if (minPrice !== undefined) params.append("min_price", minPrice.toString());
   if (maxPrice !== undefined) params.append("max_price", maxPrice.toString());
 
-  return await serverFetch<PaginatedResponse<Sublet>>(
-    `/market/listings/?${params.toString()}`
-  );
+  return await serverFetch<PaginatedResponse<Sublet>>(`/market/listings/?${params.toString()}`);
 }
 
 // ------------------------------------------------------------
@@ -193,13 +186,10 @@ export async function getPhoneStatus() {
 }
 
 export async function sendVerificationCode(phoneNumber: string) {
-  return await serverFetch<{ success: boolean; phone_number: string }>(
-    "/market/phone/send-code/",
-    {
-      method: "POST",
-      body: JSON.stringify({ phone_number: phoneNumber }),
-    }
-  );
+  return await serverFetch<{ success: boolean; phone_number: string }>("/market/phone/send-code/", {
+    method: "POST",
+    body: JSON.stringify({ phone_number: phoneNumber }),
+  });
 }
 
 export async function verifyPhoneCode(phoneNumber: string, code: string) {

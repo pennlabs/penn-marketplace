@@ -20,13 +20,15 @@ export const UserCard = ({ user, label }: Props) => {
           className="rounded-full"
         />
         <div>
-          <p className="font-semibold">{user.first_name} {user.last_name}</p>
+          <p className="font-semibold">
+            {user.first_name} {user.last_name}
+          </p>
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span>5.0</span> {/* TODO: add rating */}
           </div>
         </div>
       </div>
     </div>
   );
-}
+};

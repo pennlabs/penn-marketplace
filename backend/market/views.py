@@ -1,4 +1,3 @@
-from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -35,6 +34,7 @@ from market.serializers import (
     UserSerializer,
 )
 from utils.sms import generate_verification_code, send_verification_sms
+
 
 User = get_user_model()
 
@@ -81,7 +81,8 @@ class OffersReceived(ListAPIView, DefaultOrderMixin):
 class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
     """
     list:
-    Returns a list of Listings that match query parameters. Supports filtering by type (item/sublet) and type-specific fields.
+    Returns a list of Listings that match query parameters.
+    Supports filtering by type (item/sublet) and type-specific fields.
 
     create:
     Create a Listing (Item or Sublet based on listing_type).
@@ -98,9 +99,9 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
     pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
-        return Listing.objects.select_related(
-            "item", "sublet"
-        ).prefetch_related("tags", "images")
+        return Listing.objects.select_related("item", "sublet").prefetch_related(
+            "tags", "images"
+        )
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -139,7 +140,8 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
 
     def list(self, request, *args, **kwargs):
         """
-        Returns a list of Listings that match query parameters. Supports filtering by type and type-specific fields.
+        Returns a list of Listings that match query parameters.
+        Supports filtering by type and type-specific fields.
         """
         queryset = self.get_queryset()
 
@@ -186,7 +188,8 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         return Response(serializer.data)
 
 
-# TODO: This doesn't use CreateAPIView's functionality since we overrode the create method.
+# TODO: This doesn't use CreateAPIView's functionality
+# since we overrode the create method.
 # Think about if there's a better way
 class CreateImages(CreateAPIView):
     serializer_class = ListingImageSerializer
@@ -296,7 +299,9 @@ class Offers(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         if not request.user.phone_number or not request.user.phone_verified:
-            raise exceptions.ValidationError("You must verify your phone number before making an offer")
+            raise exceptions.ValidationError(
+                "You must verify your phone number before making an offer"
+            )
         data = request.data.copy()
         if self.get_queryset().filter(user=self.request.user).exists():
             raise exceptions.ValidationError("Offer already exists")
@@ -319,9 +324,7 @@ class Offers(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):
-        if not Listing.objects.filter(
-            pk=int(self.kwargs["listing_id"])
-        ).exists():
+        if not Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
             raise exceptions.NotFound("No Listing matches the given query")
         for offer in self.get_queryset():
             self.check_object_permissions(request, offer)
@@ -332,28 +335,25 @@ class Offers(viewsets.ModelViewSet):
 @permission_classes([IsAuthenticated])
 def send_verification_code(request):
     phone_number = request.data.get("phone_number")
-    
+
     if not phone_number:
         raise exceptions.ValidationError("Phone number is required")
-    
+
     code = generate_verification_code()
-    
+
     # unique cache key for this user + phone combination
     cache_key = f"phone_verify:{request.user.id}:{phone_number}"
-    
+
     # verification code in cache with auto-expiration
     timeout = settings.PHONE_VERIFICATION_CODE_EXPIRY_MINUTES * 60
     cache.set(cache_key, code, timeout=timeout)
-    
+
     try:
         send_verification_sms(phone_number, code)
     except Exception as e:
-        raise exceptions.APIException(f"Failed to send SMS: {str(e)}")
-    
-    return Response({
-        "success": True,
-        "message": "Verification code sent"
-    })
+        raise exceptions.APIException(f"Failed to send SMS: {str(e)}") from e
+
+    return Response({"success": True, "message": "Verification code sent"})
 
 
 @api_view(["POST"])
@@ -361,29 +361,31 @@ def send_verification_code(request):
 def verify_phone_code(request):
     phone_number = request.data.get("phone_number")
     code = request.data.get("code")
-    
+
     if not phone_number or not code:
         raise exceptions.ValidationError("Phone number and code are required")
-    
+
     cache_key = f"phone_verify:{request.user.id}:{phone_number}"
     stored_code = cache.get(cache_key)
-    
+
     if not stored_code or stored_code != code:
         raise exceptions.ValidationError("Invalid or expired verification code")
-    
+
     # Success! Update user's phone verification status
     request.user.phone_number = phone_number
     request.user.phone_verified = True
     request.user.phone_verified_at = timezone.now()
     request.user.save()
-    
+
     cache.delete(cache_key)
-    
-    return Response({
-        "verified": True,
-        "message": "Phone number verified successfully",
-        "phone_number": str(phone_number)
-    })
+
+    return Response(
+        {
+            "verified": True,
+            "message": "Phone number verified successfully",
+            "phone_number": str(phone_number),
+        }
+    )
 
 
 @api_view(["GET"])
@@ -397,7 +399,9 @@ def get_current_user(request):
 @permission_classes([IsAuthenticated])
 def get_phone_status(request):
     user = request.user
-    return Response({
-        "phone_number": str(user.phone_number) if user.phone_number else None,
-        "phone_verified": user.phone_verified,
-    })
+    return Response(
+        {
+            "phone_number": str(user.phone_number) if user.phone_number else None,
+            "phone_verified": user.phone_verified,
+        }
+    )

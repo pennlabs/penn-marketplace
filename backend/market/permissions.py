@@ -37,7 +37,10 @@ class ListingImageOwnerPermission(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Check if the user is the owner of the Listing.
-        return request.method in permissions.SAFE_METHODS or obj.listing.seller == request.user
+        return (
+            request.method in permissions.SAFE_METHODS
+            or obj.listing.seller == request.user
+        )
 
 
 class OfferOwnerPermission(permissions.BasePermission):

@@ -1,8 +1,10 @@
 """
 Base settings shared across all environments
 """
+
 import os
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -26,9 +28,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "market",
-
     # DLA for authentication management
-    'accounts.apps.AccountsConfig',
+    "accounts.apps.AccountsConfig",
 ]
 
 MIDDLEWARE = [
@@ -67,7 +68,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+        ),
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -120,4 +123,4 @@ REST_FRAMEWORK = {
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", "")
-PHONE_VERIFICATION_CODE_EXPIRY_MINUTES=10
+PHONE_VERIFICATION_CODE_EXPIRY_MINUTES = 10

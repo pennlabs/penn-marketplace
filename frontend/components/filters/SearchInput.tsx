@@ -11,14 +11,14 @@ interface Props {
 
 export const SearchInput = ({ placeholder, value, onChange }: Props) => {
   return (
-    <div className="relative flex-1 min-w-[180px]">
-      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-4 z-10 pointer-events-none" />
+    <div className="relative min-w-[180px] flex-1">
+      <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 z-10 h-4 w-5 -translate-y-1/2 transform" />
       <Input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-11 h-10 w-full text-sm bg-background focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input"
+        className="bg-background focus-visible:border-input h-10 w-full pl-11 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
       />
     </div>
   );
