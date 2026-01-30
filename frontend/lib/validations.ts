@@ -75,7 +75,7 @@ export const createItemSchema = z.object({
     .refine((n) => n > 0, { message: "Price must be a positive number" }),
   negotiable: z.coerce.boolean().default(false),
   expires_at: z.string()
-    .datetime("Expiration must be a valid date/time")
+    // .datetime("Expiration must be a valid date/time")
     .optional()
     .refine(
       (val) => !val || new Date(val).getTime() > Date.now(),
@@ -101,7 +101,7 @@ export const createSubletSchema = z.object({
     .refine((n) => n > 0, { message: "Price must be a positive number" }),
   negotiable: z.coerce.boolean().default(false),
   expires_at: z.string()
-    .datetime("Expiration must be a valid date/time")
+    // .datetime("Expiration must be a valid date/time")
     .optional()
     .refine(
       (val) => !val || new Date(val).getTime() > Date.now(),

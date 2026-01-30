@@ -231,11 +231,11 @@ export function ListingForm({ listingType }: ListingFormProps) {
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    className={`pl-7 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${!isItem ? "pr-12" : ""}`}
+                    className="pl-7"
                     aria-invalid={!!errors.price}
                   />
                   {!isItem && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                       /mo
                     </span>
                   )}
@@ -401,6 +401,24 @@ export function ListingForm({ listingType }: ListingFormProps) {
               )}
             />
           )}
+
+          <Controller
+            name="expires_at"
+            control={control}
+            render={({ field }) => (
+              <FormField
+                label="Listing Expiration Date"
+                error={errors.expires_at?.message}
+                touched={touchedFields.expires_at}
+              >
+                <Input
+                  {...field}
+                  type="date"
+                  aria-invalid={!!errors.expires_at}
+                />
+              </FormField>
+            )}
+            />        
 
         </div>
 
