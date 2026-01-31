@@ -4,7 +4,16 @@ import { cookies } from "next/headers";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
-import { AuthTokens, CreateItemPayload, CreateSubletPayload, Item, Listing, PaginatedResponse, Sublet, User } from "@/lib/types";
+import {
+  AuthTokens,
+  CreateItemPayload,
+  CreateSubletPayload,
+  Item,
+  Listing,
+  PaginatedResponse,
+  Sublet,
+  User,
+} from "@/lib/types";
 
 async function getTokensFromCookies(): Promise<AuthTokens | null> {
   try {
@@ -201,14 +210,29 @@ export async function verifyPhoneCode(phoneNumber: string, code: string) {
     body: JSON.stringify({ phone_number: phoneNumber, code }),
   });
 }
+// ------------------------------------------------------------
+// adding and removing listings from favorites
+// ------------------------------------------------------------
 
+export async function addToUsersFavorites(listingId: number) {
+  const res = await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
+    method: "POST",
+  });
+  return res;
+}
+export async function deleteFromUsersFavorites(listingId: number) {
+  return await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
+    method: "DELETE",
+  });
+}
 
+export async function getUsersFavorites() {
+  return await serverFetch<PaginatedResponse<Item | Sublet>>("/market/favorites/");
+}
 
 // ------------------------------------------------------------
 // creating new listings
 // ------------------------------------------------------------
-
-
 
 export type CreateListingPayload = CreateItemPayload | CreateSubletPayload;
 

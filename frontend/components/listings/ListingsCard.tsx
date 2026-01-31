@@ -4,7 +4,8 @@ import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice, formatCondition, formatDate } from "@/lib/utils";
 import { Item, Sublet } from "@/lib/types";
-import defaultImage from "@/public/images/default-image.jpg";
+
+const DEFAULT_IMAGE = "/images/default-image.jpg";
 
 interface Props {
   listing: Item | Sublet;
@@ -62,7 +63,7 @@ export const ListingsCard = ({ listing, previewImageUrl, href, isMyListing = fal
       {/* image container */}
       <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
         <Image
-          src={previewImageUrl || defaultImage}
+          src={previewImageUrl || DEFAULT_IMAGE}
           alt={listing.title}
           fill
           className="object-cover transition-transform duration-200 group-hover:scale-105"
