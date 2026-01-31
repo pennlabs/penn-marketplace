@@ -1,0 +1,52 @@
+name: Build Marketplace
+
+on: push
+
+jobs:
+  backend-check:
+    name: Backend Checks
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/astral-sh/uv:python3.11-bookworm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |-
+          cd backend
+          uv sync --frozen
+      - name: Run ruff check
+        run: |-
+          cd backend
+          uv run ruff check .
+      - name: Run ruff format
+        run: |-
+          cd backend
+          uv run ruff format .
+
+  frontend-check:
+    name: Frontend Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install dependencies
+        run: |-
+          cd frontend
+          pnpm install --frozen-lockfile
+      - name: Run ESLint
+        run: |-
+          cd frontend
+          pnpm lint
+      - name: Run type check
+        run: |-
+          cd frontend
+          pnpm typecheck
