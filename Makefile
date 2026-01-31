@@ -1,11 +1,9 @@
 .PHONY: setup dev up down build clean logs shell-backend shell-frontend migrate test
 
-# Install local dependencies for editor tooling
+# Full setup: prereqs, deps, pre-commit (runs scripts/setup.sh)
+# Unset VIRTUAL_ENV so uv uses the project's .venv instead of an active env
 setup:
-	@echo "📦 Installing backend dependencies..."
-	cd backend && uv sync
-	@echo "📦 Installing frontend dependencies..."
-	cd frontend && pnpm install
+	env -u VIRTUAL_ENV ./scripts/setup.sh
 	@echo "✅ Setup complete! Run 'make dev' to start."
 
 # Full dev setup: install deps + start containers
@@ -45,6 +43,10 @@ shell-backend:
 shell-frontend:
 	docker compose exec frontend sh
 
+# Run makemigrations
+makemigrations:
+	docker compose exec backend uv run python manage.py makemigrations
+
 # Run migrations
 migrate:
 	docker compose exec backend uv run python manage.py migrate
@@ -56,4 +58,3 @@ test:
 # Generate fake data
 generate-data:
 	docker compose exec backend uv run python manage.py generate_listings
-
