@@ -34,7 +34,9 @@ export const PriceRangeInput = ({
     <div className="flex items-center gap-2">
       <div className="relative flex-1">
         {formattedMinValue && (
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">$</span>
+          <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 transform">
+            $
+          </span>
         )}
         <Input
           type="text"
@@ -43,7 +45,7 @@ export const PriceRangeInput = ({
           onChange={(e) => onMinChange(e.target.value.replace(/\D/g, ""))}
           placeholder="Min $"
           className={cn(
-            "w-24 h-10 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input text-sm bg-background",
+            "focus-visible:border-input bg-background h-10 w-24 text-sm focus-visible:ring-0 focus-visible:ring-offset-0",
             formattedMinValue && "pl-7",
             inputClassName
           )}
@@ -52,7 +54,9 @@ export const PriceRangeInput = ({
       <span className="text-gray-400">—</span>
       <div className="relative flex-1">
         {formattedMaxValue && (
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">$</span>
+          <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 transform">
+            $
+          </span>
         )}
         <Input
           type="text"
@@ -61,7 +65,7 @@ export const PriceRangeInput = ({
           onChange={(e) => onMaxChange(e.target.value.replace(/\D/g, ""))}
           placeholder="Max $"
           className={cn(
-            "w-24 h-10 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input text-sm bg-background",
+            "focus-visible:border-input bg-background h-10 w-24 text-sm focus-visible:ring-0 focus-visible:ring-offset-0",
             formattedMaxValue && "pl-7",
             inputClassName
           )}
@@ -69,4 +73,4 @@ export const PriceRangeInput = ({
       </div>
     </div>
   );
-}
+};

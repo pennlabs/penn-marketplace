@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
-import { AuthTokens, Item, PaginatedResponse, Sublet, User } from "@/lib/types";
+import { AuthTokens, CreateItemPayload, CreateSubletPayload, Item, Listing, PaginatedResponse, Sublet, User } from "@/lib/types";
 
 async function getTokensFromCookies(): Promise<AuthTokens | null> {
   try {
@@ -30,10 +30,7 @@ async function getTokensFromCookies(): Promise<AuthTokens | null> {
 }
 
 // base fetch function for server actions
-async function serverFetch<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
   const tokens = await getTokensFromCookies();
@@ -109,9 +106,7 @@ export async function getItems({
   if (minPrice !== undefined) params.append("min_price", minPrice.toString());
   if (maxPrice !== undefined) params.append("max_price", maxPrice.toString());
 
-  return await serverFetch<PaginatedResponse<Item>>(
-    `/market/listings/?${params.toString()}`
-  );
+  return await serverFetch<PaginatedResponse<Item>>(`/market/listings/?${params.toString()}`);
 }
 
 // ------------------------------------------------------------
@@ -149,9 +144,7 @@ export async function getSublets({
   if (minPrice !== undefined) params.append("min_price", minPrice.toString());
   if (maxPrice !== undefined) params.append("max_price", maxPrice.toString());
 
-  return await serverFetch<PaginatedResponse<Sublet>>(
-    `/market/listings/?${params.toString()}`
-  );
+  return await serverFetch<PaginatedResponse<Sublet>>(`/market/listings/?${params.toString()}`);
 }
 
 // ------------------------------------------------------------
@@ -193,13 +186,10 @@ export async function getPhoneStatus() {
 }
 
 export async function sendVerificationCode(phoneNumber: string) {
-  return await serverFetch<{ success: boolean; phone_number: string }>(
-    "/market/phone/send-code/",
-    {
-      method: "POST",
-      body: JSON.stringify({ phone_number: phoneNumber }),
-    }
-  );
+  return await serverFetch<{ success: boolean; phone_number: string }>("/market/phone/send-code/", {
+    method: "POST",
+    body: JSON.stringify({ phone_number: phoneNumber }),
+  });
 }
 
 export async function verifyPhoneCode(phoneNumber: string, code: string) {
@@ -209,5 +199,22 @@ export async function verifyPhoneCode(phoneNumber: string, code: string) {
   }>("/market/phone/verify-code/", {
     method: "POST",
     body: JSON.stringify({ phone_number: phoneNumber, code }),
+  });
+}
+
+
+
+// ------------------------------------------------------------
+// creating new listings
+// ------------------------------------------------------------
+
+
+
+export type CreateListingPayload = CreateItemPayload | CreateSubletPayload;
+
+export async function createListing(payload: CreateListingPayload): Promise<Listing> {
+  return await serverFetch<Listing>("/market/listings/", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }

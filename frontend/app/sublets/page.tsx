@@ -10,7 +10,7 @@ export default async function SubletsPage() {
   ]);
 
   return (
-    <div className="w-full space-y-6 mx-auto container max-w-[96rem] px-12 pt-6">
+    <div className="container mx-auto w-full max-w-[96rem] space-y-6 px-12 pt-6">
       <PageHeader title="Browse Sublets" description="Find your perfect housing solution at Penn" />
       <SubletFilters />
       <ListingsGrid type="sublets" listings={sublets} currentUser={currentUser} />

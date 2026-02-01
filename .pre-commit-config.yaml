@@ -1,0 +1,81 @@
+# Pre-commit hooks configuration for Penn Marketplace
+# See https://pre-commit.com for more information
+#
+# Setup: pip install pre-commit && pre-commit install
+# Or:    cd backend && uv run pre-commit install
+#
+# Run manually: pre-commit run --all-files
+# Run same checks as CI: ./scripts/check.sh
+
+repos:
+  # =============================================================================
+  # General file checks (fast, always run)
+  # =============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(.*\.lock|.*\.min\.js|.*\.min\.css)
+      - id: end-of-file-fixer
+        exclude: ^(.*\.lock|.*\.min\.js|.*\.min\.css)
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+  # =============================================================================
+  # Backend: Python formatting and linting
+  # =============================================================================
+  # Note: CI uses ruff format (not Black), so we match that in pre-commit
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        name: ruff check (Python linter)
+        files: ^backend/.*\.py$
+        args: ['--fix']  # Auto-fix what can be fixed
+      - id: ruff-format
+        name: ruff format (Python formatter)
+        files: ^backend/.*\.py$
+        # Auto-formats (standard pre-commit behavior)
+
+  # =============================================================================
+  # Frontend: Formatting and linting via local commands
+  # (Uses your installed pnpm/node for better compatibility)
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: frontend-prettier
+        name: prettier (frontend)
+        entry: bash -c 'cd frontend && pnpm format'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
+        pass_filenames: false
+        # Auto-formats (standard pre-commit behavior)
+
+      - id: frontend-eslint
+        name: eslint (frontend)
+        entry: bash -c 'cd frontend && pnpm lint:fix'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+        # Auto-fixes what can be fixed
+
+      - id: frontend-typecheck
+        name: TypeScript type check (frontend)
+        entry: bash -c 'cd frontend && pnpm typecheck'
+        language: system
+        files: ^frontend/.*\.(ts|tsx)$
+        pass_filenames: false
+        # Type checking (whole project, but runs on commit)
+
+# =============================================================================
+# Notes:
+# - Pre-commit hooks AUTO-FIX issues (convenient for developers)
+# - check.sh only CHECKS (use --fix flag to auto-fix)
+# - TypeScript type checking runs in both pre-commit and check.sh
+# - CI doesn't run TypeScript explicitly (Next.js build catches type errors)
+# - CI uses ruff format (not Black), so pre-commit matches that
+# - Frontend: CI and pre-commit both use pnpm
+# =============================================================================

@@ -1,19 +1,20 @@
 """
 Dev settings - for local development with docker-compose
 """
-from .base import *
+
 import dj_database_url
+
+from .base import *
+
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend']
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "backend"]
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    "default": dj_database_url.config()
-}
+DATABASES = {"default": dj_database_url.config()}
 
 # Redis - from docker-compose
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")

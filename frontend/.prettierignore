@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Cache
+.cache/
+
+# Environment files
+.env
+.env.*
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Generated files
+next-env.d.ts
+
+# Public assets (don't format)
+public/
+
+# Config files that shouldn't be formatted
+*.config.js
+*.config.mjs
+*.config.ts
+postcss.config.mjs
+tailwind.config.js

@@ -20,7 +20,6 @@ interface Props {
   onClose: () => void;
   listingId: number;
   listingPrice: number;
-  listingTitle: string;
   listingOwnerLabel: string;
   priceLabel?: string;
   onChangePhone: () => void;
@@ -31,7 +30,6 @@ export function MakeOfferModal({
   onClose,
   listingId,
   listingPrice,
-  listingTitle,
   listingOwnerLabel,
   priceLabel,
   onChangePhone,
@@ -116,14 +114,16 @@ export function MakeOfferModal({
         {/* phone number */}
         <FormField label="Your phone number">
           {isLoadingPhone ? (
-            <div className="p-3 bg-gray-50 border rounded-lg">
+            <div className="rounded-lg border bg-gray-50 p-3">
               <span className="text-sm text-gray-500">Loading...</span>
             </div>
           ) : (
-            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
               <div className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium">{formatPhoneNumber(phoneStatus?.phone_number || "")}</span>
+                <Check className="h-5 w-5 text-green-600" />
+                <span className="text-sm font-medium">
+                  {formatPhoneNumber(phoneStatus?.phone_number || "")}
+                </span>
               </div>
               <Button
                 type="button"
@@ -143,9 +143,10 @@ export function MakeOfferModal({
           error={errors.offeredPrice?.message}
           touched={touchedFields.offeredPrice}
         >
-          <div className="flex items-center gap-2 mb-2">
+          <div className="mb-2 flex items-center gap-2">
             <span className="text-sm text-gray-600">
-              Listed: ${listingPrice.toLocaleString()}{priceLabel}
+              Listed: ${listingPrice.toLocaleString()}
+              {priceLabel}
             </span>
             <Button
               type="button"
@@ -161,7 +162,7 @@ export function MakeOfferModal({
             control={control}
             render={({ field }) => (
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                <span className="absolute top-1/2 left-4 -translate-y-1/2 font-medium text-gray-500">
                   $
                 </span>
                 <Input
@@ -173,7 +174,9 @@ export function MakeOfferModal({
                   className={`pl-8 text-lg ${errors.offeredPrice && touchedFields.offeredPrice ? "border-destructive" : ""}`}
                   min="0"
                   step="0.01"
-                  aria-invalid={errors.offeredPrice && touchedFields.offeredPrice ? "true" : "false"}
+                  aria-invalid={
+                    errors.offeredPrice && touchedFields.offeredPrice ? "true" : "false"
+                  }
                 />
               </div>
             )}
@@ -209,7 +212,7 @@ export function MakeOfferModal({
         <Button
           type="submit"
           disabled={isLoading || !isValid}
-          className="w-full bg-brand hover:bg-brand-hover text-white h-12 text-base"
+          className="bg-brand hover:bg-brand-hover h-12 w-full text-base text-white"
         >
           {isLoading ? "Submitting..." : "Submit Offer"}
         </Button>

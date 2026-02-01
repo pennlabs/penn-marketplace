@@ -1,7 +1,8 @@
-from twilio.rest import Client
-from django.conf import settings
 import random
 import string
+
+from django.conf import settings
+from twilio.rest import Client
 
 
 def generate_verification_code():
@@ -14,7 +15,7 @@ def send_verification_sms(phone_number, code):
         message = client.messages.create(
             body=f"Penn Marketplace: Your verification code is: {code}",
             from_=settings.TWILIO_PHONE_NUMBER,
-            to=phone_number
+            to=phone_number,
         )
         return message.sid
     except Exception as e:

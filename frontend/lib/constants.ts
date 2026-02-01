@@ -7,20 +7,16 @@ import {
 } from "@/lib/types";
 
 export const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "REPLACE WITH PROD BASE URL"
-    : "http://localhost:3000";
+  process.env.NODE_ENV === "production" ? "REPLACE WITH PROD BASE URL" : "http://localhost:3000";
 
 export const API_BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "REPLACE WITH PROD API URL"
-    : "http://backend:8000"; // can't be localhost because server fetch happens in container
+  process.env.NODE_ENV === "production" ? "REPLACE WITH PROD API URL" : "http://backend:8000"; // can't be localhost because server fetch happens in container
 
 export const PLATFORM_URL = process.env.PLATFORM_URL;
 export const CLIENT_ID = process.env.CLIENT_ID;
 export const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
-export const OIDC_REDIRECT_URI = `${BASE_URL}/callback`; // TODO: needs to be /api/callback not /callback
+export const OIDC_REDIRECT_URI = `${BASE_URL}/api/callback`;
 export const OIDC_AUTHORIZATION_ENDPOINT = `${PLATFORM_URL}/accounts/authorize/`;
 export const OIDC_TOKEN_ENDPOINT = `${API_BASE_URL}/accounts/token/`;
 
@@ -61,13 +57,12 @@ export const CATEGORY_OPTIONS: Array<{ value: ItemCategory; label: string }> = [
   { value: "Vehicles", label: "Vehicles" },
 ];
 
-export const CONDITION_OPTIONS: Array<{ value: ItemCondition; label: string }> =
-  [
-    { value: "NEW", label: "New" },
-    { value: "LIKE_NEW", label: "Used - Like New" },
-    { value: "GOOD", label: "Used - Good" },
-    { value: "FAIR", label: "Used - Fair" },
-  ];
+export const CONDITION_OPTIONS: Array<{ value: ItemCondition; label: string }> = [
+  { value: "NEW", label: "New" },
+  { value: "LIKE_NEW", label: "Used - Like New" },
+  { value: "GOOD", label: "Used - Good" },
+  { value: "FAIR", label: "Used - Fair" },
+];
 
 export const BEDS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "1", label: "1 Bed" },

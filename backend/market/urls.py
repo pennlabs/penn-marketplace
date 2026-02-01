@@ -17,6 +17,7 @@ from market.views import (
     verify_phone_code,
 )
 
+
 app_name = "market"
 
 router = routers.DefaultRouter()

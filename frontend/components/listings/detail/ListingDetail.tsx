@@ -16,15 +16,15 @@ export const ListingDetail = ({ listing }: Props) => {
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
 
   return (
-    <div className="max-w-[96rem] mx-auto flex flex-col w-full p-8 sm:px-12 px-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="mx-auto flex w-full max-w-[96rem] flex-col p-8 px-4 sm:px-12">
+      <div className="mb-4 flex items-center justify-between">
         <BackButton />
         <div className="flex items-center gap-3">
-          <Share className="w-5 h-5" />
-          <Heart className="w-5 h-5" />
+          <Share className="h-5 w-5" />
+          <Heart className="h-5 w-5" />
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <ListingImageGallery images={listing.images} />
         <div className="space-y-6">
           <ListingInfo
@@ -38,7 +38,6 @@ export const ListingDetail = ({ listing }: Props) => {
           <ListingActions
             listingId={listing.id}
             listingPrice={listing.price}
-            listingTitle={listing.title}
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
           />
@@ -46,4 +45,4 @@ export const ListingDetail = ({ listing }: Props) => {
       </div>
     </div>
   );
-}
+};
