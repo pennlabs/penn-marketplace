@@ -65,6 +65,7 @@ services:
       - ./frontend:/app
       - penn-marketplace-frontend-node-modules:/app/node_modules
       - penn-marketplace-frontend-next:/app/.next
+      - penn-marketplace-frontend-pnpm-store:/app/.pnpm-store
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8000
@@ -74,3 +75,4 @@ volumes:
   penn-marketplace-backend-venv:
   penn-marketplace-frontend-node-modules:
   penn-marketplace-frontend-next:
+  penn-marketplace-frontend-pnpm-store:
