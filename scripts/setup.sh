@@ -8,9 +8,9 @@
 # Usage: ./scripts/setup.sh
 #
 # What this does:
-#   1. Installs pre-commit hooks (for commit-time formatting/linting)
-#   2. Verifies your local tools are installed
-#   3. Shows next steps
+#   1. Verifies your local tools are installed (uv, pnpm)
+#   2. Installs backend + frontend dependencies
+#   3. Installs pre-commit hooks (for commit-time formatting/linting)
 # =============================================================================
 
 set -e
