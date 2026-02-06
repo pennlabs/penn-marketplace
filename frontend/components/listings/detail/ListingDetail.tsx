@@ -44,6 +44,7 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
           <Share className="h-5 w-5" />
           <button
             type="button"
+            style={{ cursor: "pointer" }}
             onClick={handleToggleFavorite}
             aria-pressed={isInsideFavorites}
             aria-label={isInsideFavorites ? "Remove from favorites" : "Add to favorites"}
