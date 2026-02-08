@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { BaseCreatePayload } from "@/lib/types";
 
-type BaseFields = "title" | "price" | "description";
-
 export interface BaseListingFormProps<T extends BaseCreatePayload> {
   control: Control<T>;
   errors: FieldErrors<T>;
