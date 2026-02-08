@@ -4,7 +4,16 @@ import { cookies } from "next/headers";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
-import { AuthTokens, CreateItemPayload, CreateSubletPayload, Item, Listing, PaginatedResponse, Sublet, User } from "@/lib/types";
+import {
+  AuthTokens,
+  CreateItemPayload,
+  CreateSubletPayload,
+  Item,
+  Listing,
+  PaginatedResponse,
+  Sublet,
+  User,
+} from "@/lib/types";
 
 async function getTokensFromCookies(): Promise<AuthTokens | null> {
   try {
@@ -202,13 +211,9 @@ export async function verifyPhoneCode(phoneNumber: string, code: string) {
   });
 }
 
-
-
 // ------------------------------------------------------------
 // creating new listings
 // ------------------------------------------------------------
-
-
 
 export type CreateListingPayload = CreateItemPayload | CreateSubletPayload;
 
