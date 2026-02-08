@@ -2,10 +2,13 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
 from rest_framework.serializers import (
+    BooleanField,
+    DateTimeField,
     ImageField,
     ModelSerializer,
     SerializerMethodField,
     SlugRelatedField,
+    URLField,
     ValidationError,
 )
 
@@ -97,7 +100,7 @@ class ItemDataSerializer(ModelSerializer):
 class SubletDataSerializer(ModelSerializer):
     class Meta:
         model = Sublet
-        fields = ["address", "beds", "baths", "start_date", "end_date"]
+        fields = ["street_address", "beds", "baths", "start_date", "end_date"]
 
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
@@ -108,16 +111,31 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             "model": Item,
         },
         "sublet": {
-            "required_fields": ["address", "beds", "baths", "start_date", "end_date"],
+            "required_fields": [
+                "street_address",
+                "beds",
+                "baths",
+                "start_date",
+                "end_date",
+            ],
             "model": Sublet,
         },
     }
 
     images = ListingImageSerializer(many=True, required=False, read_only=True)
-    tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
+    tags = SlugRelatedField(
+        many=True,
+        slug_field="name",
+        queryset=Tag.objects.all(),
+        required=False,
+        allow_empty=True,
+    )
     seller = UserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
+    external_link = URLField(required=False, allow_blank=True, allow_null=True)
+    negotiable = BooleanField(required=False, default=True)
+    expires_at = DateTimeField(required=False, allow_null=True)
 
     class Meta:
         model = Listing
@@ -240,7 +258,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         tags = validated_data.pop("tags", None)
 
         sublet = Sublet.objects.create(
-            address=additional_data.get("address"),
+            street_address=additional_data.get("street_address"),
             beds=additional_data.get("beds"),
             baths=additional_data.get("baths"),
             start_date=additional_data.get("start_date"),
@@ -297,7 +315,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
     def _update_sublet(self, instance, additional_data):
         sublet = instance.sublet
-        sublet_fields = ["address", "beds", "baths", "start_date", "end_date"]
+        sublet_fields = ["street_address", "beds", "baths", "start_date", "end_date"]
         for field in sublet_fields:
             if field in additional_data:
                 setattr(sublet, field, additional_data[field])
