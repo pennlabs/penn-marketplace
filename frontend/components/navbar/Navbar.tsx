@@ -26,9 +26,7 @@ export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const showListingsTabs = isAllListingsPage(pathname);
-  const createNewConfig = showListingsTabs
-    ? ALL_LISTINGS_PAGES_CONFIG[pathname]
-    : undefined;
+  const createNewConfig = showListingsTabs ? ALL_LISTINGS_PAGES_CONFIG[pathname] : undefined;
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -48,13 +46,15 @@ export const Navbar = () => {
               </div>
             )}
 
-            {createNewConfig && <NavbarActions
-              createNewText={createNewConfig.text}
-              createNewHref={createNewConfig.href}
-              mobileShowHamburger={showListingsTabs}
-              isMobileMenuOpen={isMobileMenuOpen}
-              onToggleMobileMenu={toggleMobileMenu}
-            />}
+            {createNewConfig && (
+              <NavbarActions
+                createNewText={createNewConfig.text}
+                createNewHref={createNewConfig.href}
+                mobileShowHamburger={showListingsTabs}
+                isMobileMenuOpen={isMobileMenuOpen}
+                onToggleMobileMenu={toggleMobileMenu}
+              />
+            )}
           </div>
         </div>
       </div>
