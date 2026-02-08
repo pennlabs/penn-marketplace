@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
@@ -128,7 +129,7 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         sublet_filters = {
             "beds": "sublet__beds",
             "baths": "sublet__baths",
-            "address": "sublet__address__icontains",
+            "address": "sublet__street_address__icontains",
         }
 
         if listing_type == "item":
@@ -168,7 +169,11 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         if request.query_params.get("seller", "false").lower() == "true":
             queryset = queryset.filter(seller=request.user)
         else:
-            queryset = queryset.filter(expires_at__gte=timezone.now())
+            # Show listings that are not expired, or have no expiration
+            now = timezone.now()
+            queryset = queryset.filter(
+                Q(expires_at__gte=now) | Q(expires_at__isnull=True)
+            )
 
         page = self.paginate_queryset(queryset)
         if page is not None:

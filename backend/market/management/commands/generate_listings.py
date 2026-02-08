@@ -180,19 +180,6 @@ class Command(BaseCommand):
             "House",
         ]
 
-        neighborhoods = [
-            "University City",
-            "Center City",
-            "Rittenhouse Square",
-            "Fairmount",
-            "Graduate Hospital",
-            "Old City",
-            "Northern Liberties",
-            "Fishtown",
-            "Queen Village",
-            "South Philadelphia",
-        ]
-
         street_names = [
             "Walnut",
             "Chestnut",
@@ -234,8 +221,8 @@ class Command(BaseCommand):
             # generate random address
             street_number = random.randint(100, 4999)
             street = random.choice(street_names)
-            neighborhood = random.choice(neighborhoods)
-            address = f"{street_number} {street} St, {neighborhood}, Philadelphia, PA"
+
+            street_address = f"{street_number} {street} St, Philadelphia, PA"
 
             # random beds and baths
             beds = random.randint(0, 4)  # 0 for studio
@@ -271,7 +258,7 @@ class Command(BaseCommand):
                     price=price,
                     negotiable=negotiable,
                     expires_at=expires_at,
-                    address=address,
+                    street_address=street_address,
                     beds=beds,
                     baths=baths,
                     start_date=start_date,

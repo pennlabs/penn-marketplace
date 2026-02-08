@@ -89,7 +89,7 @@ class Listing(models.Model):
     )
     negotiable = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
+    expires_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.title} by {self.seller}"
@@ -125,7 +125,7 @@ class Item(Listing):
 
 
 class Sublet(Listing):
-    address = models.CharField(max_length=255)
+    street_address = models.CharField(max_length=255)
     beds = models.PositiveIntegerField()
     baths = models.PositiveIntegerField()
     start_date = models.DateField()

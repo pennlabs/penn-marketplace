@@ -39,7 +39,7 @@ export type ItemAdditionalData = {
 };
 
 export type SubletAdditionalData = {
-  address: string;
+  street_address: string;
   beds: number;
   baths: number;
   start_date: string;
@@ -139,26 +139,21 @@ export type ListingFiltersMap = {
   sublets: SubletFilters;
 };
 
-
 // ------------------------------------------------------------
 // create payload types
 // ------------------------------------------------------------
-type BaseCreatePayload = {
+export type BaseCreatePayload = {
   title: string;
   description: string;
   price: string;
-  negotiable: boolean;
-  expires_at: string;
-  external_link?: string;
-  tags: string[];
-}
+};
 
 export type CreateItemPayload = BaseCreatePayload & {
   listing_type: "item";
   additional_data: ItemAdditionalData;
-}
+};
 
 export type CreateSubletPayload = BaseCreatePayload & {
   listing_type: "sublet";
   additional_data: SubletAdditionalData;
-}
+};
