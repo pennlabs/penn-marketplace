@@ -35,8 +35,9 @@ export const Select = ({
       <div className="relative w-full">
         <SelectShadcn value={value} onValueChange={onValueChange}>
           <SelectTrigger
+            // height forced to h-10 to override shadcn default
             className={cn(
-              "focus-visible:border-input bg-background h-10 w-[180px] focus-visible:ring-0 focus-visible:ring-offset-0",
+              "focus-visible:border-input bg-background !h-10 w-[180px] focus-visible:ring-0 focus-visible:ring-offset-0",
               triggerClassName
             )}
           >
