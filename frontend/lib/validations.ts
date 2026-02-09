@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ItemCondition, ItemCategory } from "@/lib/types";
+import type { ItemCondition, ItemCategory, ValidatedAddress } from "@/lib/types";
 
 export const phoneSchema = z.object({
   phoneNumber: z
@@ -126,6 +126,14 @@ export const createSubletSchema = z
     price: priceSchema,
     tags: z.array(z.string().trim()),
     street_address: z.string().trim().min(1, "Street address is required"),
+    validated_address: z
+      .object({
+        display_name: z.string(),
+        lat: z.string(),
+        lon: z.string(),
+        place_id: z.number(),
+      })
+      .nullable(),
     beds: z.number().int().min(0, "Beds must be 0 or more"),
     baths: z.number().int().min(0, "Baths must be 0 or more"),
     start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
@@ -138,6 +146,22 @@ export const createSubletSchema = z
       return Number.isFinite(start) && Number.isFinite(end) && end > start;
     },
     { message: "End date must be after start date", path: ["end_date"] }
+  )
+  .refine((data) => data.validated_address !== null, {
+    message: "Please select an address from the dropdown",
+    path: ["street_address"],
+  })
+  .refine(
+    (data) => {
+      if (data.validated_address) {
+        return data.street_address === data.validated_address.display_name;
+      }
+      return true;
+    },
+    {
+      message: "Please select an address from the dropdown",
+      path: ["street_address"],
+    }
   );
 
 export type CreateSubletFormData = z.infer<typeof createSubletSchema>;
