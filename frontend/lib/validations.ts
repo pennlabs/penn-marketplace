@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ItemCondition, ItemCategory } from "@/lib/types";
 
 export const phoneSchema = z.object({
   phoneNumber: z
@@ -55,6 +56,42 @@ export const offerSchema = z.object({
 
 export type OfferFormData = z.infer<typeof offerSchema>;
 
+// price validation regex: allows optional $, comma-separated thousands, optional decimals (up to 2)
+const priceRegex = /^(\$?\d{1,3}(,\d{3})*|\$?\d+)(\.\d{1,2})?$/;
+
+const priceSchema = z
+  .string()
+  .trim()
+  .min(1, "Price is required")
+  .refine((s) => priceRegex.test(s), { message: "Price must be a valid amount" })
+  .refine(
+    (s) => {
+      const num = Number(s.replace(/[$,]/g, ""));
+      return num > 0;
+    },
+    { message: "Price must be a positive number" }
+  );
+
+// Zod schemas using the actual enum values from types.ts
+const itemConditionValues = [
+  "NEW",
+  "LIKE_NEW",
+  "GOOD",
+  "FAIR",
+] as const satisfies readonly ItemCondition[];
+const itemCategoryValues = [
+  "Art",
+  "Books",
+  "Clothing",
+  "Electronics",
+  "Furniture",
+  "Home and Garden",
+  "Music",
+  "Other",
+  "Tools",
+  "Vehicles",
+] as const satisfies readonly ItemCategory[];
+
 export const createItemSchema = z.object({
   title: z
     .string()
@@ -66,27 +103,10 @@ export const createItemSchema = z.object({
     .trim()
     .min(1, "Description is required")
     .max(5000, "Description must be less than 5000 characters"),
-  price: z
-    .string()
-    .trim()
-    .min(1, "Price is required")
-    .refine((s) => /^(\$?\d{1,3}(,\d{3})*|\$?\d+)(\.\d{1,2})?$/.test(s), {
-      message: "Price must be a valid amount",
-    })
-    .transform((s) => Number(s.replace(/[$,]/g, "")))
-    .refine((n) => n > 0, { message: "Price must be a positive number" }),
-  negotiable: z.coerce.boolean().default(false),
-  expires_at: z
-    .string()
-    // .datetime("Expiration must be a valid date/time")
-    .optional()
-    .refine((val) => !val || new Date(val).getTime() > Date.now(), {
-      message: "Expiration must be in the future",
-    }),
-  external_link: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
-  tags: z.array(z.string().trim()).default([]),
-  condition: z.string().trim().min(1, "Condition is required"),
-  category: z.string().trim().min(1, "Category is required"),
+  price: priceSchema,
+  tags: z.array(z.string().trim()),
+  condition: z.enum(itemConditionValues, "Condition is required"),
+  category: z.enum(itemCategoryValues, "Category is required"),
 });
 
 export type CreateItemFormData = z.infer<typeof createItemSchema>;
@@ -103,28 +123,11 @@ export const createSubletSchema = z
       .trim()
       .min(1, "Description is required")
       .max(5000, "Description must be less than 5000 characters"),
-    price: z
-      .string()
-      .trim()
-      .min(1, "Price is required")
-      .refine((s) => /^(\$?\d{1,3}(,\d{3})*|\$?\d+)(\.\d{1,2})?$/.test(s), {
-        message: "Price must be a valid amount",
-      })
-      .transform((s) => Number(s.replace(/[$,]/g, "")))
-      .refine((n) => n > 0, { message: "Price must be a positive number" }),
-    negotiable: z.coerce.boolean().default(false),
-    expires_at: z
-      .string()
-      // .datetime("Expiration must be a valid date/time")
-      .optional()
-      .refine((val) => !val || new Date(val).getTime() > Date.now(), {
-        message: "Expiration must be in the future",
-      }),
-    external_link: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
-    tags: z.array(z.string().trim()).default([]),
-    address: z.string().trim().min(1, "Address is required"),
-    beds: z.coerce.number().int().min(0, "Beds must be 0 or more"),
-    baths: z.coerce.number().int().min(0, "Baths must be 0 or more"),
+    price: priceSchema,
+    tags: z.array(z.string().trim()),
+    street_address: z.string().trim().min(1, "Street address is required"),
+    beds: z.number().int().min(0, "Beds must be 0 or more"),
+    baths: z.number().int().min(0, "Baths must be 0 or more"),
     start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
     end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
   })

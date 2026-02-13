@@ -14,6 +14,11 @@ export function formatPrice(price: number, showMonthly: boolean = false) {
   return showMonthly ? `${formatted}/mo` : formatted;
 }
 
+// parse a price string (with optional $, commas) to a number. Use when building API payloads from form data.
+export function parsePriceString(price: string): number {
+  return Number(price.replace(/[$,]/g, ""));
+}
+
 export function formatDate(dateString: string) {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });

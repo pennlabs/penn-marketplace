@@ -1,3 +1,4 @@
+import { FormField } from "@/components/common/FormField";
 import {
   Select,
   SelectContent,
@@ -5,60 +6,55 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FormField } from "@/components/common/FormField";
 
 interface Option {
   value: string;
   label: string;
 }
 
-type FormSelectPropsBase = {
+interface FormSelectPropsBase {
   label: string;
   options: Option[];
   placeholder?: string;
   error?: string;
   touched?: boolean;
-  required?: boolean;
   optional?: boolean;
   helperText?: string;
-};
+}
 
 type StringFormSelectProps = FormSelectPropsBase & {
+  valueType?: "string";
   value: string | undefined;
   onChange: (value: string) => void;
-  asNumber?: false;
 };
 
 type NumberFormSelectProps = FormSelectPropsBase & {
+  valueType: "number";
   value: number | undefined;
   onChange: (value: number) => void;
-  asNumber: true;
 };
 
 type FormSelectProps = StringFormSelectProps | NumberFormSelectProps;
 
-export function FormSelect(props: FormSelectProps) {
-  const {
-    label,
-    options,
-    placeholder = "Select an option",
-    error,
-    touched,
-    optional,
-    helperText,
-  } = props;
-
-  const stringValue = props.asNumber
-    ? props.value !== undefined
-      ? String(props.value)
-      : ""
-    : (props.value ?? "");
+export const FormSelect = ({
+  label,
+  options,
+  placeholder = "Select an option",
+  error,
+  touched,
+  optional,
+  helperText,
+  valueType,
+  value,
+  onChange,
+}: FormSelectProps) => {
+  const stringValue = value !== undefined ? String(value) : "";
 
   const handleChange = (val: string) => {
-    if (props.asNumber) {
-      props.onChange(Number(val));
+    if (valueType === "number") {
+      onChange(Number(val));
     } else {
-      props.onChange(val);
+      onChange(val);
     }
   };
 
@@ -84,4 +80,4 @@ export function FormSelect(props: FormSelectProps) {
       </Select>
     </FormField>
   );
-}
+};
