@@ -44,14 +44,15 @@ export function FormSelect(props: FormSelectProps) {
     placeholder = "Select an option",
     error,
     touched,
-    required,
     optional,
     helperText,
   } = props;
 
   const stringValue = props.asNumber
-    ? props.value !== undefined ? String(props.value) : ""
-    : props.value ?? "";
+    ? props.value !== undefined
+      ? String(props.value)
+      : ""
+    : (props.value ?? "");
 
   const handleChange = (val: string) => {
     if (props.asNumber) {

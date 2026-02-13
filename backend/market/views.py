@@ -262,7 +262,7 @@ class Favorites(
             )
         listing = get_object_or_404(Listing, id=listing_id)
         favorites.add(listing)
-        return Response({"favorited": True}, status=status.HTTP_200_OK)
+        return Response({"favorited": True}, status=status.HTTP_201_OK)
 
     def destroy(self, request, *args, **kwargs):
         listing_id = int(self.kwargs["listing_id"])
@@ -271,7 +271,7 @@ class Favorites(
         if listing not in request.user.listings_favorited.all():
             return Response(
                 {"favorited": False, "detail": "Favorite does not exist"},
-                status=status.HTTP_200_OK,
+                status=status.HTTP_404_OK,
             )
 
         request.user.listings_favorited.remove(listing)

@@ -33,27 +33,29 @@ export const NavbarActions = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3">
       {/* desktop only new listing button */}
-      {<Button
+      {
+        <Button
           variant="outline"
-          className="hidden md:flex gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden gap-2 md:flex"
           asChild
         >
           <Link href={createNewHref} aria-label={createNewText}>
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
             <span>{createNewText}</span>
           </Link>
         </Button>
       }
 
       {/* mobile only new listing button (icon only) */}
-      {<Button
+      {
+        <Button
           variant="outline"
           size="icon"
-          className="md:hidden border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground md:hidden"
           asChild
         >
           <Link href={createNewHref} aria-label={createNewText}>
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
           </Link>
         </Button>
       }

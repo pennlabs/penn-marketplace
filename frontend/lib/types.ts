@@ -139,7 +139,6 @@ export type ListingFiltersMap = {
   sublets: SubletFilters;
 };
 
-
 // ------------------------------------------------------------
 // create payload types
 // ------------------------------------------------------------
@@ -151,14 +150,14 @@ type BaseCreatePayload = {
   expires_at: string;
   external_link?: string;
   tags: string[];
-}
+};
 
 export type CreateItemPayload = BaseCreatePayload & {
   listing_type: "item";
   additional_data: ItemAdditionalData;
-}
+};
 
 export type CreateSubletPayload = BaseCreatePayload & {
   listing_type: "sublet";
   additional_data: SubletAdditionalData;
-}
+};

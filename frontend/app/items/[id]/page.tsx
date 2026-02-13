@@ -5,7 +5,6 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const item = await getListing(id);
   const favorites = await getUsersFavorites().catch(() => null);
-  const isFavorited = Boolean(favorites?.results?.some((favorite) => favorite.id === item.id));
 
-  return <ListingDetail listing={item} initialIsFavorited={isFavorited} />;
+  return <ListingDetail listing={item} initialFavorites={favorites} />;
 }

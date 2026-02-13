@@ -55,26 +55,34 @@ export const offerSchema = z.object({
 
 export type OfferFormData = z.infer<typeof offerSchema>;
 
-
-
-
 export const createItemSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
-  description: z.string().trim().min(1, "Description is required").max(5000, "Description must be less than 5000 characters"),
-  price: z.string()
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(200, "Title must be less than 200 characters"),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description is required")
+    .max(5000, "Description must be less than 5000 characters"),
+  price: z
+    .string()
     .trim()
     .min(1, "Price is required")
-    .refine((s) => /^(\$?\d{1,3}(,\d{3})*|\$?\d+)(\.\d{1,2})?$/.test(s), { message: "Price must be a valid amount" })
+    .refine((s) => /^(\$?\d{1,3}(,\d{3})*|\$?\d+)(\.\d{1,2})?$/.test(s), {
+      message: "Price must be a valid amount",
+    })
     .transform((s) => Number(s.replace(/[$,]/g, "")))
     .refine((n) => n > 0, { message: "Price must be a positive number" }),
   negotiable: z.coerce.boolean().default(false),
-  expires_at: z.string()
+  expires_at: z
+    .string()
     // .datetime("Expiration must be a valid date/time")
     .optional()
-    .refine(
-      (val) => !val || new Date(val).getTime() > Date.now(),
-      { message: "Expiration must be in the future" }
-    ),
+    .refine((val) => !val || new Date(val).getTime() > Date.now(), {
+      message: "Expiration must be in the future",
+    }),
   external_link: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
   tags: z.array(z.string().trim()).default([]),
   condition: z.string().trim().min(1, "Condition is required"),
@@ -83,38 +91,50 @@ export const createItemSchema = z.object({
 
 export type CreateItemFormData = z.infer<typeof createItemSchema>;
 
-
-export const createSubletSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
-  description: z.string().trim().min(1, "Description is required").max(5000, "Description must be less than 5000 characters"),
-  price: z.string()
-    .trim()
-    .min(1, "Price is required")
-    .refine((s) => /^(\$?\d{1,3}(,\d{3})*|\$?\d+)(\.\d{1,2})?$/.test(s), { message: "Price must be a valid amount" })
-    .transform((s) => Number(s.replace(/[$,]/g, "")))
-    .refine((n) => n > 0, { message: "Price must be a positive number" }),
-  negotiable: z.coerce.boolean().default(false),
-  expires_at: z.string()
-    // .datetime("Expiration must be a valid date/time")
-    .optional()
-    .refine(
-      (val) => !val || new Date(val).getTime() > Date.now(),
-      { message: "Expiration must be in the future" }
-    ),
-  external_link: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
-  tags: z.array(z.string().trim()).default([]),
-  address: z.string().trim().min(1, "Address is required"),
-  beds: z.coerce.number().int().min(0, "Beds must be 0 or more"),
-  baths: z.coerce.number().int().min(0, "Baths must be 0 or more"),
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
-}).refine(
-  (data) => {
-  const start = Date.parse(data.start_date);
-  const end = Date.parse(data.end_date);
-  return Number.isFinite(start) && Number.isFinite(end) && end > start;
-  },
-  { message: "End date must be after start date", path: ["end_date"] }
-);
+export const createSubletSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(1, "Title is required")
+      .max(200, "Title must be less than 200 characters"),
+    description: z
+      .string()
+      .trim()
+      .min(1, "Description is required")
+      .max(5000, "Description must be less than 5000 characters"),
+    price: z
+      .string()
+      .trim()
+      .min(1, "Price is required")
+      .refine((s) => /^(\$?\d{1,3}(,\d{3})*|\$?\d+)(\.\d{1,2})?$/.test(s), {
+        message: "Price must be a valid amount",
+      })
+      .transform((s) => Number(s.replace(/[$,]/g, "")))
+      .refine((n) => n > 0, { message: "Price must be a positive number" }),
+    negotiable: z.coerce.boolean().default(false),
+    expires_at: z
+      .string()
+      // .datetime("Expiration must be a valid date/time")
+      .optional()
+      .refine((val) => !val || new Date(val).getTime() > Date.now(), {
+        message: "Expiration must be in the future",
+      }),
+    external_link: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
+    tags: z.array(z.string().trim()).default([]),
+    address: z.string().trim().min(1, "Address is required"),
+    beds: z.coerce.number().int().min(0, "Beds must be 0 or more"),
+    baths: z.coerce.number().int().min(0, "Baths must be 0 or more"),
+    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
+    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
+  })
+  .refine(
+    (data) => {
+      const start = Date.parse(data.start_date);
+      const end = Date.parse(data.end_date);
+      return Number.isFinite(start) && Number.isFinite(end) && end > start;
+    },
+    { message: "End date must be after start date", path: ["end_date"] }
+  );
 
 export type CreateSubletFormData = z.infer<typeof createSubletSchema>;
