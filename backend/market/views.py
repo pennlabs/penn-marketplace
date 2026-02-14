@@ -267,7 +267,7 @@ class Favorites(
             )
         listing = get_object_or_404(Listing, id=listing_id)
         favorites.add(listing)
-        return Response({"favorited": True}, status=status.HTTP_201_OK)
+        return Response({"favorited": True}, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         listing_id = int(self.kwargs["listing_id"])
