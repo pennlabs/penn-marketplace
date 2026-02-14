@@ -276,7 +276,7 @@ class Favorites(
         if listing not in request.user.listings_favorited.all():
             return Response(
                 {"favorited": False, "detail": "Favorite does not exist"},
-                status=status.HTTP_404_OK,
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         request.user.listings_favorited.remove(listing)
