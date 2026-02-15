@@ -1,23 +1,40 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Heart, Share } from "lucide-react";
-import { Item, PaginatedResponse, Sublet } from "@/lib/types";
-import { ListingActions } from "@/components/listings/detail/ListingActions";
+import { Item, ItemCategory, ItemCondition, Offer, PaginatedResponse, Sublet } from "@/lib/types";
+import { CONDITION_OPTIONS } from "@/lib/constants";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
-import { ListingInfo } from "@/components/listings/detail/ListingInfo";
-import { UserCard } from "@/components/listings/detail/UserCard";
 import { BackButton } from "@/components/listings/detail/BackButton";
-import { addToUsersFavorites, deleteFromUsersFavorites, getUsersFavorites } from "@/lib/actions";
+import {
+  addToUsersFavorites,
+  deleteFromUsersFavorites,
+  getListing,
+  getUsersFavorites,
+  updateListing,
+  uploadListingImages,
+} from "@/lib/actions";
+import { ExternalItemView } from "@/components/listings/detail/ExternalItemView";
+import { PersonalItemView } from "@/components/listings/detail/PersonalItemView";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   listing: Item | Sublet;
   initialFavorites: PaginatedResponse<Item | Sublet> | null;
+  offers: Offer[];
+  offersMode: "received" | "made";
+  canEdit: boolean;
 }
 
-export const ListingDetail = ({ listing, initialFavorites }: Props) => {
-  const listingType = listing.listing_type;
+export const ListingDetail = ({
+  listing,
+  initialFavorites,
+  offers,
+  offersMode,
+  canEdit,
+}: Props) => {
+  const [listingState, setListingState] = useState(listing);
+  const listingType = listingState.listing_type;
   const priceLabel = listingType === "sublet" ? "/mo" : undefined;
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
   const queryClient = useQueryClient();
@@ -29,16 +46,16 @@ export const ListingDetail = ({ listing, initialFavorites }: Props) => {
   });
 
   const isInsideFavorites = useMemo(
-    () => !!favoritesQuery.data?.results?.some((favorite) => favorite.id === listing.id),
-    [favoritesQuery.data, listing.id]
+    () => !!favoritesQuery.data?.results?.some((favorite) => favorite.id === listingState.id),
+    [favoritesQuery.data, listingState.id]
   );
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (shouldFavorite: boolean) => {
       if (shouldFavorite) {
-        await addToUsersFavorites(listing.id);
+        await addToUsersFavorites(listingState.id);
       } else {
-        await deleteFromUsersFavorites(listing.id);
+        await deleteFromUsersFavorites(listingState.id);
       }
     },
     onMutate: async (shouldFavorite: boolean) => {
@@ -46,14 +63,14 @@ export const ListingDetail = ({ listing, initialFavorites }: Props) => {
       const previous = queryClient.getQueryData<PaginatedResponse<Item | Sublet>>(["favorites"]);
 
       if (previous) {
-        const exists = previous.results?.some((favorite) => favorite.id === listing.id);
+        const exists = previous.results?.some((favorite) => favorite.id === listingState.id);
         let results = previous.results ?? [];
 
         if (shouldFavorite && !exists) {
-          results = [...results, listing];
+          results = [...results, listingState];
         }
         if (!shouldFavorite && exists) {
-          results = results.filter((favorite) => favorite.id !== listing.id);
+          results = results.filter((favorite) => favorite.id !== listingState.id);
         }
 
         queryClient.setQueryData<PaginatedResponse<Item | Sublet>>(["favorites"], {
@@ -74,8 +91,88 @@ export const ListingDetail = ({ listing, initialFavorites }: Props) => {
     },
   });
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(listingState.title);
+  const [draftPrice, setDraftPrice] = useState(listingState.price.toString());
+  const [draftDescription, setDraftDescription] = useState(listingState.description);
+  const [draftCategory, setDraftCategory] = useState<ItemCategory | "">(
+    listingState.listing_type === "item" ? listingState.additional_data.category : ""
+  );
+  const resolveConditionValue = (condition: string) =>
+    CONDITION_OPTIONS.find((option) => option.label === condition)?.value ??
+    (condition as ItemCondition);
+
+  const [draftCondition, setDraftCondition] = useState<ItemCondition | "">(
+    listingState.listing_type === "item"
+      ? resolveConditionValue(listingState.additional_data.condition)
+      : ""
+  );
+  const [draftExpiresAt, setDraftExpiresAt] = useState(
+    listingState.expires_at ? listingState.expires_at.slice(0, 10) : ""
+  );
+  const [draftImages, setDraftImages] = useState<File[]>([]);
+
   const handleToggleFavorite = async () => {
     toggleFavoriteMutation.mutate(!isInsideFavorites);
+  };
+
+  const handleEditCancel = () => {
+    setDraftTitle(listingState.title);
+    setDraftPrice(listingState.price.toString());
+    setDraftDescription(listingState.description);
+    if (listingState.listing_type === "item") {
+      setDraftCategory(listingState.additional_data.category);
+      setDraftCondition(resolveConditionValue(listingState.additional_data.condition));
+    }
+    setDraftExpiresAt(listingState.expires_at ? listingState.expires_at.slice(0, 10) : "");
+    setDraftImages([]);
+    setIsEditing(false);
+  };
+
+  const handleEditStart = () => {
+    setDraftTitle(listingState.title);
+    setDraftPrice(listingState.price.toString());
+    setDraftDescription(listingState.description);
+    if (listingState.listing_type === "item") {
+      setDraftCategory(listingState.additional_data.category);
+      setDraftCondition(resolveConditionValue(listingState.additional_data.condition));
+    }
+    setDraftExpiresAt(listingState.expires_at ? listingState.expires_at.slice(0, 10) : "");
+    setDraftImages([]);
+    setIsEditing(true);
+  };
+
+  const handleEditSave = async () => {
+    const priceValue = Number(draftPrice);
+    if (!Number.isFinite(priceValue)) {
+      return;
+    }
+
+    try {
+      const updated = await updateListing(listingState.id, {
+        title: draftTitle.trim(),
+        description: draftDescription.trim(),
+        price: priceValue,
+        listing_type: listingState.listing_type,
+        additional_data:
+          listingState.listing_type === "item"
+            ? {
+                ...(draftCondition ? { condition: draftCondition } : {}),
+                ...(draftCategory ? { category: draftCategory } : {}),
+              }
+            : {},
+      });
+      let nextListing = updated;
+      if (draftImages.length > 0) {
+        await uploadListingImages(listingState.id, draftImages);
+        nextListing = await getListing(String(listingState.id));
+        setDraftImages([]);
+      }
+      setListingState(nextListing);
+      setIsEditing(false);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
@@ -98,23 +195,40 @@ export const ListingDetail = ({ listing, initialFavorites }: Props) => {
         </div>
       </div>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <ListingImageGallery images={listing.images} />
-        <div className="space-y-6">
-          <ListingInfo
-            title={listing.title}
-            price={listing.price}
-            description={listing.description}
-            priceLabel={priceLabel}
-            {...listing.additional_data}
-          />
-          <UserCard user={listing.seller} label={listingOwnerLabel} />
-          <ListingActions
-            listingId={listing.id}
-            listingPrice={listing.price}
+        <ListingImageGallery images={listingState.images} />
+        {canEdit ? (
+          <PersonalItemView
+            listing={listingState}
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
+            isEditing={isEditing}
+            draftTitle={draftTitle}
+            draftPrice={draftPrice}
+            draftDescription={draftDescription}
+            draftCategory={draftCategory}
+            draftCondition={draftCondition}
+            draftImages={draftImages}
+            onDraftTitleChange={setDraftTitle}
+            onDraftPriceChange={setDraftPrice}
+            onDraftDescriptionChange={setDraftDescription}
+            onDraftCategoryChange={setDraftCategory}
+            onDraftConditionChange={setDraftCondition}
+            onDraftImagesChange={setDraftImages}
+            onEditCancel={handleEditCancel}
+            onEditSave={handleEditSave}
+            onEditStart={handleEditStart}
+            offers={offers}
+            offersMode={offersMode}
           />
-        </div>
+        ) : (
+          <ExternalItemView
+            listing={listingState}
+            priceLabel={priceLabel}
+            listingOwnerLabel={listingOwnerLabel}
+            offers={offers}
+            offersMode={offersMode}
+          />
+        )}
       </div>
     </div>
   );

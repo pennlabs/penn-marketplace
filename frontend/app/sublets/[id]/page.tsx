@@ -1,10 +1,28 @@
 import { ListingDetail } from "@/components/listings/detail/ListingDetail";
-import { getListing, getUsersFavorites } from "@/lib/actions";
+import {
+  getCurrentUser,
+  getListing,
+  getOffersMade,
+  getOffersReceived,
+  getUsersFavorites,
+} from "@/lib/actions";
 
 export default async function SubletPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sublet = await getListing(id);
   const favorites = await getUsersFavorites().catch(() => null);
+  const currentUser = await getCurrentUser().catch(() => null);
+  const isOwner = currentUser?.id === sublet.seller.id;
+  const offersResponse = await (isOwner ? getOffersReceived() : getOffersMade()).catch(() => null);
+  const offers = offersResponse?.results?.filter((offer) => offer.listing === sublet.id) ?? [];
 
-  return <ListingDetail listing={sublet} initialFavorites={favorites} />;
+  return (
+    <ListingDetail
+      listing={sublet}
+      initialFavorites={favorites}
+      offers={offers}
+      offersMode={isOwner ? "received" : "made"}
+      canEdit={isOwner}
+    />
+  );
 }
