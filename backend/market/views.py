@@ -263,7 +263,7 @@ class Favorites(
         if favorites.filter(id=listing_id).exists():
             return Response(
                 {"liked": True, "detail": "User has already liked the listing"},
-                status=status.HTTP_200_OK,
+                status=status.HTTP_409_CONFLICT,
             )
         listing = get_object_or_404(Listing, id=listing_id)
         favorites.add(listing)

@@ -27,7 +27,7 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
     staleTime: Infinity,
   });
 
-  const isInsideFavorites = favoritesQuery.data ?? false;
+  const isFavorited = favoritesQuery.data ?? false;
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (shouldFavorite: boolean) => {
@@ -51,7 +51,7 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
   });
 
   const handleToggleFavorite = async () => {
-    toggleFavoriteMutation.mutate(!isInsideFavorites);
+    toggleFavoriteMutation.mutate(!isFavorited);
   };
 
   return (
@@ -64,12 +64,10 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
             type="button"
             className="cursor-pointer"
             onClick={handleToggleFavorite}
-            aria-pressed={isInsideFavorites}
-            aria-label={isInsideFavorites ? "Remove from favorites" : "Add to favorites"}
+            aria-pressed={isFavorited}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
           >
-            <Heart
-              className={isInsideFavorites ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"}
-            />
+            <Heart className={isFavorited ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"} />
           </button>
         </div>
       </div>
