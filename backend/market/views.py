@@ -262,12 +262,12 @@ class Favorites(
         favorites = request.user.listings_favorited
         if favorites.filter(id=listing_id).exists():
             return Response(
-                {"favorited": True, "detail": "Favorite already exists"},
-                status=status.HTTP_200_OK,
+                {"liked": True, "detail": "User has already liked the listing"},
+                status=status.HTTP_409_CONFLICT,
             )
         listing = get_object_or_404(Listing, id=listing_id)
         favorites.add(listing)
-        return Response({"favorited": True}, status=status.HTTP_200_OK)
+        return Response({"liked": True}, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         listing_id = int(self.kwargs["listing_id"])
@@ -275,12 +275,12 @@ class Favorites(
 
         if listing not in request.user.listings_favorited.all():
             return Response(
-                {"favorited": False, "detail": "Favorite does not exist"},
-                status=status.HTTP_200_OK,
+                {"liked": False, "detail": "User hasn't liked the listing yet"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         request.user.listings_favorited.remove(listing)
-        return Response({"favorited": False}, status=status.HTTP_200_OK)
+        return Response({"liked": False}, status=status.HTTP_200_OK)
 
 
 class Offers(viewsets.ModelViewSet):
