@@ -131,10 +131,52 @@ class Sublet(Listing):
     start_date = models.DateField()
     end_date = models.DateField()
 
+    true_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    true_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    
+
     def clean(self):
         super().clean()
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             raise ValidationError({"end_date": "End date must be after start date"})
+    
+    def _calculate_fake_location(self, true_latitude, true_longitude):
+        import math
+        import hashlib
+        from decimal import Decimal
+
+        if true_latitude is None or true_longitude is None:
+            return None, None
+        
+        lat_str = f"{float(true_latitude):.6f}"
+        lon_str = f"{float(true_longitude):.6f}"
+        seed = hashlib.md5(f"{lat_str}{lon_str}".encode()).hexdigest()
+
+        offset_factor = int(seed[:8], 16) / 0xFFFFFFFF
+
+        offset_distance = 0.0005 + (offset_factor * 0.0013)
+        angle = offset_factor * 2 * math.pi
+
+        lat_offset = offset_distance * math.sin(angle)
+        lon_offset = offset_distance * math.cos(angle) 
+
+        approx_lat = Decimal(str(float(true_latitude) + lat_offset))
+        approx_lon = Decimal(str(float(true_longitude) + lon_offset))
+        return approx_lat, approx_lon
+
+    @property
+    def fake_latitude(self):
+        if self.true_latitude and self.true_longitude:
+            fake_lat, _ = self._calculate_fake_location(self.true_latitude, self.true_longitude)
+            return fake_lat
+        return None
+    
+    @property
+    def fake_longitude(self):
+        if self.true_latitude and self.true_longitude:
+            _, fake_lon = self._calculate_fake_location(self.true_latitude, self.true_longitude)
+            return fake_lon
+        return None
 
     def save(self, *args, **kwargs):
         self.full_clean()

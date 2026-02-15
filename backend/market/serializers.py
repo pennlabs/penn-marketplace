@@ -98,9 +98,25 @@ class ItemDataSerializer(ModelSerializer):
 
 
 class SubletDataSerializer(ModelSerializer):
+    latitude = SerializerMethodField()
+    longitude = SerializerMethodField()
+
     class Meta:
         model = Sublet
-        fields = ["street_address", "beds", "baths", "start_date", "end_date"]
+        fields = ["street_address", "beds", "baths", "start_date", "end_date", "latitude", "longitude"]
+
+    def get_latitude(self, obj):
+        if obj.true_latitude and obj.true_longitude:
+            fake_lat, _ = obj._calculate_fake_location(obj.true_latitude, obj.true_longitude)
+            return float(fake_lat) if fake_lat else None
+        return None
+    
+    def get_longitude(self, obj):
+        if obj.true_latitude and obj.true_longitude:
+            _, fake_lon = obj._calculate_fake_location(obj.true_latitude, obj.true_longitude)
+            return float(fake_lon) if fake_lon else None
+        return None
+
 
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
@@ -255,7 +271,16 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         return item
 
     def _create_sublet(self, validated_data, additional_data):
+        from decimal import Decimal, ROUND_DOWN
         tags = validated_data.pop("tags", None)
+
+        latitude = additional_data.get("latitude")
+        longitude = additional_data.get("longitude")
+
+        if latitude is not None:
+            latitude = Decimal(str(latitude)).quantize(Decimal("1.000000"), rounding=ROUND_DOWN)
+        if longitude is not None:
+            longitude = Decimal(str(longitude)).quantize(Decimal("1.000000"), rounding=ROUND_DOWN)
 
         sublet = Sublet.objects.create(
             street_address=additional_data.get("street_address"),
@@ -263,6 +288,8 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             baths=additional_data.get("baths"),
             start_date=additional_data.get("start_date"),
             end_date=additional_data.get("end_date"),
+            true_latitude=latitude,
+            true_longitude=longitude,
             **validated_data,
         )
 
@@ -319,6 +346,10 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         for field in sublet_fields:
             if field in additional_data:
                 setattr(sublet, field, additional_data[field])
+        if "latitude" in additional_data:
+            sublet.true_latitude = additional_data["latitude"]
+        if "longitude" in additional_data:
+            sublet.true_longitude = additional_data["longitude"]
         sublet.full_clean()
         sublet.save()
 
