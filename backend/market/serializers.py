@@ -133,6 +133,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
     seller = UserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
+    is_favorited = SerializerMethodField()
     external_link = URLField(required=False, allow_blank=True, allow_null=True)
     negotiable = BooleanField(required=False, default=True)
     expires_at = DateTimeField(required=False, allow_null=True)
@@ -155,6 +156,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             "images",
             "listing_type",
             "additional_data",
+            "is_favorited",
         ]
         read_only_fields = [
             "id",
@@ -195,6 +197,12 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
                 )
 
         return super().validate(attrs)
+
+    def get_is_favorited(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.listings_favorited.filter(id=obj.id).exists()
 
     def validate_title(self, value):
         if self.contains_profanity(value):
@@ -327,6 +335,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
     buyer_count = SerializerMethodField()
     favorite_count = SerializerMethodField()
+    is_favorited = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
     seller = UserSerializer(read_only=True)
@@ -350,6 +359,7 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
             "favorite_count",
             "listing_type",
             "additional_data",
+            "is_favorited",
         ]
         read_only_fields = fields
 
@@ -358,6 +368,12 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
 
     def get_favorite_count(self, obj):
         return obj.favorites.count()
+
+    def get_is_favorited(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.listings_favorited.filter(id=obj.id).exists()
 
 
 # Read-only serializer for use when pulling all listings /etc

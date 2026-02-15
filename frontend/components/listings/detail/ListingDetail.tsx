@@ -1,37 +1,33 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { addToUsersFavorites, deleteFromUsersFavorites } from "@/lib/actions";
 import { Heart, Share } from "lucide-react";
-import { Item, PaginatedResponse, Sublet } from "@/lib/types";
+import { Item, Sublet } from "@/lib/types";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
 import { BackButton } from "@/components/listings/detail/BackButton";
-import { addToUsersFavorites, deleteFromUsersFavorites, getUsersFavorites } from "@/lib/actions";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   listing: Item | Sublet;
-  initialFavorites: PaginatedResponse<Item | Sublet> | null;
+  initialIsFavorited: boolean;
 }
 
-export const ListingDetail = ({ listing, initialFavorites }: Props) => {
+export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
   const listingType = listing.listing_type;
   const priceLabel = listingType === "sublet" ? "/mo" : undefined;
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
   const queryClient = useQueryClient();
   const favoritesQuery = useQuery({
-    queryKey: ["favorites"],
-    queryFn: getUsersFavorites,
-    initialData: initialFavorites ?? undefined,
-    enabled: initialFavorites !== null,
+    queryKey: ["favorite", listing.id],
+    queryFn: async () => initialIsFavorited,
+    initialData: initialIsFavorited,
+    staleTime: Infinity,
   });
 
-  const isInsideFavorites = useMemo(
-    () => !!favoritesQuery.data?.results?.some((favorite) => favorite.id === listing.id),
-    [favoritesQuery.data, listing.id]
-  );
+  const isInsideFavorites = favoritesQuery.data ?? false;
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (shouldFavorite: boolean) => {
@@ -42,35 +38,15 @@ export const ListingDetail = ({ listing, initialFavorites }: Props) => {
       }
     },
     onMutate: async (shouldFavorite: boolean) => {
-      await queryClient.cancelQueries({ queryKey: ["favorites"] });
-      const previous = queryClient.getQueryData<PaginatedResponse<Item | Sublet>>(["favorites"]);
-
-      if (previous) {
-        const exists = previous.results?.some((favorite) => favorite.id === listing.id);
-        let results = previous.results ?? [];
-
-        if (shouldFavorite && !exists) {
-          results = [...results, listing];
-        }
-        if (!shouldFavorite && exists) {
-          results = results.filter((favorite) => favorite.id !== listing.id);
-        }
-
-        queryClient.setQueryData<PaginatedResponse<Item | Sublet>>(["favorites"], {
-          ...previous,
-          results,
-        });
-      }
-
+      await queryClient.cancelQueries({ queryKey: ["favorite", listing.id] });
+      const previous = queryClient.getQueryData<boolean>(["favorite", listing.id]);
+      queryClient.setQueryData(["favorite", listing.id], shouldFavorite);
       return { previous };
     },
     onError: (_error, _shouldFavorite, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["favorites"], context.previous);
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(["favorite", listing.id], context.previous);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
     },
   });
 
@@ -86,6 +62,7 @@ export const ListingDetail = ({ listing, initialFavorites }: Props) => {
           <Share className="h-5 w-5" />
           <button
             type="button"
+            className="cursor-pointer"
             onClick={handleToggleFavorite}
             aria-pressed={isInsideFavorites}
             aria-label={isInsideFavorites ? "Remove from favorites" : "Add to favorites"}
