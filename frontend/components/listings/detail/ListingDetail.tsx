@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Heart, Share } from "lucide-react";
 import { Item, ItemCategory, ItemCondition, Offer, PaginatedResponse, Sublet } from "@/lib/types";
 import { CONDITION_OPTIONS } from "@/lib/constants";
@@ -10,7 +10,6 @@ import {
   addToUsersFavorites,
   deleteFromUsersFavorites,
   getListing,
-  getUsersFavorites,
   updateListing,
   uploadListingImages,
 } from "@/lib/actions";
@@ -20,7 +19,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   listing: Item | Sublet;
-  initialFavorites: PaginatedResponse<Item | Sublet> | null;
+  initialIsFavorited: boolean;
   offers: Offer[];
   offersMode: "received" | "made";
   canEdit: boolean;
@@ -28,7 +27,7 @@ interface Props {
 
 export const ListingDetail = ({
   listing,
-  initialFavorites,
+  initialIsFavorited,
   offers,
   offersMode,
   canEdit,
@@ -39,16 +38,13 @@ export const ListingDetail = ({
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
   const queryClient = useQueryClient();
   const favoritesQuery = useQuery({
-    queryKey: ["favorites"],
-    queryFn: getUsersFavorites,
-    initialData: initialFavorites ?? undefined,
-    enabled: initialFavorites !== null,
+    queryKey: ["favorite", listing.id],
+    queryFn: async () => initialIsFavorited,
+    initialData: initialIsFavorited,
+    staleTime: Infinity,
   });
 
-  const isInsideFavorites = useMemo(
-    () => !!favoritesQuery.data?.results?.some((favorite) => favorite.id === listingState.id),
-    [favoritesQuery.data, listingState.id]
-  );
+  const isFavorited = favoritesQuery.data ?? false;
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (shouldFavorite: boolean) => {
@@ -59,12 +55,19 @@ export const ListingDetail = ({
       }
     },
     onMutate: async (shouldFavorite: boolean) => {
+      await queryClient.cancelQueries({ queryKey: ["favorite", listing.id] });
+      const previousFavorite = queryClient.getQueryData<boolean>(["favorite", listing.id]);
+      queryClient.setQueryData(["favorite", listing.id], shouldFavorite);
       await queryClient.cancelQueries({ queryKey: ["favorites"] });
-      const previous = queryClient.getQueryData<PaginatedResponse<Item | Sublet>>(["favorites"]);
+      const previousFavoritesList = queryClient.getQueryData<PaginatedResponse<Item | Sublet>>([
+        "favorites",
+      ]);
 
-      if (previous) {
-        const exists = previous.results?.some((favorite) => favorite.id === listingState.id);
-        let results = previous.results ?? [];
+      if (previousFavoritesList) {
+        const exists = previousFavoritesList.results?.some(
+          (favorite) => favorite.id === listingState.id
+        );
+        let results = previousFavoritesList.results ?? [];
 
         if (shouldFavorite && !exists) {
           results = [...results, listingState];
@@ -74,16 +77,19 @@ export const ListingDetail = ({
         }
 
         queryClient.setQueryData<PaginatedResponse<Item | Sublet>>(["favorites"], {
-          ...previous,
+          ...previousFavoritesList,
           results,
         });
       }
 
-      return { previous };
+      return { previousFavorite, previousFavoritesList };
     },
     onError: (_error, _shouldFavorite, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["favorites"], context.previous);
+      if (context?.previousFavorite !== undefined) {
+        queryClient.setQueryData(["favorite", listing.id], context.previousFavorite);
+      }
+      if (context?.previousFavoritesList !== undefined) {
+        queryClient.setQueryData(["favorites"], context.previousFavoritesList);
       }
     },
     onSettled: () => {
@@ -112,8 +118,8 @@ export const ListingDetail = ({
   );
   const [draftImages, setDraftImages] = useState<File[]>([]);
 
-  const handleToggleFavorite = async () => {
-    toggleFavoriteMutation.mutate(!isInsideFavorites);
+  const handleToggleFavorite = () => {
+    toggleFavoriteMutation.mutate(!isFavorited);
   };
 
   const handleEditCancel = () => {
@@ -185,12 +191,10 @@ export const ListingDetail = ({
             type="button"
             className="cursor-pointer"
             onClick={handleToggleFavorite}
-            aria-pressed={isInsideFavorites}
-            aria-label={isInsideFavorites ? "Remove from favorites" : "Add to favorites"}
+            aria-pressed={isFavorited}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
           >
-            <Heart
-              className={isInsideFavorites ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"}
-            />
+            <Heart className={isFavorited ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"} />
           </button>
         </div>
       </div>

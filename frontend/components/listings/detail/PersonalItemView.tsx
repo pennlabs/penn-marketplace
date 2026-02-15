@@ -138,19 +138,17 @@ export const PersonalItemView = ({
         canEdit
       />
       <OffersSection offers={offers} offersMode={offersMode} />
-      {!isEditing && (
-        <div className="flex items-center justify-end gap-2">
-          <Button className="cursor-pointer" variant="outline" onClick={onEditStart}>
-            Edit Listing
-          </Button>
-          <Button
-            className="cursor-pointer bg-red-600 text-white hover:bg-red-700"
-            onClick={() => setIsDeleteOpen(true)}
-          >
-            Delete Item
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center justify-end gap-2">
+        <Button className="cursor-pointer" variant="outline" onClick={onEditStart}>
+          Edit Listing
+        </Button>
+        <Button
+          className="cursor-pointer bg-red-600 text-white hover:bg-red-700"
+          onClick={() => setIsDeleteOpen(true)}
+        >
+          Delete Item
+        </Button>
+      </div>
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>

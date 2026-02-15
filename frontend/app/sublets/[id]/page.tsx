@@ -10,7 +10,6 @@ import {
 export default async function SubletPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sublet = await getListing(id);
-  const favorites = await getUsersFavorites().catch(() => null);
   const currentUser = await getCurrentUser().catch(() => null);
   const isOwner = currentUser?.id === sublet.seller.id;
   const offersResponse = await (isOwner ? getOffersReceived() : getOffersMade()).catch(() => null);
@@ -19,7 +18,7 @@ export default async function SubletPage({ params }: { params: Promise<{ id: str
   return (
     <ListingDetail
       listing={sublet}
-      initialFavorites={favorites}
+      initialIsFavorited={sublet.is_favorited ?? false}
       offers={offers}
       offersMode={isOwner ? "received" : "made"}
       canEdit={isOwner}

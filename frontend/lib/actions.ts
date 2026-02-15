@@ -238,7 +238,6 @@ export async function deleteFromUsersFavorites(listingId: number) {
 export async function getUsersFavorites() {
   return await serverFetch<PaginatedResponse<Item | Sublet>>("/market/favorites/");
 }
-
 // ------------------------------------------------------------
 // creating new listings
 // ------------------------------------------------------------
