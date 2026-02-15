@@ -55,7 +55,7 @@ class UserFavorites(ListAPIView, DefaultOrderMixin):
 
     def get_queryset(self):
         user = self.request.user
-        return user.listings_favorited
+        return user.listings_favorited.all()
 
 
 # TODO: Can add feature to filter for active offers only
@@ -255,26 +255,32 @@ class Favorites(
 
     def get_queryset(self):
         user = self.request.user
-        return user.listings_favorited
+        return user.listings_favorited.all()
 
     def create(self, request, *args, **kwargs):
         listing_id = int(self.kwargs["listing_id"])
-        queryset = self.get_queryset()
-        if queryset.filter(id=listing_id).exists():
-            raise exceptions.ValidationError("Favorite already exists")
+        favorites = request.user.listings_favorited
+        if favorites.filter(id=listing_id).exists():
+            return Response(
+                {"liked": True, "detail": "User has already liked the listing"},
+                status=status.HTTP_409_CONFLICT,
+            )
         listing = get_object_or_404(Listing, id=listing_id)
-        self.get_queryset().add(listing)
-        return Response(status=status.HTTP_201_CREATED)
+        favorites.add(listing)
+        return Response({"liked": True}, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         listing_id = int(self.kwargs["listing_id"])
         listing = get_object_or_404(Listing, id=listing_id)
 
         if listing not in request.user.listings_favorited.all():
-            raise exceptions.NotFound("Favorite does not exist.")
+            return Response(
+                {"liked": False, "detail": "User hasn't liked the listing yet"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        self.get_queryset().remove(listing)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        request.user.listings_favorited.remove(listing)
+        return Response({"liked": False}, status=status.HTTP_200_OK)
 
 
 class Offers(viewsets.ModelViewSet):

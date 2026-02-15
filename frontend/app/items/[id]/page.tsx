@@ -5,5 +5,5 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const item = await getListing(id);
 
-  return <ListingDetail listing={item} />;
+  return <ListingDetail listing={item} initialIsFavorited={item.is_favorited ?? false} />;
 }

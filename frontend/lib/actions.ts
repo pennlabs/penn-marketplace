@@ -210,6 +210,25 @@ export async function verifyPhoneCode(phoneNumber: string, code: string) {
     body: JSON.stringify({ phone_number: phoneNumber, code }),
   });
 }
+// ------------------------------------------------------------
+// adding and removing listings from favorites
+// ------------------------------------------------------------
+
+export async function addToUsersFavorites(listingId: number) {
+  const res = await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
+    method: "POST",
+  });
+  return res;
+}
+export async function deleteFromUsersFavorites(listingId: number) {
+  return await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
+    method: "DELETE",
+  });
+}
+
+export async function getUsersFavorites() {
+  return await serverFetch<PaginatedResponse<Item | Sublet>>("/market/favorites/");
+}
 
 // ------------------------------------------------------------
 // creating new listings
