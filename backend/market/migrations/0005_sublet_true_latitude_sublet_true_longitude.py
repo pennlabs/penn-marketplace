@@ -12,14 +12,14 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="sublet",
-            name="true_latitude",
+            name="latitude",
             field=models.DecimalField(
                 blank=True, decimal_places=6, max_digits=9, null=True
             ),
         ),
         migrations.AddField(
             model_name="sublet",
-            name="true_longitude",
+            name="longitude",
             field=models.DecimalField(
                 blank=True, decimal_places=6, max_digits=9, null=True
             ),
