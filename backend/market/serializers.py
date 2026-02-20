@@ -1,3 +1,5 @@
+from decimal import ROUND_DOWN, Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -14,7 +16,6 @@ from rest_framework.serializers import (
 
 from market.mixins import ListingTypeMixin
 from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, Tag
-from decimal import ROUND_DOWN, Decimal
 
 
 User = get_user_model()
@@ -274,14 +275,14 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         latitude = additional_data.get("latitude")
         longitude = additional_data.get("longitude")
 
-        
+
         if latitude is not None:
             latitude = Decimal(str(latitude)).quantize(
                 Decimal("0.000001"), rounding=ROUND_DOWN)
         if longitude is not None:
             longitude = Decimal(str(longitude)).quantize(
                 Decimal("0.000001"), rounding=ROUND_DOWN)
-        
+
         sublet = Sublet.objects.create(
             street_address=additional_data.get("street_address"),
             beds=additional_data.get("beds"),

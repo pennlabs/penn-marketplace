@@ -1,11 +1,13 @@
+import hashlib
+import math
+from decimal import Decimal
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
-import hashlib
-import math
-from decimal import Decimal
+
 
 class User(AbstractUser):
     """
@@ -144,7 +146,7 @@ class Sublet(Listing):
             raise ValidationError({"end_date": "End date must be after start date"})
 
     def _calculate_approximate_location(self, latitude, longitude):
-        
+
 
         if latitude is None or longitude is None:
             return None, None
