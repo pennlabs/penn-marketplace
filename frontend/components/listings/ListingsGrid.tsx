@@ -20,10 +20,20 @@ type Props =
     };
 
 export const ListingsGrid = ({ type, listings, currentUser }: Props) => {
-  const { data, isFetchingNextPage, hasNextPage, ref } = useListings({ type, listings });
+  const { data, error, isFetchingNextPage, hasNextPage, ref } = useListings({ type, listings });
 
   const totalResults = data?.pages.reduce((acc, page) => acc + page.results.length, 0) || 0;
   const isEmpty = totalResults === 0;
+
+  if (error && totalResults === 0) {
+    return (
+      <div className="flex w-full flex-col items-center space-y-4 py-12">
+        <p className="text-muted-foreground text-sm">
+          Failed to load listings. Please try refreshing the page.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col items-center space-y-4">

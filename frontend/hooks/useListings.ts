@@ -41,7 +41,6 @@ export function useListings<T extends ListingTypes>({ type, listings }: UseListi
     getNextPageParam(lastPage, allPages) {
       return lastPage.results.length > 0 ? allPages.length + 1 : undefined;
     },
-    refetchOnWindowFocus: false,
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
   });

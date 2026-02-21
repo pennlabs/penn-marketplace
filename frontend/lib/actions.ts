@@ -1,7 +1,9 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
+import { clearAuthCookies, getTokensFromCookies } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
 import {
@@ -15,26 +17,37 @@ import {
   User,
 } from "@/lib/types";
 
-async function getTokensFromCookies(): Promise<AuthTokens | null> {
-  try {
-    const cookieStore = await cookies();
-    const idToken = cookieStore.get("id_token")?.value;
-    const accessToken = cookieStore.get("access_token")?.value;
-    const refreshToken = cookieStore.get("refresh_token")?.value;
-    const expiresIn = cookieStore.get("expires_in")?.value;
+function formatFieldName(key: string): string {
+  return key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
 
-    if (!idToken || !accessToken || !refreshToken || !expiresIn) {
-      return null;
+// recursively find the first leaf error string from a nested error object.
+// handles: { title: ["Required"] }, { additional_data: { condition: "Required" } }, etc.
+function parseFirstFieldError(obj: Record<string, unknown>): string {
+  for (const key of Object.keys(obj)) {
+    const value = obj[key];
+
+    if (typeof value === "string") {
+      return `${formatFieldName(key)}: ${value}`;
     }
 
-    return {
-      idToken,
-      accessToken,
-      refreshToken,
-      expiresIn: parseInt(expiresIn),
-    };
+    if (Array.isArray(value) && typeof value[0] === "string") {
+      return `${formatFieldName(key)}: ${value[0]}`;
+    }
+
+    if (typeof value === "object" && value !== null) {
+      return parseFirstFieldError(value as Record<string, unknown>);
+    }
+  }
+
+  return `${ErrorMessages.API_REQUEST_FAILED}`;
+}
+
+async function safeFetch(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
   } catch {
-    return null;
+    throw new Error("Unable to reach the server. Please check your connection and try again.");
   }
 }
 
@@ -46,29 +59,41 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
   const accessToken = tokens?.accessToken;
 
   if (!accessToken) {
-    throw new APIError(ErrorMessages.NO_ACCESS_TOKEN, 401);
+    await clearAuthCookies();
+    redirect("/");
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...options.headers,
-    },
-  });
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${accessToken}`,
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (options.body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const response = await safeFetch(url, { ...options, headers });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    let errorMessage = `${ErrorMessages.API_REQUEST_FAILED}: ${response.status}`;
-
-    if (errorData) {
-      const firstKey = Object.keys(errorData)[0];
-      if (firstKey) {
-        const firstError = errorData[firstKey];
-        errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
-      }
+    if (response.status === 401) {
+      await clearAuthCookies();
+      redirect("/");
     }
+
+    // 5xx: server error - don't bother parsing body, sanitize in prod
+    if (response.status >= 500) {
+      const message =
+        process.env.NODE_ENV === "production"
+          ? "Something went wrong. Please try again."
+          : `Server error: ${response.status}`;
+      throw new APIError(message, response.status);
+    }
+
+    // 4xx: client error - parse field-level errors from response body
+    const errorData = await response.json().catch(() => null);
+    const errorMessage = errorData
+      ? parseFirstFieldError(errorData)
+      : `${ErrorMessages.API_REQUEST_FAILED}: ${response.status}`;
 
     throw new APIError(errorMessage, response.status);
   }
@@ -159,8 +184,17 @@ export async function getSublets({
 // ------------------------------------------------------------
 // single listing (items or sublets)
 // ------------------------------------------------------------
-export async function getListing(id: string) {
+async function getListing(id: string) {
   return await serverFetch<Item | Sublet>(`/market/listings/${id}/`);
+}
+
+export async function getListingOrNotFound(id: string) {
+  try {
+    return await getListing(id);
+  } catch (error) {
+    if (error instanceof APIError && error.status === 404) notFound();
+    throw error;
+  }
 }
 
 // ------------------------------------------------------------
@@ -175,15 +209,13 @@ export async function createOffer({
   offeredPrice: number;
   message?: string;
 }) {
-  const offer = await serverFetch(`/market/listings/${listingId}/offers/`, {
+  return await serverFetch(`/market/listings/${listingId}/offers/`, {
     method: "POST",
     body: JSON.stringify({
       offered_price: offeredPrice,
       message,
     }),
   });
-
-  return offer;
 }
 
 export async function getPhoneStatus() {
@@ -210,15 +242,14 @@ export async function verifyPhoneCode(phoneNumber: string, code: string) {
     body: JSON.stringify({ phone_number: phoneNumber, code }),
   });
 }
+
 // ------------------------------------------------------------
 // adding and removing listings from favorites
 // ------------------------------------------------------------
-
 export async function addToUsersFavorites(listingId: number) {
-  const res = await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
+  return await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
     method: "POST",
   });
-  return res;
 }
 export async function deleteFromUsersFavorites(listingId: number) {
   return await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
@@ -233,7 +264,6 @@ export async function getUsersFavorites() {
 // ------------------------------------------------------------
 // creating new listings
 // ------------------------------------------------------------
-
 export type CreateListingPayload = CreateItemPayload | CreateSubletPayload;
 
 export async function createListing(payload: CreateListingPayload): Promise<Listing> {
