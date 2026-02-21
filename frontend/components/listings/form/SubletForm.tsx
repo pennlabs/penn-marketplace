@@ -40,11 +40,11 @@ export function SubletForm() {
       price: "",
       description: "",
       tags: [],
-      street_address: "",
+      streetAddress: "",
       beds: 0,
       baths: 0,
-      start_date: "",
-      end_date: "",
+      startDate: "",
+      endDate: "",
     },
   });
 
@@ -75,11 +75,11 @@ export function SubletForm() {
       price: String(parsePriceString(data.price)),
       listing_type: "sublet",
       additional_data: {
-        street_address: data.street_address,
+        street_address: data.streetAddress,
         beds: data.beds,
         baths: data.baths,
-        start_date: data.start_date,
-        end_date: data.end_date,
+        start_date: data.startDate,
+        end_date: data.endDate,
       },
     };
     mutate(payload);
@@ -90,13 +90,13 @@ export function SubletForm() {
   const subletFieldsAfterPrice = (
     <>
       <Controller
-        name="street_address"
+        name="streetAddress"
         control={control}
         render={({ field }) => (
           <FormField
             label="Street Address"
-            error={errors.street_address?.message}
-            touched={touchedFields.street_address}
+            error={errors.streetAddress?.message}
+            touched={touchedFields.streetAddress}
             labelSupplement={
               <span className="group relative inline-flex">
                 <Info
@@ -113,7 +113,7 @@ export function SubletForm() {
             <Input
               {...field}
               placeholder="123 Main St, Philadelphia, PA 19104"
-              aria-invalid={!!errors.street_address}
+              aria-invalid={!!errors.streetAddress}
               disabled={isFormDisabled}
               autoComplete="street-address"
             />
@@ -156,36 +156,36 @@ export function SubletForm() {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Controller
-          name="start_date"
+          name="startDate"
           control={control}
           render={({ field }) => (
             <FormField
               label="Start Date"
-              error={errors.start_date?.message}
-              touched={touchedFields.start_date}
+              error={errors.startDate?.message}
+              touched={touchedFields.startDate}
             >
               <Input
                 {...field}
                 type="date"
-                aria-invalid={!!errors.start_date}
+                aria-invalid={!!errors.startDate}
                 disabled={isFormDisabled}
               />
             </FormField>
           )}
         />
         <Controller
-          name="end_date"
+          name="endDate"
           control={control}
           render={({ field }) => (
             <FormField
               label="End Date"
-              error={errors.end_date?.message}
-              touched={touchedFields.end_date}
+              error={errors.endDate?.message}
+              touched={touchedFields.endDate}
             >
               <Input
                 {...field}
                 type="date"
-                aria-invalid={!!errors.end_date}
+                aria-invalid={!!errors.endDate}
                 disabled={isFormDisabled}
               />
             </FormField>
