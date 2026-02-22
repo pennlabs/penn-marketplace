@@ -1,4 +1,3 @@
-from decimal import ROUND_DOWN, Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
@@ -110,12 +109,12 @@ class SubletDataSerializer(ModelSerializer):
 
     def get_latitude(self, obj):
         if obj.approximate_latitude:
-            return round(float(obj.approximate_latitude), 6)
+            return float(obj.approximate_latitude)
         return None
 
     def get_longitude(self, obj):
         if obj.approximate_longitude:
-            return round(float(obj.approximate_longitude), 6)
+            return float(obj.approximate_longitude)
         return None
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
@@ -277,11 +276,9 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
 
         if latitude is not None:
-            latitude = Decimal(str(latitude)).quantize(
-                Decimal("0.000001"), rounding=ROUND_DOWN)
+            latitude = float(latitude)
         if longitude is not None:
-            longitude = Decimal(str(longitude)).quantize(
-                Decimal("0.000001"), rounding=ROUND_DOWN)
+            longitude = float(longitude)
 
         sublet = Sublet.objects.create(
             street_address=additional_data.get("street_address"),
@@ -348,15 +345,9 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             if field in additional_data:
                 setattr(sublet, field, additional_data[field])
         if "latitude" in additional_data:
-            latitude = Decimal(str(additional_data["latitude"])).quantize(
-                Decimal("0.000001"), rounding=ROUND_DOWN
-            )
-            sublet.latitude = latitude
+            sublet.latitude = float(additional_data["latitude"])
         if "longitude" in additional_data:
-            longitude = Decimal(str(additional_data["longitude"])).quantize(
-                Decimal("0.000001"), rounding=ROUND_DOWN
-            )
-            sublet.longitude = longitude
+            sublet.longitude = float(additional_data["longitude"])
         sublet.full_clean()
         sublet.save()
 

@@ -13,15 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="sublet",
             name="latitude",
-            field=models.DecimalField(
-                blank=True, decimal_places=6, max_digits=9, null=True
-            ),
+            field=models.FloatField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name="sublet",
             name="longitude",
-            field=models.DecimalField(
-                blank=True, decimal_places=6, max_digits=9, null=True
-            ),
+            field=models.FloatField(blank=True, null=True),
         ),
     ]

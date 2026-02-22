@@ -134,10 +134,8 @@ class Sublet(Listing):
     start_date = models.DateField()
     end_date = models.DateField()
 
-    latitude = models.DecimalField(
-        max_digits=9, decimal_places=6, null=True, blank=True)
-    longitude = models.DecimalField(
-        max_digits=9, decimal_places=6, null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
 
     def clean(self):
@@ -151,8 +149,8 @@ class Sublet(Listing):
         if latitude is None or longitude is None:
             return None, None
 
-        lat_str = f"{float(latitude):.6f}"
-        lon_str = f"{float(longitude):.6f}"
+        lat_str = f"{float(latitude):.9f}"
+        lon_str = f"{float(longitude):.9f}"
         seed = hashlib.md5(f"{lat_str}{lon_str}".encode()).hexdigest()
 
         offset_factor = int(seed[:8], 16) / 0xFFFFFFFF
@@ -163,8 +161,8 @@ class Sublet(Listing):
         lat_offset = offset_distance * math.sin(angle)
         lon_offset = offset_distance * math.cos(angle)
 
-        approx_lat = Decimal(str(float(latitude) + lat_offset))
-        approx_lon = Decimal(str(float(longitude) + lon_offset))
+        approx_lat = float(latitude) + lat_offset
+        approx_lon = float(longitude) + lon_offset
         return approx_lat, approx_lon
 
     @property
