@@ -145,7 +145,7 @@ export type ListingFiltersMap = {
 // ------------------------------------------------------------
 export type BaseCreatePayload = {
   title: string;
-  description: string;
+  description?: string;
   price: string;
 };
 
