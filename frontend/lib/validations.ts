@@ -101,8 +101,8 @@ export const createItemSchema = z.object({
   description: z
     .string()
     .trim()
-    .min(1, "Description is required")
-    .max(5000, "Description must be less than 5000 characters"),
+    .max(5000, "Description must be less than 5000 characters")
+    .optional(),
   price: priceSchema,
   tags: z.array(z.string().trim()),
   condition: z.enum(itemConditionValues, "Condition is required"),
@@ -121,8 +121,8 @@ export const createSubletSchema = z
     description: z
       .string()
       .trim()
-      .min(1, "Description is required")
-      .max(5000, "Description must be less than 5000 characters"),
+      .max(5000, "Description must be less than 5000 characters")
+      .optional(),
     price: priceSchema,
     tags: z.array(z.string().trim()),
     street_address: z.string().trim().min(1, "Street address is required"),
