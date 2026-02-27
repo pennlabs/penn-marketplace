@@ -125,19 +125,19 @@ export const createSubletSchema = z
       .optional(),
     price: priceSchema,
     tags: z.array(z.string().trim()),
-    street_address: z.string().trim().min(1, "Street address is required"),
+    streetAddress: z.string().trim().min(1, "Street address is required"),
     beds: z.number().int().min(0, "Beds must be 0 or more"),
     baths: z.number().int().min(0, "Baths must be 0 or more"),
-    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
-    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
   })
   .refine(
     (data) => {
-      const start = Date.parse(data.start_date);
-      const end = Date.parse(data.end_date);
+      const start = Date.parse(data.startDate);
+      const end = Date.parse(data.endDate);
       return Number.isFinite(start) && Number.isFinite(end) && end > start;
     },
-    { message: "End date must be after start date", path: ["end_date"] }
+    { message: "End date must be after start date", path: ["endDate"] }
   );
 
 export type CreateSubletFormData = z.infer<typeof createSubletSchema>;
