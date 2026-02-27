@@ -87,6 +87,15 @@ export type Sublet = BaseListing & {
 export type Listing = Item | Sublet;
 export type ListingTypes = "items" | "sublets";
 
+export type Offer = {
+  id: number;
+  user: User;
+  listing: number;
+  offered_price: number;
+  message: string | null;
+  created_at: string;
+};
+
 // ------------------------------------------------------------
 // api responses
 // ------------------------------------------------------------
