@@ -11,8 +11,10 @@ from market.views import (
     OffersReceived,
     Tags,
     UserFavorites,
+    accept_offer,
     get_current_user,
     get_phone_status,
+    reject_offer,
     send_verification_code,
     verify_phone_code,
 )
@@ -49,6 +51,9 @@ additional_urls = [
         "listings/<listing_id>/offers/",
         Offers.as_view({"get": "list", "post": "create", "delete": "destroy"}),
     ),
+    # Offer accept / reject
+    path("offers/<int:offer_id>/accept/", accept_offer, name="offer-accept"),
+    path("offers/<int:offer_id>/reject/", reject_offer, name="offer-reject"),
     # Image Creation
     path("listings/<listing_id>/images/", CreateImages.as_view()),
     # Image Deletion

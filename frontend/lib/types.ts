@@ -14,6 +14,8 @@ export type User = {
   first_name: string;
   last_name: string;
   email: string;
+  phone_number: string | null;
+  phone_verified: boolean;
 };
 
 // ------------------------------------------------------------
@@ -86,6 +88,18 @@ export type Sublet = BaseListing & {
 // ------------------------------------------------------------
 export type Listing = Item | Sublet;
 export type ListingTypes = "items" | "sublets";
+
+export type OfferStatus = "pending" | "accepted" | "rejected";
+
+export type Offer = {
+  id: number;
+  user: User;
+  listing: number;
+  offered_price: number;
+  message: string | null;
+  status: OfferStatus;
+  created_at: string;
+};
 
 // ------------------------------------------------------------
 // api responses

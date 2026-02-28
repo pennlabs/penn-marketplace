@@ -46,7 +46,14 @@ class OfferSerializer(ModelSerializer):
 
     class Meta:
         model = Offer
-        fields = ["id", "user", "listing", "offered_price", "message", "created_at"]
+        fields = [
+            "id",
+            "user",
+            "listing",
+            "offered_price",
+            "message",
+            "created_at",
+        ]
         read_only_fields = ["id", "created_at", "user"]
 
     def create(self, validated_data):
