@@ -8,12 +8,9 @@ import {
 
 export default async function SubletPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [sublet, currentUser] = await Promise.all([
-    getListingOrNotFound(id),
-    getCurrentUser().catch(() => null),
-  ]);
+  const [sublet, currentUser] = await Promise.all([getListingOrNotFound(id), getCurrentUser()]);
   const isOwner = currentUser?.id === sublet.seller.id;
-  const offersResponse = await (isOwner ? getOffersReceived() : getOffersMade()).catch(() => null);
+  const offersResponse = await (isOwner ? getOffersReceived() : getOffersMade());
   const offers = offersResponse?.results?.filter((offer) => offer.listing === sublet.id) ?? [];
 
   return (

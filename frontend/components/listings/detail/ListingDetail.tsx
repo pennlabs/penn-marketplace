@@ -402,7 +402,7 @@ export const ListingDetail = ({
             listingOwnerLabel={listingOwnerLabel}
             canEdit={canEdit}
           />
-          <OffersSection offers={offers} offersMode={offersMode} />
+          {offersMode === "received" && <OffersSection offers={offers} offersMode={offersMode} />}
           {canEdit && (
             <>
               <div className="flex items-center justify-end gap-2">
