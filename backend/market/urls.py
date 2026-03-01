@@ -48,7 +48,7 @@ additional_urls = [
     # post: create an offer for an listing
     # delete: delete an offer for an listing
     path(
-        "listings/<listing_id>/offers/",
+        "listings/<int:listing_id>/offers/",
         Offers.as_view({"get": "list", "post": "create", "delete": "destroy"}),
     ),
     # Offer accept / reject

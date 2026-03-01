@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Check, Clock, Heart, Share, Star, X } from "lucide-react";
 import { Item, ItemCategory, ItemCondition, Offer, PaginatedResponse, Sublet } from "@/lib/types";
-import { CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/lib/constants";
+import { BEDS_OPTIONS, BATHS_OPTIONS, CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/lib/constants";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
@@ -303,6 +303,13 @@ export const ListingDetail = ({
   const [draftExpiresAt, setDraftExpiresAt] = useState(
     listingState.expires_at ? listingState.expires_at.slice(0, 10) : ""
   );
+  const subletData = listingState.listing_type === "sublet" ? listingState.additional_data : null;
+  const toDateInput = (d: string | undefined) => (d ? d.slice(0, 10) : "");
+  const [draftStreetAddress, setDraftStreetAddress] = useState(subletData?.street_address ?? "");
+  const [draftBeds, setDraftBeds] = useState<number>(subletData?.beds ?? 0);
+  const [draftBaths, setDraftBaths] = useState<number>(subletData?.baths ?? 0);
+  const [draftStartDate, setDraftStartDate] = useState(toDateInput(subletData?.start_date));
+  const [draftEndDate, setDraftEndDate] = useState(toDateInput(subletData?.end_date));
 
   const handleToggleFavorite = () => {
     toggleFavoriteMutation.mutate(!isFavorited);
@@ -315,6 +322,14 @@ export const ListingDetail = ({
     if (listingState.listing_type === "item") {
       setDraftCategory(listingState.additional_data.category);
       setDraftCondition(resolveConditionValue(listingState.additional_data.condition));
+    }
+    if (listingState.listing_type === "sublet") {
+      const data = listingState.additional_data;
+      setDraftStreetAddress(data.street_address);
+      setDraftBeds(data.beds);
+      setDraftBaths(data.baths);
+      setDraftStartDate(toDateInput(data.start_date));
+      setDraftEndDate(toDateInput(data.end_date));
     }
     setDraftExpiresAt(listingState.expires_at ? listingState.expires_at.slice(0, 10) : "");
   };
@@ -345,7 +360,15 @@ export const ListingDetail = ({
                 ...(draftCondition ? { condition: draftCondition } : {}),
                 ...(draftCategory ? { category: draftCategory } : {}),
               }
-            : {},
+            : listingState.listing_type === "sublet"
+              ? {
+                  street_address: draftStreetAddress.trim(),
+                  beds: draftBeds,
+                  baths: draftBaths,
+                  start_date: draftStartDate,
+                  end_date: draftEndDate,
+                }
+              : {},
       });
       setListingState(nextListing);
       setIsEditing(false);
@@ -358,7 +381,8 @@ export const ListingDetail = ({
     if (isDeleting) return;
     setIsDeleting(true);
     try {
-      await deleteListing(listingState.id);
+      const res = await deleteListing(listingState.id);
+      console.log(res);
       window.location.href = "/";
     } catch (err) {
       console.log(err);
@@ -466,6 +490,56 @@ export const ListingDetail = ({
                         onChange={(e) => setDraftPrice(e.target.value)}
                       />
                     </div>
+                    {listingState.listing_type === "sublet" && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">
+                            Street Address
+                          </label>
+                          <Input
+                            value={draftStreetAddress}
+                            onChange={(e) => setDraftStreetAddress(e.target.value)}
+                            placeholder="123 Main St, Philadelphia, PA 19104"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormSelect
+                            label="Bedrooms"
+                            valueType="number"
+                            value={draftBeds}
+                            onChange={setDraftBeds}
+                            options={BEDS_OPTIONS}
+                            placeholder="Select beds"
+                          />
+                          <FormSelect
+                            label="Bathrooms"
+                            valueType="number"
+                            value={draftBaths}
+                            onChange={setDraftBaths}
+                            options={BATHS_OPTIONS}
+                            placeholder="Select baths"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">Start Date</label>
+                            <Input
+                              type="date"
+                              value={draftStartDate}
+                              onChange={(e) => setDraftStartDate(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">End Date</label>
+                            <Input
+                              type="date"
+                              value={draftEndDate}
+                              onChange={(e) => setDraftEndDate(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700">Description</label>
                       <Textarea

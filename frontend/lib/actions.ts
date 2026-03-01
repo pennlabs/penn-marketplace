@@ -313,8 +313,8 @@ export async function updateListing(
   });
 }
 
-export async function deleteListing(listingId: number): Promise<void> {
-  await serverFetch<void>(`/market/listings/${listingId}/`, {
+export async function deleteListing(listingId: number): Promise<Listing> {
+  return await serverFetch<Listing>(`/market/listings/${listingId}/`, {
     method: "DELETE",
   });
 }
