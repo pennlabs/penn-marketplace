@@ -1,9 +1,9 @@
 import { ListingDetail } from "@/components/listings/detail/ListingDetail";
-import { getListing } from "@/lib/actions";
+import { getListingOrNotFound } from "@/lib/actions";
 
 export default async function SubletPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const sublet = await getListing(id);
+  const sublet = await getListingOrNotFound(id);
 
   return <ListingDetail listing={sublet} initialIsFavorited={sublet.is_favorited ?? false} />;
 }

@@ -1,9 +1,23 @@
 "use client";
 
-import { isServer, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { isServer, MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 function makeQueryClient() {
-  return new QueryClient();
+  return new QueryClient({
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) => {
+        if (mutation.meta?.suppressErrorToast) return;
+        toast.error(error.message || "Something went wrong");
+      },
+    }),
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: 1,
+      },
+    },
+  });
 }
 
 let browserQueryClient: QueryClient | undefined = undefined;

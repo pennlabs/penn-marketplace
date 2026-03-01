@@ -63,9 +63,6 @@ export function SubletForm() {
       imageUpload.clearImages();
       router.replace(`/sublets/${data.id}`);
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to create listing. Please try again.");
-    },
   });
 
   const onSubmit = (data: CreateSubletFormData) => {
