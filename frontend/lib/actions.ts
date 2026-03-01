@@ -99,6 +99,9 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
     throw new APIError(errorMessage, response.status);
   }
 
+  if (response.status === 204 || response.status === 205) {
+    return undefined as T;
+  }
   return response.json();
 }
 
@@ -313,8 +316,8 @@ export async function updateListing(
   });
 }
 
-export async function deleteListing(listingId: number): Promise<Listing> {
-  return await serverFetch<Listing>(`/market/listings/${listingId}/`, {
+export async function deleteListing(listingId: number): Promise<void> {
+  await serverFetch<void>(`/market/listings/${listingId}/`, {
     method: "DELETE",
   });
 }

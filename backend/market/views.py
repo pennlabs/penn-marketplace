@@ -332,7 +332,7 @@ class Offers(viewsets.ModelViewSet):
         obj = get_object_or_404(queryset, **filter)
         self.check_object_permissions(self.request, obj)
         self.perform_destroy(obj)
-        return Response({"deleted": True}, status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):
         if not Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():

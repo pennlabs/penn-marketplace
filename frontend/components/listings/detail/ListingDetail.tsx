@@ -381,9 +381,8 @@ export const ListingDetail = ({
     if (isDeleting) return;
     setIsDeleting(true);
     try {
-      const res = await deleteListing(listingState.id);
-      console.log(res);
-      window.location.href = "/";
+      await deleteListing(listingState.id);
+      window.location.href = "/items";
     } catch (err) {
       console.log(err);
       setIsDeleting(false);
