@@ -1,3 +1,4 @@
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -98,10 +99,23 @@ class ItemDataSerializer(ModelSerializer):
 
 
 class SubletDataSerializer(ModelSerializer):
+    latitude = SerializerMethodField()
+    longitude = SerializerMethodField()
+
     class Meta:
         model = Sublet
-        fields = ["street_address", "beds", "baths", "start_date", "end_date"]
+        fields = ["street_address", "beds", "baths", "start_date", "end_date",
+            "latitude", "longitude"]
 
+    def get_latitude(self, obj):
+        if obj.approximate_latitude:
+            return float(obj.approximate_latitude)
+        return None
+
+    def get_longitude(self, obj):
+        if obj.approximate_longitude:
+            return float(obj.approximate_longitude)
+        return None
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
 class ListingSerializer(ListingTypeMixin, ModelSerializer):
@@ -265,12 +279,23 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
     def _create_sublet(self, validated_data, additional_data):
         tags = validated_data.pop("tags", None)
 
+        latitude = additional_data.get("latitude")
+        longitude = additional_data.get("longitude")
+
+
+        if latitude is not None:
+            latitude = float(latitude)
+        if longitude is not None:
+            longitude = float(longitude)
+
         sublet = Sublet.objects.create(
             street_address=additional_data.get("street_address"),
             beds=additional_data.get("beds"),
             baths=additional_data.get("baths"),
             start_date=additional_data.get("start_date"),
             end_date=additional_data.get("end_date"),
+            latitude=latitude,
+            longitude=longitude,
             **validated_data,
         )
 
@@ -327,6 +352,10 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         for field in sublet_fields:
             if field in additional_data:
                 setattr(sublet, field, additional_data[field])
+        if "latitude" in additional_data:
+            sublet.latitude = float(additional_data["latitude"])
+        if "longitude" in additional_data:
+            sublet.longitude = float(additional_data["longitude"])
         sublet.full_clean()
         sublet.save()
 

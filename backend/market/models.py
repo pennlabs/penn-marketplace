@@ -1,3 +1,6 @@
+import hashlib
+import math
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -41,7 +44,6 @@ class Offer(models.Model):
 
     def __str__(self):
         return f"Offer for {self.listing} made by {self.user}"
-
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -131,10 +133,52 @@ class Sublet(Listing):
     start_date = models.DateField()
     end_date = models.DateField()
 
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+
     def clean(self):
         super().clean()
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             raise ValidationError({"end_date": "End date must be after start date"})
+
+    def _calculate_approximate_location(self, latitude, longitude):
+
+
+        if latitude is None or longitude is None:
+            return None, None
+
+        lat_str = f"{float(latitude):.9f}"
+        lon_str = f"{float(longitude):.9f}"
+        seed = hashlib.md5(f"{lat_str}{lon_str}".encode()).hexdigest()
+
+        offset_factor = int(seed[:8], 16) / 0xFFFFFFFF
+
+        offset_distance = 0.0005 + (offset_factor * 0.0013)
+        angle = offset_factor * 2 * math.pi
+
+        lat_offset = offset_distance * math.sin(angle)
+        lon_offset = offset_distance * math.cos(angle)
+
+        approx_lat = float(latitude) + lat_offset
+        approx_lon = float(longitude) + lon_offset
+        return approx_lat, approx_lon
+
+    @property
+    def approximate_latitude(self):
+        if self.latitude and self.longitude:
+            approximate_latitude, _ = self._calculate_approximate_location(
+                self.latitude, self.longitude)
+            return approximate_latitude
+        return None
+
+    @property
+    def approximate_longitude(self):
+        if self.latitude and self.longitude:
+            _, approximate_lon = self._calculate_approximate_location(
+                self.latitude, self.longitude)
+            return approximate_lon
+        return None
 
     def save(self, *args, **kwargs):
         self.full_clean()
