@@ -1,9 +1,20 @@
 import { ListingDetail } from "@/components/listings/detail/ListingDetail";
-import { getListingOrNotFound } from "@/lib/actions";
+import { getCurrentUser, getListingOrNotFound, getOffersReceived } from "@/lib/actions";
 
 export default async function ItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const item = await getListingOrNotFound(id);
+  const [item, currentUser] = await Promise.all([getListingOrNotFound(id), getCurrentUser()]);
+  const isOwner = currentUser?.id === item.seller.id;
+  const offersResponse = isOwner ? await getOffersReceived() : null;
+  const offers = offersResponse?.results?.filter((offer) => offer.listing === item.id) ?? [];
 
-  return <ListingDetail listing={item} initialIsFavorited={item.is_favorited ?? false} />;
+  return (
+    <ListingDetail
+      listing={item}
+      initialIsFavorited={item.is_favorited ?? false}
+      offers={offers}
+      offersMode={isOwner ? "received" : "made"}
+      canEdit={isOwner}
+    />
+  );
 }

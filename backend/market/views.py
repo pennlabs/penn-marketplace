@@ -344,6 +344,28 @@ class Offers(viewsets.ModelViewSet):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+def accept_offer(request, offer_id):
+    offer = get_object_or_404(Offer, pk=offer_id)
+    if offer.listing.seller != request.user:
+        raise exceptions.PermissionDenied("Only the listing owner can accept offers.")
+    offer.status = Offer.Status.ACCEPTED
+    offer.save(update_fields=["status"])
+    return Response(OfferSerializer(offer).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def reject_offer(request, offer_id):
+    offer = get_object_or_404(Offer, pk=offer_id)
+    if offer.listing.seller != request.user:
+        raise exceptions.PermissionDenied("Only the listing owner can reject offers.")
+    offer.status = Offer.Status.REJECTED
+    offer.save(update_fields=["status"])
+    return Response(OfferSerializer(offer).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def send_verification_code(request):
     phone_number = request.data.get("phone_number")
 

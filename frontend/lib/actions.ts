@@ -12,6 +12,7 @@ import {
   CreateSubletPayload,
   Item,
   Listing,
+  Offer,
   PaginatedResponse,
   Sublet,
   User,
@@ -184,7 +185,7 @@ export async function getSublets({
 // ------------------------------------------------------------
 // single listing (items or sublets)
 // ------------------------------------------------------------
-async function getListing(id: string) {
+export async function getListing(id: string) {
   return await serverFetch<Item | Sublet>(`/market/listings/${id}/`);
 }
 
@@ -215,6 +216,26 @@ export async function createOffer({
       offered_price: offeredPrice,
       message,
     }),
+  });
+}
+
+export async function getOffersMade() {
+  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/made/");
+}
+
+export async function getOffersReceived() {
+  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
+}
+
+export async function acceptOffer(offerId: number) {
+  return await serverFetch<Offer>(`/market/offers/${offerId}/accept/`, {
+    method: "POST",
+  });
+}
+
+export async function rejectOffer(offerId: number) {
+  return await serverFetch<Offer>(`/market/offers/${offerId}/reject/`, {
+    method: "POST",
   });
 }
 
@@ -270,5 +291,30 @@ export async function createListing(payload: CreateListingPayload): Promise<List
   return await serverFetch<Listing>("/market/listings/", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export type UpdateListingPayload = {
+  title?: string;
+  description?: string;
+  price?: number;
+  expires_at?: string;
+  listing_type: "item" | "sublet";
+  additional_data?: Record<string, unknown>;
+};
+
+export async function updateListing(
+  listingId: number,
+  payload: UpdateListingPayload
+): Promise<Listing> {
+  return await serverFetch<Listing>(`/market/listings/${listingId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteListing(listingId: number): Promise<void> {
+  await serverFetch<void>(`/market/listings/${listingId}/`, {
+    method: "DELETE",
   });
 }
