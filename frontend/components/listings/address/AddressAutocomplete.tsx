@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
-import type { NominatimAddress, ValidatedAddress } from "@/lib/types";
+import type { AddressResult, ValidatedAddress } from "@/lib/types";
 import { useAddressAutocomplete } from "@/hooks/useAddressAutocomplete";
 import { Input } from "@/components/ui/input";
-import { AddressDropdown } from "./address-dropdown";
+import { AddressDropdown } from "@/components/listings/address/AddressDropdown";
 import { cn } from "@/lib/utils";
 
 interface AddressAutocompleteProps {
@@ -39,7 +39,7 @@ export function AddressAutocomplete({
   } = useAddressAutocomplete();
 
   useEffect(() => {
-    if (value.trim().length > 0 && !hasValidatedAddress) {
+    if (value.trim().length >= 3 && !hasValidatedAddress) {
       search(value);
       setIsOpen(true);
       setHighlightedIndex(-1);
@@ -47,7 +47,7 @@ export function AddressAutocomplete({
       clearSuggestions();
       setIsOpen(false);
     }
-  }, [value, search, clearSuggestions, hasValidatedAddress]);
+  }, [value, hasValidatedAddress, search, clearSuggestions]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -59,15 +59,15 @@ export function AddressAutocomplete({
     }
   };
 
-  const handleSelect = (address: NominatimAddress) => {
+  const handleSelect = (address: AddressResult) => {
     const validatedAddress: ValidatedAddress = {
-      display_name: address.display_name,
+      displayName: address.displayName,
       lat: address.lat,
       lon: address.lon,
-      place_id: address.place_id,
+      placeId: address.placeId,
     };
 
-    onChange(address.display_name);
+    onChange(address.displayName);
     onValidatedAddressChange(validatedAddress);
     setHasValidatedAddress(true);
     setIsOpen(false);

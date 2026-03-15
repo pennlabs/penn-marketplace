@@ -1,14 +1,13 @@
 import { Loader2 } from "lucide-react";
-import type { NominatimAddress } from "@/lib/types";
-import { AddressOption } from "./address-option";
+import type { AddressResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface AddressDropdownProps {
-  suggestions: NominatimAddress[];
+  suggestions: AddressResult[];
   isLoading: boolean;
   error: string | null;
   isOpen: boolean;
-  onSelect: (address: NominatimAddress) => void;
+  onSelect: (address: AddressResult) => void;
   highlightedIndex: number;
 }
 
@@ -49,12 +48,22 @@ export function AddressDropdown({
       {!isLoading && !error && suggestions.length > 0 && (
         <div className={"p-1"}>
           {suggestions.map((address, index) => (
-            <AddressOption
-              key={address.place_id}
-              address={address}
-              isHighlighted={index === highlightedIndex}
+            <div
+              key={address.placeId}
+              role="option"
+              aria-selected={index === highlightedIndex}
+              className={cn(
+                "relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm transition-colors outline-none select-none",
+                "hover:bg-accent hover:text-accent-foreground",
+                index === highlightedIndex && "bg-accent text-accent-foreground"
+              )}
               onClick={() => onSelect(address)}
-            />
+              onMouseDown={(e) => {
+                e.preventDefault();
+              }}
+            >
+              <span className={"truncate"}>{address.displayName}</span>
+            </div>
           ))}
         </div>
       )}

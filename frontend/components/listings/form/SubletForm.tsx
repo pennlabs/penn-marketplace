@@ -18,7 +18,7 @@ import { parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
 import type { CreateSubletPayload } from "@/lib/types";
 import type { CreateSubletFormData } from "@/lib/validations";
-import { AddressAutocomplete } from "../address/address-autocomplete";
+import { AddressAutocomplete } from "@/components/listings/address/AddressAutocomplete";
 
 const DISPLAY_LABEL = "Listing";
 const EXAMPLE_TITLE = "e.g., Spacious 2BR near campus";
@@ -42,7 +42,8 @@ export function SubletForm() {
       description: "",
       tags: [],
       street_address: "",
-      validated_address: null,
+      latitude: 0,
+      longitude: 0,
       beds: 0,
       baths: 0,
       start_date: "",
@@ -96,39 +97,48 @@ export function SubletForm() {
         control={control}
         render={({ field: streetField }) => (
           <Controller
-            name="validated_address"
+            name="latitude"
             control={control}
-            render={({ field: validatedField }) => (
-              <FormField
-                label={"Street Address"}
-                error={errors.street_address?.message}
-                touched={touchedFields.street_address}
-                labelSupplement={
-                  <span className={"group relative inline-flex"}>
-                    <Info
-                      className={"text-muted-foreground h-4 w-4 shrink-0 cursor-help"}
-                      aria-label="address privacy info"
+            render={({ field: latField }) => (
+              <Controller
+                name="longitude"
+                control={control}
+                render={({ field: lonField }) => (
+                  <FormField
+                    label={"Street Address"}
+                    error={errors.street_address?.message}
+                    touched={touchedFields.street_address}
+                    labelSupplement={
+                      <span className={"group relative inline-flex"}>
+                        <Info
+                          className={"text-muted-foreground h-4 w-4 shrink-0 cursor-help"}
+                          aria-label="address privacy info"
+                        />
+                        <span
+                          className={
+                            "bg-popover text-popover-foreground pointer-events-none absolute top-full left-0 z-10 mt-1.5 w-56 rounded-md border px-3 py-2 text-xs opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100"
+                          }
+                        >
+                          Your address will not be visible to the public. Only an approximate
+                          location will be shown on the map.
+                        </span>
+                      </span>
+                    }
+                  >
+                    <AddressAutocomplete
+                      value={streetField.value}
+                      onChange={streetField.onChange}
+                      onValidatedAddressChange={(addr) => {
+                        latField.onChange(addr ? parseFloat(addr.lat) : 0);
+                        lonField.onChange(addr ? parseFloat(addr.lon) : 0);
+                      }}
+                      disabled={isFormDisabled}
+                      error={!!errors.street_address}
+                      placeholder={"123 Main St 19104"}
                     />
-                    <span
-                      className={
-                        "bg-popover text-popover-foreground pointer-events-none absolute top-full left-0 z-10 mt-1.5 w-56 rounded-md border px-3 py-2 text-xs opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100"
-                      }
-                    >
-                      Your address will not be visible to the public. Only an approximate location
-                      will be shown on the map.
-                    </span>
-                  </span>
-                }
-              >
-                <AddressAutocomplete
-                  value={streetField.value}
-                  onChange={streetField.onChange}
-                  onValidatedAddressChange={validatedField.onChange}
-                  disabled={isFormDisabled}
-                  error={!!errors.street_address}
-                  placeholder={"123 Main St, Philadelphia, PA 19104"}
-                />
-              </FormField>
+                  </FormField>
+                )}
+              />
             )}
           />
         )}

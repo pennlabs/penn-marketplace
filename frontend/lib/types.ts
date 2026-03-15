@@ -47,33 +47,64 @@ export type SubletAdditionalData = {
 };
 
 // ------------------------------------------------------------
-// create payload types
+// address autocomplete types
 // ------------------------------------------------------------
-export type NominatimAddress = {
-  place_id: number;
+
+export type PhotonGeometry = {
+  type: "Point";
+  coordinates: [number, number]; // longitude, latitude
+};
+
+export type PhotonProperties = {
+  osm_id: number;
+  osm_type: string;
+  osm_value: string;
+  name?: string;
+  street?: string;
+  housenumber?: string;
+  postcode?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  countrycode?: string;
+  extent?: [number, number, number];
+  county?: string;
+  district?: string;
+  locality?: string;
+};
+
+export type PhotonFeature = {
+  type: "Feature";
+  geometry: PhotonGeometry;
+  properties: PhotonProperties;
+};
+
+export type PhotonReponse = {
+  type: "FeatureCollection";
+  features: PhotonFeature[];
+};
+
+export type AddressResult = {
+  placeId: number;
   lat: string;
   lon: string;
-  display_name: string;
+  displayName: string;
   address: {
-    house_number?: string;
+    housenumber?: string;
     road?: string;
-    neighbourhood?: string;
-    suburb?: string;
     city?: string;
-    county?: string;
     state?: string;
-    postcode?: string;
+    postCode?: string;
     country?: string;
-    country_code?: string;
+    countryCode?: string;
   };
-  boundingbox: [string, string, string, string];
 };
 
 export type ValidatedAddress = {
-  display_name: string;
+  displayName: string;
   lat: string;
   lon: string;
-  place_id: number;
+  placeId: number;
 };
 
 // ------------------------------------------------------------
