@@ -18,7 +18,7 @@ function photonFeatureToAddressResult(feature: PhotonFeature): AddressResult {
   if (props.city) displayParts.push(props.city);
   if (props.state) displayParts.push(props.state);
 
-  const displayName = `${displayParts.join(", ")} + ${props.postcode ? props.postcode : ""}`;
+  const displayName = `${displayParts.join(", ")} ${props.postcode ? props.postcode : ""}`;
 
   return {
     placeId: props.osm_id,
