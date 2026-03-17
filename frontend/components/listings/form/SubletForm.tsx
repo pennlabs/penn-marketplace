@@ -9,6 +9,7 @@ import { Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/FormField";
 import { FormSelect } from "@/components/common/FormSelect";
+import { AddressAutocomplete } from "@/components/listings/address/AddressAutocomplete";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -18,7 +19,6 @@ import { parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
 import type { CreateSubletPayload } from "@/lib/types";
 import type { CreateSubletFormData } from "@/lib/validations";
-import { AddressAutocomplete } from "@/components/listings/address/AddressAutocomplete";
 
 const DISPLAY_LABEL = "Listing";
 const EXAMPLE_TITLE = "e.g., Spacious 2BR near campus";
@@ -79,6 +79,8 @@ export function SubletForm() {
       listing_type: "sublet",
       additional_data: {
         street_address: data.street_address,
+        latitude: data.latitude,
+        longitude: data.longitude,
         beds: data.beds,
         baths: data.baths,
         start_date: data.start_date,

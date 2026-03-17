@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 export function useAddressAutocomplete() {
@@ -24,14 +24,14 @@ export function useAddressAutocomplete() {
     enabled: debouncedQuery.length >= 3,
   });
 
-  const search = (newQuery: string) => {
+  const search = useCallback((newQuery: string) => {
     setQuery(newQuery);
-  };
+  }, []);
 
-  const clearSuggestions = () => {
+  const clearSuggestions = useCallback(() => {
     setQuery("");
     setDebouncedQuery("");
-  };
+  }, []);
 
   return { suggestions, isLoading, error: error?.message || null, search, clearSuggestions };
 }

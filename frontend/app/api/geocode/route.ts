@@ -5,20 +5,15 @@ function photonFeatureToAddressResult(feature: PhotonFeature): AddressResult {
   const props = feature.properties;
   const [lon, lat] = feature.geometry.coordinates;
 
-  const displayParts: string[] = [];
+  const addressParts = [
+    props.housenumber && props.street
+      ? `${props.housenumber} ${props.street}`
+      : (props.street ?? props.name),
+    props.city,
+    [props.state, props.postcode].filter(Boolean).join(" "),
+  ].filter(Boolean);
 
-  if (props.housenumber && props.street) {
-    displayParts.push(`${props.housenumber} ${props.street}`);
-  } else if (props.street) {
-    displayParts.push(props.street);
-  } else if (props.name) {
-    displayParts.push(props.name);
-  }
-
-  if (props.city) displayParts.push(props.city);
-  if (props.state) displayParts.push(props.state);
-
-  const displayName = `${displayParts.join(", ")} ${props.postcode ? props.postcode : ""}`;
+  const displayName = addressParts.join(", ");
 
   return {
     placeId: props.osm_id,
@@ -50,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     const params = new URLSearchParams({
       q: query,
-      limit: "5",
+      limit: "5", // maximum number of results returned
       lang: "en",
       bbox: bbox,
     });
