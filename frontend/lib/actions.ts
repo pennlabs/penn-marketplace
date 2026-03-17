@@ -1,13 +1,11 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
 import { clearAuthCookies, getTokensFromCookies } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
 import {
-  AuthTokens,
   CreateItemPayload,
   CreateSubletPayload,
   Item,
