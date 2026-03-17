@@ -46,8 +46,8 @@ export function SubletForm() {
       longitude: 0,
       beds: 0,
       baths: 0,
-      start_date: "",
-      end_date: "",
+      startDate: "",
+      endDate: "",
     },
   });
 
@@ -83,8 +83,8 @@ export function SubletForm() {
         longitude: data.longitude,
         beds: data.beds,
         baths: data.baths,
-        start_date: data.start_date,
-        end_date: data.end_date,
+        start_date: data.startDate,
+        end_date: data.endDate,
       },
     };
     mutate(payload);
@@ -95,7 +95,7 @@ export function SubletForm() {
   const subletFieldsAfterPrice = (
     <>
       <Controller
-        name="street_address"
+        name="streetAddress"
         control={control}
         render={({ field: streetField }) => (
           <Controller
@@ -182,36 +182,36 @@ export function SubletForm() {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Controller
-          name="start_date"
+          name="startDate"
           control={control}
           render={({ field }) => (
             <FormField
               label="Start Date"
-              error={errors.start_date?.message}
-              touched={touchedFields.start_date}
+              error={errors.startDate?.message}
+              touched={touchedFields.startDate}
             >
               <Input
                 {...field}
                 type="date"
-                aria-invalid={!!errors.start_date}
+                aria-invalid={!!errors.startDate}
                 disabled={isFormDisabled}
               />
             </FormField>
           )}
         />
         <Controller
-          name="end_date"
+          name="endDate"
           control={control}
           render={({ field }) => (
             <FormField
               label="End Date"
-              error={errors.end_date?.message}
-              touched={touchedFields.end_date}
+              error={errors.endDate?.message}
+              touched={touchedFields.endDate}
             >
               <Input
                 {...field}
                 type="date"
-                aria-invalid={!!errors.end_date}
+                aria-invalid={!!errors.endDate}
                 disabled={isFormDisabled}
               />
             </FormField>

@@ -5,5 +5,5 @@ export default async function SubletPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const sublet = await getListing(id);
 
-  return <ListingDetail listing={sublet} />;
+  return <ListingDetail listing={sublet} initialIsFavorited={sublet.is_favorited ?? false} />;
 }

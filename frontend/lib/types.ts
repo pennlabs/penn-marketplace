@@ -124,6 +124,7 @@ type BaseListing = {
   images: string[];
   tags: string[];
   favorite_count: number;
+  is_favorited?: boolean;
   seller: User;
 };
 
@@ -207,7 +208,7 @@ export type ListingFiltersMap = {
 // ------------------------------------------------------------
 export type BaseCreatePayload = {
   title: string;
-  description: string;
+  description?: string;
   price: string;
 };
 

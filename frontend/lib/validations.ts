@@ -101,8 +101,8 @@ export const createItemSchema = z.object({
   description: z
     .string()
     .trim()
-    .min(1, "Description is required")
-    .max(5000, "Description must be less than 5000 characters"),
+    .max(5000, "Description must be less than 5000 characters")
+    .optional(),
   price: priceSchema,
   tags: z.array(z.string().trim()),
   condition: z.enum(itemConditionValues, "Condition is required"),
@@ -121,8 +121,8 @@ export const createSubletSchema = z
     description: z
       .string()
       .trim()
-      .min(1, "Description is required")
-      .max(5000, "Description must be less than 5000 characters"),
+      .max(5000, "Description must be less than 5000 characters")
+      .optional(),
     price: priceSchema,
     tags: z.array(z.string().trim()),
     street_address: z.string().trim().min(1, "Street address is required"),
@@ -130,13 +130,13 @@ export const createSubletSchema = z
     longitude: z.number(),
     beds: z.number().int().min(0, "Beds must be 0 or more"),
     baths: z.number().int().min(0, "Baths must be 0 or more"),
-    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
-    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
   })
   .refine(
     (data) => {
-      const start = Date.parse(data.start_date);
-      const end = Date.parse(data.end_date);
+      const start = Date.parse(data.startDate);
+      const end = Date.parse(data.endDate);
       return Number.isFinite(start) && Number.isFinite(end) && end > start;
     },
     { message: "End date must be after start date", path: ["end_date"] }
