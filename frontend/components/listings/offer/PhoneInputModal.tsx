@@ -48,9 +48,6 @@ export function PhoneInputModal({
       toast.success("Verification code sent!");
       onCodeSent(phoneNumber);
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to send verification code");
-    },
   });
 
   const handleSendVerificationCode = (data: PhoneFormData) => {
