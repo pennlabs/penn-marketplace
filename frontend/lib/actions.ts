@@ -10,6 +10,7 @@ import {
   CreateSubletPayload,
   Item,
   Listing,
+  Offer,
   PaginatedResponse,
   Sublet,
   User,
@@ -186,6 +187,14 @@ export async function createOffer({
   return offer;
 }
 
+export async function getOffersMade() {
+  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/made/");
+}
+
+export async function getOffersReceived() {
+  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
+}
+
 export async function getPhoneStatus() {
   return await serverFetch<{
     phone_number: string | null;
@@ -229,7 +238,6 @@ export async function deleteFromUsersFavorites(listingId: number) {
 export async function getUsersFavorites() {
   return await serverFetch<PaginatedResponse<Item | Sublet>>("/market/favorites/");
 }
-
 // ------------------------------------------------------------
 // creating new listings
 // ------------------------------------------------------------
@@ -241,4 +249,90 @@ export async function createListing(payload: CreateListingPayload): Promise<List
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export type UpdateListingPayload = {
+  title?: string;
+  description?: string;
+  price?: number;
+  expires_at?: string;
+  listing_type: "item" | "sublet";
+  additional_data?: Record<string, unknown>;
+};
+
+export async function updateListing(
+  listingId: number,
+  payload: UpdateListingPayload
+): Promise<Listing> {
+  return await serverFetch<Listing>(`/market/listings/${listingId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function uploadListingImages(listingId: number, images: File[]) {
+  const tokens = await getTokensFromCookies();
+  const accessToken = tokens?.accessToken;
+
+  if (!accessToken) {
+    throw new APIError(ErrorMessages.NO_ACCESS_TOKEN, 401);
+  }
+
+  const formData = new FormData();
+  images.forEach((image) => formData.append("images", image));
+
+  const response = await fetch(`${API_BASE_URL}/market/listings/${listingId}/images/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    let errorMessage = `${ErrorMessages.API_REQUEST_FAILED}: ${response.status}`;
+
+    if (errorData) {
+      const firstKey = Object.keys(errorData)[0];
+      if (firstKey) {
+        const firstError = errorData[firstKey];
+        errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+      }
+    }
+
+    throw new APIError(errorMessage, response.status);
+  }
+
+  return response.json();
+}
+
+export async function deleteListing(listingId: number): Promise<void> {
+  const tokens = await getTokensFromCookies();
+  const accessToken = tokens?.accessToken;
+
+  if (!accessToken) {
+    throw new APIError(ErrorMessages.NO_ACCESS_TOKEN, 401);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/market/listings/${listingId}/`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    let errorMessage = `${ErrorMessages.API_REQUEST_FAILED}: ${response.status}`;
+
+    if (errorData) {
+      const firstKey = Object.keys(errorData)[0];
+      if (firstKey) {
+        const firstError = errorData[firstKey];
+        errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+      }
+    }
+    throw new APIError(errorMessage, response.status);
+  }
 }
