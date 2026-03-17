@@ -125,7 +125,9 @@ export const createSubletSchema = z
       .optional(),
     price: priceSchema,
     tags: z.array(z.string().trim()),
-    streetAddress: z.string().trim().min(1, "Street address is required"),
+    street_address: z.string().trim().min(1, "Street address is required"),
+    latitude: z.number(),
+    longitude: z.number(),
     beds: z.number().int().min(0, "Beds must be 0 or more"),
     baths: z.number().int().min(0, "Baths must be 0 or more"),
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
@@ -137,7 +139,11 @@ export const createSubletSchema = z
       const end = Date.parse(data.endDate);
       return Number.isFinite(start) && Number.isFinite(end) && end > start;
     },
-    { message: "End date must be after start date", path: ["endDate"] }
-  );
+    { message: "End date must be after start date", path: ["end_date"] }
+  )
+  .refine((data) => data.latitude !== 0 && data.longitude !== 0, {
+    message: "Please select an address from the dropdown",
+    path: ["street_address"],
+  });
 
 export type CreateSubletFormData = z.infer<typeof createSubletSchema>;
