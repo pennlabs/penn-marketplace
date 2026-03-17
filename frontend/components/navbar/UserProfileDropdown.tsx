@@ -26,7 +26,7 @@ export function UserProfileDropdown({ isOpen, onClose }: UserProfileDropdownProp
         href="/"
         onClick={onClose}
         className={cn(
-          "flex items-center gap-3 px-3 py-3 text-sm",
+          "flex items-center gap-3 rounded-t-md px-3 py-3 text-sm",
           "hover:bg-accent hover:text-accent-foreground transition-colors"
         )}
         role="menuitem"
@@ -67,7 +67,7 @@ export function UserProfileDropdown({ isOpen, onClose }: UserProfileDropdownProp
         href="/"
         onClick={onClose}
         className={cn(
-          "flex items-center gap-3 px-3 py-3 text-sm",
+          "flex items-center gap-3 rounded-b-md px-3 py-3 text-sm",
           "hover:bg-accent hover:text-accent-foreground transition-colors"
         )}
         role="menuitem"
