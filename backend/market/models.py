@@ -132,10 +132,8 @@ class Sublet(Listing):
     baths = models.PositiveIntegerField()
     start_date = models.DateField()
     end_date = models.DateField()
-
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
-
 
     def clean(self):
         super().clean()
@@ -143,8 +141,6 @@ class Sublet(Listing):
             raise ValidationError({"end_date": "End date must be after start date"})
 
     def _calculate_approximate_location(self, latitude, longitude):
-
-
         if latitude is None or longitude is None:
             return None, None
 
@@ -165,20 +161,12 @@ class Sublet(Listing):
         return approx_lat, approx_lon
 
     @property
-    def approximate_latitude(self):
-        if self.latitude and self.longitude:
-            approximate_latitude, _ = self._calculate_approximate_location(
+    def approximate_location(self):
+        if self.latitude is not None and self.longitude is not None:
+            approximate_location = self._calculate_approximate_location(
                 self.latitude, self.longitude)
-            return approximate_latitude
-        return None
-
-    @property
-    def approximate_longitude(self):
-        if self.latitude and self.longitude:
-            _, approximate_lon = self._calculate_approximate_location(
-                self.latitude, self.longitude)
-            return approximate_lon
-        return None
+            return approximate_location
+        return None, None
 
     def save(self, *args, **kwargs):
         self.full_clean()

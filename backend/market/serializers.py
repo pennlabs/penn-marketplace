@@ -108,13 +108,13 @@ class SubletDataSerializer(ModelSerializer):
             "latitude", "longitude"]
 
     def get_latitude(self, obj):
-        if obj.approximate_latitude:
-            return float(obj.approximate_latitude)
+        if obj.approximate_location is not None:
+            return float(obj.approximate_location[0])
         return None
 
     def get_longitude(self, obj):
-        if obj.approximate_longitude:
-            return float(obj.approximate_longitude)
+        if obj.approximate_location is not None:
+            return float(obj.approximate_location[1])
         return None
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
@@ -340,14 +340,16 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
     def _update_sublet(self, instance, additional_data):
         sublet = instance.sublet
-        sublet_fields = ["street_address", "beds", "baths", "start_date", "end_date"]
-        for field in sublet_fields:
+        str_fields = ["street_address", "beds", "baths", "start_date", "end_date"]
+        float_fields = ["latitude", "longitude"]
+        for field in str_fields:
             if field in additional_data:
                 setattr(sublet, field, additional_data[field])
-        if "latitude" in additional_data:
-            sublet.latitude = float(additional_data["latitude"])
-        if "longitude" in additional_data:
-            sublet.longitude = float(additional_data["longitude"])
+        
+        for field in float_fields:
+            if field in additional_data:
+                value = additional_data[field]
+                setattr(sublet, field, float(value) if value is not None else None)
         sublet.full_clean()
         sublet.save()
 
