@@ -345,7 +345,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         for field in str_fields:
             if field in additional_data:
                 setattr(sublet, field, additional_data[field])
-        
+
         for field in float_fields:
             if field in additional_data:
                 value = additional_data[field]
