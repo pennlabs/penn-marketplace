@@ -49,7 +49,7 @@ export const ListingDetail = ({ listing }: Props) => {
           />
           {hasLocation && (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold">Where you'll be living</h2>
+              <h2 className="text-lg font-semibold">{"Where you'll be living"}</h2>
               <SubletMap
                 latitude={subletCoords.latitude!}
                 longitude={subletCoords.longitude!}
