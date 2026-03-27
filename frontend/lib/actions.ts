@@ -1,13 +1,11 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
 import { clearAuthCookies, getTokensFromCookies } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
 import {
-  AuthTokens,
   CreateItemPayload,
   CreateSubletPayload,
   Item,
@@ -15,6 +13,7 @@ import {
   Offer,
   PaginatedResponse,
   Sublet,
+  UpdateListingPayload,
   User,
 } from "@/lib/types";
 
@@ -98,7 +97,6 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
 
     throw new APIError(errorMessage, response.status);
   }
-
   if (response.status === 204 || response.status === 205) {
     return undefined as T;
   }
@@ -230,15 +228,10 @@ export async function getOffersReceived() {
   return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
 }
 
-export async function acceptOffer(offerId: number) {
-  return await serverFetch<Offer>(`/market/offers/${offerId}/accept/`, {
-    method: "POST",
-  });
-}
-
-export async function rejectOffer(offerId: number) {
-  return await serverFetch<Offer>(`/market/offers/${offerId}/reject/`, {
-    method: "POST",
+export async function changeOfferStatus(offerId: number, status: Offer["status"]) {
+  return await serverFetch<Offer>(`/market/offers/${offerId}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 }
 
@@ -296,15 +289,6 @@ export async function createListing(payload: CreateListingPayload): Promise<List
     body: JSON.stringify(payload),
   });
 }
-
-export type UpdateListingPayload = {
-  title?: string;
-  description?: string;
-  price?: number;
-  expires_at?: string;
-  listing_type: "item" | "sublet";
-  additional_data?: Record<string, unknown>;
-};
 
 export async function updateListing(
   listingId: number,

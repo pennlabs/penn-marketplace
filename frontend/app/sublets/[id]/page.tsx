@@ -19,7 +19,7 @@ export default async function SubletPage({ params }: { params: Promise<{ id: str
       initialIsFavorited={sublet.is_favorited ?? false}
       offers={offers}
       offersMode={isOwner ? "received" : "made"}
-      canEdit={isOwner}
+      isOwner={isOwner}
     />
   );
 }

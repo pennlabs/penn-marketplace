@@ -15,11 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormSelect } from "@/components/common/FormSelect";
 import {
-  acceptOffer,
   addToUsersFavorites,
+  changeOfferStatus,
   deleteListing,
   deleteFromUsersFavorites,
-  rejectOffer,
   updateListing,
 } from "@/lib/actions";
 import {
@@ -69,7 +68,7 @@ const OfferCard = ({
   const handleAccept = async () => {
     setLoading("accept");
     try {
-      await acceptOffer(offer.id);
+      await changeOfferStatus(offer.id, "accepted");
       onStatusChange(offer.id, "accepted");
     } catch (err) {
       console.error(err);
@@ -81,7 +80,7 @@ const OfferCard = ({
   const handleReject = async () => {
     setLoading("reject");
     try {
-      await rejectOffer(offer.id);
+      await changeOfferStatus(offer.id, "rejected");
       onStatusChange(offer.id, "rejected");
     } catch (err) {
       console.error(err);
@@ -202,7 +201,7 @@ interface Props {
   initialIsFavorited: boolean;
   offers: Offer[];
   offersMode: "received" | "made";
-  canEdit: boolean;
+  isOwner: boolean;
 }
 
 export const ListingDetail = ({
@@ -210,9 +209,10 @@ export const ListingDetail = ({
   initialIsFavorited,
   offers,
   offersMode,
-  canEdit,
+  isOwner,
 }: Props) => {
   const [listingState, setListingState] = useState(listing);
+  console.log(listing)
   const listingType = listingState.listing_type;
   const priceLabel = listingType === "sublet" ? "/mo" : undefined;
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
@@ -423,10 +423,10 @@ export const ListingDetail = ({
             listingPrice={listingState.price}
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
-            canEdit={canEdit}
+            isOwner={isOwner}
           />
           {offersMode === "received" && <OffersSection offers={offers} offersMode={offersMode} />}
-          {canEdit && (
+          {isOwner && (
             <>
               <div className="flex items-center justify-end gap-2">
                 <Button className="cursor-pointer" variant="outline" onClick={handleEditStart}>

@@ -52,13 +52,29 @@ class OfferSerializer(ModelSerializer):
             "listing",
             "offered_price",
             "message",
+            "status",
             "created_at",
         ]
-        read_only_fields = ["id", "created_at", "user"]
+        read_only_fields = ["id", "created_at", "user", "status"]
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class OfferStatusSerializer(ModelSerializer):
+    class Meta:
+        model = Offer
+        fields = ["id", "status"]
+        read_only_fields = ["id"]
+
+    def validate_status(self, value):
+        valid_statuses = [choice[0] for choice in Offer.Status.choices]
+        if value not in valid_statuses:
+            raise ValidationError(
+                f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+            )
+        return value
 
 
 # Create/Update Image Serializer

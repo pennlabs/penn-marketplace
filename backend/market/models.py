@@ -17,6 +17,11 @@ class User(AbstractUser):
 
 
 class Offer(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACCEPTED = "accepted", "Accepted"
+        REJECTED = "rejected", "Rejected"
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -37,6 +42,9 @@ class Offer(models.Model):
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
     message = models.TextField(max_length=500, blank=True)
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.PENDING
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

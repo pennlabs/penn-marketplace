@@ -31,6 +31,7 @@ from market.serializers import (
     ListingSerializerList,
     ListingSerializerPublic,
     OfferSerializer,
+    OfferStatusSerializer,
     TagSerializer,
     UserSerializer,
 )
@@ -300,6 +301,11 @@ class Offers(viewsets.ModelViewSet):
     serializer_class = OfferSerializer
     pagination_class = PageSizeOffsetPagination
 
+    def get_serializer_class(self):
+        if self.action in ["partial_update", "update"]:
+            return OfferStatusSerializer
+        return OfferSerializer
+
     def get_queryset(self):
         if Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
             return Offer.objects.filter(
@@ -342,25 +348,18 @@ class Offers(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def accept_offer(request, offer_id):
+@api_view(["PATCH"])
+@permission_classes([OfferOwnerPermission | IsSuperUser])
+def change_offer_status(request, offer_id):
     offer = get_object_or_404(Offer, pk=offer_id)
-    if offer.listing.seller != request.user:
-        raise exceptions.PermissionDenied("Only the listing owner can accept offers.")
-    offer.status = Offer.Status.ACCEPTED
-    offer.save(update_fields=["status"])
-    return Response(OfferSerializer(offer).data)
-
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def reject_offer(request, offer_id):
-    offer = get_object_or_404(Offer, pk=offer_id)
-    if offer.listing.seller != request.user:
-        raise exceptions.PermissionDenied("Only the listing owner can reject offers.")
-    offer.status = Offer.Status.REJECTED
-    offer.save(update_fields=["status"])
+    if not any(
+        perm.has_object_permission(request, None, offer)
+        for perm in [OfferOwnerPermission(), IsSuperUser()]
+    ):
+        raise exceptions.PermissionDenied()
+    serializer = OfferStatusSerializer(offer, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
     return Response(OfferSerializer(offer).data)
 
 

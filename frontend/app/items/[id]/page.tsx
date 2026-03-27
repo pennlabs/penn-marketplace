@@ -14,7 +14,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
       initialIsFavorited={item.is_favorited ?? false}
       offers={offers}
       offersMode={isOwner ? "received" : "made"}
-      canEdit={isOwner}
+      isOwner={isOwner}
     />
   );
 }

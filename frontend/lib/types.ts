@@ -172,3 +172,25 @@ export type CreateSubletPayload = BaseCreatePayload & {
   listing_type: "sublet";
   additional_data: SubletAdditionalData;
 };
+
+// ------------------------------------------------------------
+// update payload types
+// ------------------------------------------------------------
+type BaseUpdatePayload = {
+  title?: string;
+  description?: string;
+  price?: number;
+  expires_at?: string;
+};
+
+export type UpdateItemPayload = BaseUpdatePayload & {
+  listing_type: "item";
+  additional_data?: Partial<ItemAdditionalData>;
+};
+
+export type UpdateSubletPayload = BaseUpdatePayload & {
+  listing_type: "sublet";
+  additional_data?: Partial<SubletAdditionalData>;
+};
+
+export type UpdateListingPayload = UpdateItemPayload | UpdateSubletPayload;
