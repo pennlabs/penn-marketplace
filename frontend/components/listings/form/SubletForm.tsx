@@ -9,6 +9,7 @@ import { Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/FormField";
 import { FormSelect } from "@/components/common/FormSelect";
+import { AddressAutocomplete } from "@/components/listings/address/AddressAutocomplete";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -41,10 +42,12 @@ export function SubletForm() {
       description: "",
       tags: [],
       street_address: "",
+      latitude: 0,
+      longitude: 0,
       beds: 0,
       baths: 0,
-      start_date: "",
-      end_date: "",
+      startDate: "",
+      endDate: "",
     },
   });
 
@@ -63,9 +66,6 @@ export function SubletForm() {
       imageUpload.clearImages();
       router.replace(`/sublets/${data.id}`);
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to create listing. Please try again.");
-    },
   });
 
   const onSubmit = (data: CreateSubletFormData) => {
@@ -76,10 +76,12 @@ export function SubletForm() {
       listing_type: "sublet",
       additional_data: {
         street_address: data.street_address,
+        latitude: data.latitude,
+        longitude: data.longitude,
         beds: data.beds,
         baths: data.baths,
-        start_date: data.start_date,
-        end_date: data.end_date,
+        start_date: data.startDate,
+        end_date: data.endDate,
       },
     };
     mutate(payload);
@@ -92,34 +94,55 @@ export function SubletForm() {
       <Controller
         name="street_address"
         control={control}
-        render={({ field }) => (
-          <FormField
-            label="Street Address"
-            error={errors.street_address?.message}
-            touched={touchedFields.street_address}
-            labelSupplement={
-              <span className="group relative inline-flex">
-                <Info
-                  className="text-muted-foreground h-4 w-4 shrink-0 cursor-help"
-                  aria-label="Address privacy info"
-                />
-                <span className="bg-popover text-popover-foreground pointer-events-none absolute top-full left-0 z-10 mt-1.5 w-56 rounded-md border px-3 py-2 text-xs opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100">
-                  Your address will not be visible to the public. Only an approximate location will
-                  be shown on the map.
-                </span>
-              </span>
-            }
-          >
-            <Input
-              {...field}
-              placeholder="123 Main St, Philadelphia, PA 19104"
-              aria-invalid={!!errors.street_address}
-              disabled={isFormDisabled}
-              autoComplete="street-address"
-            />
-          </FormField>
+        render={({ field: streetField }) => (
+          <Controller
+            name="latitude"
+            control={control}
+            render={({ field: latField }) => (
+              <Controller
+                name="longitude"
+                control={control}
+                render={({ field: lonField }) => (
+                  <FormField
+                    label={"Street Address"}
+                    error={errors.street_address?.message}
+                    touched={touchedFields.street_address}
+                    labelSupplement={
+                      <span className={"group relative inline-flex"}>
+                        <Info
+                          className={"text-muted-foreground h-4 w-4 shrink-0 cursor-help"}
+                          aria-label="address privacy info"
+                        />
+                        <span
+                          className={
+                            "bg-popover text-popover-foreground pointer-events-none absolute top-full left-0 z-10 mt-1.5 w-56 rounded-md border px-3 py-2 text-xs opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100"
+                          }
+                        >
+                          Your address will not be visible to the public. Only an approximate
+                          location will be shown on the map.
+                        </span>
+                      </span>
+                    }
+                  >
+                    <AddressAutocomplete
+                      value={streetField.value}
+                      onChange={streetField.onChange}
+                      onValidatedAddressChange={(addr) => {
+                        latField.onChange(addr ? parseFloat(addr.lat) : 0);
+                        lonField.onChange(addr ? parseFloat(addr.lon) : 0);
+                      }}
+                      disabled={isFormDisabled}
+                      error={!!errors.street_address}
+                      placeholder={"123 Main St 19104"}
+                    />
+                  </FormField>
+                )}
+              />
+            )}
+          />
         )}
       />
+
       <div className="grid grid-cols-2 gap-4">
         <Controller
           name="beds"
@@ -156,36 +179,36 @@ export function SubletForm() {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Controller
-          name="start_date"
+          name="startDate"
           control={control}
           render={({ field }) => (
             <FormField
               label="Start Date"
-              error={errors.start_date?.message}
-              touched={touchedFields.start_date}
+              error={errors.startDate?.message}
+              touched={touchedFields.startDate}
             >
               <Input
                 {...field}
                 type="date"
-                aria-invalid={!!errors.start_date}
+                aria-invalid={!!errors.startDate}
                 disabled={isFormDisabled}
               />
             </FormField>
           )}
         />
         <Controller
-          name="end_date"
+          name="endDate"
           control={control}
           render={({ field }) => (
             <FormField
               label="End Date"
-              error={errors.end_date?.message}
-              touched={touchedFields.end_date}
+              error={errors.endDate?.message}
+              touched={touchedFields.endDate}
             >
               <Input
                 {...field}
                 type="date"
-                aria-invalid={!!errors.end_date}
+                aria-invalid={!!errors.endDate}
                 disabled={isFormDisabled}
               />
             </FormField>
