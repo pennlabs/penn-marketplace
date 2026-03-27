@@ -68,7 +68,10 @@ services:
       - penn-marketplace-frontend-pnpm-store:/app/.pnpm-store
     environment:
       - NODE_ENV=development
+      # Browser on your machine → API on published port
       - NEXT_PUBLIC_API_URL=http://localhost:8000
+      # Next server inside this container → Django service name
+      - API_BASE_URL=http://backend:8000
 
 volumes:
   penn-marketplace-postgres-data:

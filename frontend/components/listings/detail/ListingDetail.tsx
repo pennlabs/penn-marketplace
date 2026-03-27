@@ -5,6 +5,7 @@ import { ListingImageGallery } from "@/components/listings/detail/ListingImageGa
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
 import { BackButton } from "@/components/listings/detail/BackButton";
+import { SubletMap } from "@/components/listings/detail/SubletMap";
 
 interface Props {
   listing: Item | Sublet;
@@ -14,6 +15,11 @@ export const ListingDetail = ({ listing }: Props) => {
   const listingType = listing.listing_type;
   const priceLabel = listingType === "sublet" ? "/mo" : undefined;
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
+
+  const subletCoords =
+    listingType === "sublet" ? listing.additional_data : null;
+  const hasLocation =
+    subletCoords?.latitude != null && subletCoords?.longitude != null;
 
   return (
     <div className="mx-auto flex w-full max-w-[96rem] flex-col p-8 px-4 sm:px-12">
@@ -41,6 +47,15 @@ export const ListingDetail = ({ listing }: Props) => {
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
           />
+          {hasLocation && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">Where you'll be living</h2>
+              <SubletMap
+                latitude={subletCoords.latitude!}
+                longitude={subletCoords.longitude!}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
