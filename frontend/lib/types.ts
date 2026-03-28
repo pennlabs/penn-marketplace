@@ -40,12 +40,75 @@ export type ItemAdditionalData = {
 
 export type SubletAdditionalData = {
   street_address: string;
+  latitude: number;
+  longitude: number;
   beds: number;
   baths: number;
   start_date: string;
   end_date: string;
   latitude?: number;
   longitude?: number;
+};
+
+// ------------------------------------------------------------
+// address autocomplete types
+// ------------------------------------------------------------
+
+export type PhotonGeometry = {
+  type: "Point";
+  coordinates: [number, number]; // longitude, latitude
+};
+
+export type PhotonProperties = {
+  osm_id: number;
+  osm_type: string;
+  osm_value: string;
+  name?: string;
+  street?: string;
+  housenumber?: string;
+  postcode?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  countrycode?: string;
+  extent?: [number, number, number];
+  county?: string;
+  district?: string;
+  locality?: string;
+};
+
+export type PhotonFeature = {
+  type: "Feature";
+  geometry: PhotonGeometry;
+  properties: PhotonProperties;
+};
+
+export type PhotonReponse = {
+  type: "FeatureCollection";
+  features: PhotonFeature[];
+};
+
+export type AddressResult = {
+  placeId: number;
+  lat: string;
+  lon: string;
+  displayName: string;
+  address: {
+    housenumber?: string;
+    road?: string;
+    city?: string;
+    state?: string;
+    postCode?: string;
+    country?: string;
+    countryCode?: string;
+  };
+};
+
+export type ValidatedAddress = {
+  displayName: string;
+  lat: string;
+  lon: string;
+  placeId: number;
 };
 
 // ------------------------------------------------------------
@@ -63,6 +126,7 @@ type BaseListing = {
   images: string[];
   tags: string[];
   favorite_count: number;
+  is_favorited?: boolean;
   seller: User;
 };
 
@@ -146,7 +210,7 @@ export type ListingFiltersMap = {
 // ------------------------------------------------------------
 export type BaseCreatePayload = {
   title: string;
-  description: string;
+  description?: string;
   price: string;
 };
 

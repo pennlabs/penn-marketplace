@@ -64,9 +64,6 @@ export function MakeOfferModal({
       queryClient.invalidateQueries({ queryKey: ["offers"] });
       onClose();
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to send offer");
-    },
   });
 
   const handleCreateOffer = (data: OfferFormData) => {

@@ -1,3 +1,7 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { addToUsersFavorites, deleteFromUsersFavorites } from "@/lib/actions";
 import { Heart, Share } from "lucide-react";
 import { Item, Sublet } from "@/lib/types";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
@@ -9,12 +13,48 @@ import { SubletMap } from "@/components/listings/detail/SubletMap";
 
 interface Props {
   listing: Item | Sublet;
+  initialIsFavorited: boolean;
 }
 
-export const ListingDetail = ({ listing }: Props) => {
+export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
   const listingType = listing.listing_type;
   const priceLabel = listingType === "sublet" ? "/mo" : undefined;
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
+  const queryClient = useQueryClient();
+  const favoritesQuery = useQuery({
+    queryKey: ["favorite", listing.id],
+    queryFn: async () => initialIsFavorited,
+    initialData: initialIsFavorited,
+    staleTime: Infinity,
+  });
+
+  const isFavorited = favoritesQuery.data ?? false;
+
+  const toggleFavoriteMutation = useMutation({
+    meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
+    mutationFn: async (shouldFavorite: boolean) => {
+      if (shouldFavorite) {
+        await addToUsersFavorites(listing.id);
+      } else {
+        await deleteFromUsersFavorites(listing.id);
+      }
+    },
+    onMutate: async (shouldFavorite: boolean) => {
+      await queryClient.cancelQueries({ queryKey: ["favorite", listing.id] });
+      const previous = queryClient.getQueryData<boolean>(["favorite", listing.id]);
+      queryClient.setQueryData(["favorite", listing.id], shouldFavorite);
+      return { previous };
+    },
+    onError: (_error, _shouldFavorite, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(["favorite", listing.id], context.previous);
+      }
+    },
+  });
+
+  const handleToggleFavorite = async () => {
+    toggleFavoriteMutation.mutate(!isFavorited);
+  };
 
   const subletCoords =
     listingType === "sublet" ? listing.additional_data : null;
@@ -27,7 +67,15 @@ export const ListingDetail = ({ listing }: Props) => {
         <BackButton />
         <div className="flex items-center gap-3">
           <Share className="h-5 w-5" />
-          <Heart className="h-5 w-5" />
+          <button
+            type="button"
+            className="cursor-pointer"
+            onClick={handleToggleFavorite}
+            aria-pressed={isFavorited}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Heart className={isFavorited ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"} />
+          </button>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
