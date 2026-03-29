@@ -45,14 +45,19 @@ class ListingImageOwnerPermission(permissions.BasePermission):
 
 class OfferOwnerPermission(permissions.BasePermission):
     """
-    Custom permission to allow owner of an offer to delete it.
+    - GET: offer owner can view offers on their listing
+    - DELETE: offer owner can delete their own offer
+    - PATCH: offer owner can update offer status
     """
 
     def has_permission(self, request, view):
         return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:  # GET
+        if request.method in permissions.SAFE_METHODS:
+            return obj.listing.seller == request.user
+
+        if request.method in ("PATCH", "PUT"):
             return obj.listing.seller == request.user
 
         return obj.user == request.user

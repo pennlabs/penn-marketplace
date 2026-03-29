@@ -14,6 +14,7 @@ interface Props {
   listingPrice: number;
   listingOwnerLabel: string;
   priceLabel?: string;
+  isOwner?: boolean;
 }
 
 type ModalState = "none" | "phone-input" | "verification" | "offer";
@@ -23,6 +24,7 @@ export const ListingActions = ({
   listingPrice,
   priceLabel,
   listingOwnerLabel,
+  isOwner = false,
 }: Props) => {
   const [modalState, setModalState] = useState<ModalState>("none");
   const [pendingPhoneNumber, setPendingPhoneNumber] = useState<string>("");
@@ -34,6 +36,10 @@ export const ListingActions = ({
     queryKey: ["phoneStatus"],
     queryFn: getPhoneStatus,
   });
+
+  if (isOwner) {
+    return null;
+  }
 
   const handleMakeOfferClick = () => {
     if (!phoneStatus) return;

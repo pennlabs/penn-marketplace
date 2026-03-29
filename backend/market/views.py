@@ -31,6 +31,7 @@ from market.serializers import (
     ListingSerializerList,
     ListingSerializerPublic,
     OfferSerializer,
+    OfferStatusSerializer,
     TagSerializer,
     UserSerializer,
 )
@@ -192,6 +193,11 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         serializer = serializer_class(instance)
         return Response(serializer.data)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"deleted": True}, status=status.HTTP_200_OK)
+
 
 # TODO: This doesn't use CreateAPIView's functionality
 # since we overrode the create method.
@@ -300,6 +306,11 @@ class Offers(viewsets.ModelViewSet):
     serializer_class = OfferSerializer
     pagination_class = PageSizeOffsetPagination
 
+    def get_serializer_class(self):
+        if self.action in ["partial_update", "update"]:
+            return OfferStatusSerializer
+        return OfferSerializer
+
     def get_queryset(self):
         if Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
             return Offer.objects.filter(
@@ -332,7 +343,7 @@ class Offers(viewsets.ModelViewSet):
         obj = get_object_or_404(queryset, **filter)
         self.check_object_permissions(self.request, obj)
         self.perform_destroy(obj)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"deleted": True}, status=status.HTTP_204)
 
     def list(self, request, *args, **kwargs):
         if not Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
@@ -340,6 +351,21 @@ class Offers(viewsets.ModelViewSet):
         for offer in self.get_queryset():
             self.check_object_permissions(request, offer)
         return super().list(request, *args, **kwargs)
+
+
+@api_view(["PATCH"])
+@permission_classes([OfferOwnerPermission | IsSuperUser])
+def change_offer_status(request, offer_id):
+    offer = get_object_or_404(Offer, pk=offer_id)
+    if not any(
+        perm.has_object_permission(request, None, offer)
+        for perm in [OfferOwnerPermission(), IsSuperUser()]
+    ):
+        raise exceptions.PermissionDenied()
+    serializer = OfferStatusSerializer(offer, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(OfferSerializer(offer).data)
 
 
 @api_view(["POST"])

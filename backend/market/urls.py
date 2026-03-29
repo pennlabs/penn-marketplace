@@ -11,6 +11,7 @@ from market.views import (
     OffersReceived,
     Tags,
     UserFavorites,
+    change_offer_status,
     get_current_user,
     get_phone_status,
     send_verification_code,
@@ -46,9 +47,11 @@ additional_urls = [
     # post: create an offer for an listing
     # delete: delete an offer for an listing
     path(
-        "listings/<listing_id>/offers/",
+        "listings/<int:listing_id>/offers/",
         Offers.as_view({"get": "list", "post": "create", "delete": "destroy"}),
     ),
+    # Update offer status (PATCH)
+    path("offers/<int:offer_id>/", change_offer_status, name="offer-status"),
     # Image Creation
     path("listings/<listing_id>/images/", CreateImages.as_view()),
     # Image Deletion

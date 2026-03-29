@@ -10,8 +10,10 @@ import {
   CreateSubletPayload,
   Item,
   Listing,
+  Offer,
   PaginatedResponse,
   Sublet,
+  UpdateListingPayload,
   User,
 } from "@/lib/types";
 
@@ -95,7 +97,6 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
 
     throw new APIError(errorMessage, response.status);
   }
-
   return response.json();
 }
 
@@ -182,7 +183,7 @@ export async function getSublets({
 // ------------------------------------------------------------
 // single listing (items or sublets)
 // ------------------------------------------------------------
-async function getListing(id: string) {
+export async function getListing(id: string) {
   return await serverFetch<Item | Sublet>(`/market/listings/${id}/`);
 }
 
@@ -213,6 +214,25 @@ export async function createOffer({
       offered_price: offeredPrice,
       message,
     }),
+  });
+}
+
+export async function getOffersMade() {
+  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/made/");
+}
+
+export async function getOffersReceived() {
+  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
+}
+
+export async function getOffersForListing(listingId: number) {
+  return await serverFetch<PaginatedResponse<Offer>>(`/market/listings/${listingId}/offers/`);
+}
+
+export async function changeOfferStatus(offerId: number, status: Offer["status"]) {
+  return await serverFetch<Offer>(`/market/offers/${offerId}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 }
 
@@ -268,5 +288,21 @@ export async function createListing(payload: CreateListingPayload): Promise<List
   return await serverFetch<Listing>("/market/listings/", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function updateListing(
+  listingId: number,
+  payload: UpdateListingPayload
+): Promise<Listing> {
+  return await serverFetch<Listing>(`/market/listings/${listingId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteListing(listingId: number): Promise<void> {
+  return await serverFetch<void>(`/market/listings/${listingId}/`, {
+    method: "DELETE",
   });
 }
