@@ -97,9 +97,6 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
 
     throw new APIError(errorMessage, response.status);
   }
-  if (response.status === 204 || response.status === 205) {
-    return undefined as T;
-  }
   return response.json();
 }
 
@@ -228,6 +225,10 @@ export async function getOffersReceived() {
   return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
 }
 
+export async function getOffersForListing(listingId: number) {
+  return await serverFetch<PaginatedResponse<Offer>>(`/market/listings/${listingId}/offers/`);
+}
+
 export async function changeOfferStatus(offerId: number, status: Offer["status"]) {
   return await serverFetch<Offer>(`/market/offers/${offerId}/`, {
     method: "PATCH",
@@ -301,7 +302,7 @@ export async function updateListing(
 }
 
 export async function deleteListing(listingId: number): Promise<void> {
-  await serverFetch<void>(`/market/listings/${listingId}/`, {
+  return await serverFetch<void>(`/market/listings/${listingId}/`, {
     method: "DELETE",
   });
 }

@@ -373,7 +373,6 @@ export const ListingDetail = ({
       setListingState(nextListing);
       setIsEditing(false);
     } catch (err) {
-      console.log(err);
     }
   };
 
@@ -381,10 +380,9 @@ export const ListingDetail = ({
     if (isDeleting) return;
     setIsDeleting(true);
     try {
-      await deleteListing(listingState.id);
+      const response = await deleteListing(listingState.id);
       window.location.href = "/items";
     } catch (err) {
-      console.log(err);
       setIsDeleting(false);
       setIsDeleteOpen(false);
     }
