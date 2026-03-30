@@ -104,17 +104,26 @@ class SubletDataSerializer(ModelSerializer):
 
     class Meta:
         model = Sublet
-        fields = ["street_address", "beds", "baths", "start_date", "end_date",
-            "latitude", "longitude"]
+        fields = [
+            "street_address",
+            "beds",
+            "baths",
+            "start_date",
+            "end_date",
+            "latitude",
+            "longitude",
+        ]
 
     def get_latitude(self, obj):
-        if obj.approximate_location is not None:
-            return float(obj.approximate_location[0])
+        approx_lat, _ = obj.approximate_location
+        if approx_lat is not None:
+            return float(approx_lat)
         return None
 
     def get_longitude(self, obj):
-        if obj.approximate_location is not None:
-            return float(obj.approximate_location[1])
+        _, approx_lon = obj.approximate_location
+        if approx_lon is not None:
+            return float(approx_lon)
         return None
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations

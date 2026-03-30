@@ -40,12 +40,12 @@ export type ItemAdditionalData = {
 
 export type SubletAdditionalData = {
   street_address: string;
-  latitude: number;
-  longitude: number;
   beds: number;
   baths: number;
   start_date: string;
   end_date: string;
+  latitude: number;
+  longitude: number;
 };
 
 // ------------------------------------------------------------

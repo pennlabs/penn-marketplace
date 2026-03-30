@@ -1,6 +1,8 @@
 import hashlib
+import hmac
 import math
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -146,7 +148,11 @@ class Sublet(Listing):
 
         lat_str = f"{float(latitude):.9f}"
         lon_str = f"{float(longitude):.9f}"
-        seed = hashlib.md5(f"{lat_str}{lon_str}".encode()).hexdigest()
+        seed = hmac.new(
+            settings.SECRET_KEY.encode(),
+            f"{lat_str}{lon_str}".encode(),
+            hashlib.sha256,
+        ).hexdigest()
 
         offset_factor = int(seed[:8], 16) / 0xFFFFFFFF
 
