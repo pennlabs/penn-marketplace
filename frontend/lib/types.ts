@@ -44,8 +44,8 @@ export type SubletAdditionalData = {
   baths: number;
   start_date: string;
   end_date: string;
-  latitude?: number;
-  longitude?: number;
+  latitude: number;
+  longitude: number;
 };
 
 // ------------------------------------------------------------

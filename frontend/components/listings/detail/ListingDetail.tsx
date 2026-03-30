@@ -89,21 +89,26 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
             {...listing.additional_data}
           />
           <UserCard user={listing.seller} label={listingOwnerLabel} />
-          <ListingActions
-            listingId={listing.id}
-            listingPrice={listing.price}
-            priceLabel={priceLabel}
-            listingOwnerLabel={listingOwnerLabel}
-          />
           {hasLocation && (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold">{"Where you'll be living"}</h2>
+              <div>
+                <h2 className="text-lg font-semibold">{"Where you'll be living"}</h2>
+                <p className="text-sm text-gray-500">
+                  Approximate location shown. The exact location will be shared once you connect with the owner.
+                </p>
+                </div>
               <SubletMap
                 latitude={subletCoords.latitude!}
                 longitude={subletCoords.longitude!}
               />
             </div>
           )}
+          <ListingActions
+            listingId={listing.id}
+            listingPrice={listing.price}
+            priceLabel={priceLabel}
+            listingOwnerLabel={listingOwnerLabel}
+          />
         </div>
       </div>
     </div>

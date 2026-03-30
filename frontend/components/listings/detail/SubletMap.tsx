@@ -9,7 +9,7 @@ interface Props {
 
 const LazyMap = dynamic(
   () =>
-    import("./SubletMapContent").then((m) => m.SubletMapContent),
+    import("@/components/listings/detail/SubletMapContent").then((m) => m.SubletMapContent),
   { ssr: false },
 );
 

@@ -9,15 +9,9 @@ import {
 export const BASE_URL =
   process.env.NODE_ENV === "production" ? "REPLACE WITH PROD BASE URL" : "http://localhost:3000";
 
-/**
- * Server-side fetches (RSC, Route Handlers, middleware).
- * - Local `pnpm dev`: default http://localhost:8000 (backend on host port).
- * - Docker frontend service: set API_BASE_URL=http://backend:8000 in compose.
- */
 export const API_BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? process.env.NEXT_PUBLIC_API_URL ?? "REPLACE WITH PROD API URL"
-    : (process.env.API_BASE_URL ?? "http://localhost:8000");
+  process.env.NODE_ENV === "production" ? "REPLACE WITH PROD API URL" : "http://backend:8000"; // can't be localhost because server fetch happens in container
+  
 
 export const PLATFORM_URL = process.env.PLATFORM_URL;
 export const CLIENT_ID = process.env.CLIENT_ID;
