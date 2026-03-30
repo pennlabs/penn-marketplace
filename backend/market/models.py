@@ -1,12 +1,12 @@
 import hashlib
-import math
 import hmac
+import math
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.conf import settings
 from phonenumber_field.modelfields import PhoneNumberField
 
 
