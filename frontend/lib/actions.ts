@@ -242,3 +242,19 @@ export async function createListing(payload: CreateListingPayload): Promise<List
     body: JSON.stringify(payload),
   });
 }
+
+// ------------------------------------------------------------
+// user's own listings
+// ------------------------------------------------------------
+
+export async function getMyListings({ pageParam = 1 }: { pageParam?: unknown } = {}) {
+  const page = typeof pageParam === "number" ? pageParam : 1;
+  const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
+
+  const params = new URLSearchParams();
+  params.append("seller", "true");
+  params.append("limit", FETCH_LISTINGS_LIMIT.toString());
+  params.append("offset", offset.toString());
+
+  return await serverFetch<PaginatedResponse<Listing>>(`/market/listings/?${params.toString()}`);
+}

@@ -14,6 +14,8 @@ export type User = {
   first_name: string;
   last_name: string;
   email: string;
+  phone_number: string | null;
+  phone_verified: boolean;
 };
 
 // ------------------------------------------------------------
@@ -61,6 +63,7 @@ type BaseListing = {
   images: string[];
   tags: string[];
   favorite_count: number;
+  offers_count?: number;
   is_favorited?: boolean;
   seller: User;
 };
