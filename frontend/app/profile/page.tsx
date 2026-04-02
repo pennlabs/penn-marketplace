@@ -16,7 +16,7 @@ export default async function ProfilePage() {
         title="My Listings"
         count={myListings.count}
         listings={myListings.results}
-        seeAllHref="/profile"
+        seeAllHref="/profile/listings"
         icon="listings"
       />
       <ListingSection
