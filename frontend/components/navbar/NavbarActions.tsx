@@ -6,16 +6,14 @@ import { Button } from "@/components/ui/button";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 
 interface Props {
-  createNewText: string;
-  createNewHref: string;
+  createNewConfig: { text: string; href: string } | undefined;
   mobileShowHamburger: boolean;
   isMobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
 }
 
 export const NavbarActions = ({
-  createNewText,
-  createNewHref,
+  createNewConfig,
   mobileShowHamburger,
   isMobileMenuOpen,
   onToggleMobileMenu,
@@ -61,33 +59,33 @@ export const NavbarActions = ({
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      {/* desktop only new listing button */}
-      {
-        <Button
-          variant="outline"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden gap-2 md:flex"
-          asChild
-        >
-          <Link href={createNewHref} aria-label={createNewText}>
-            <Plus className="h-4 w-4" />
-            <span>{createNewText}</span>
-          </Link>
-        </Button>
-      }
+      {createNewConfig && (
+        <>
+          {/* desktop only new listing button */}
+          <Button
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden gap-2 md:flex"
+            asChild
+          >
+            <Link href={createNewConfig.href} aria-label={createNewConfig.text}>
+              <Plus className="h-4 w-4" />
+              <span>{createNewConfig.text}</span>
+            </Link>
+          </Button>
 
-      {/* mobile only new listing button (icon only) */}
-      {
-        <Button
-          variant="outline"
-          size="icon"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground md:hidden"
-          asChild
-        >
-          <Link href={createNewHref} aria-label={createNewText}>
-            <Plus className="h-4 w-4" />
-          </Link>
-        </Button>
-      }
+          {/* mobile only new listing button (icon only) */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground md:hidden"
+            asChild
+          >
+            <Link href={createNewConfig.href} aria-label={createNewConfig.text}>
+              <Plus className="h-4 w-4" />
+            </Link>
+          </Button>
+        </>
+      )}
 
       {/* notification bell */}
       <Button
