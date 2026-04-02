@@ -46,15 +46,12 @@ export const Navbar = () => {
               </div>
             )}
 
-            {createNewConfig && (
-              <NavbarActions
-                createNewText={createNewConfig.text}
-                createNewHref={createNewConfig.href}
-                mobileShowHamburger={showListingsTabs}
-                isMobileMenuOpen={isMobileMenuOpen}
-                onToggleMobileMenu={toggleMobileMenu}
-              />
-            )}
+            <NavbarActions
+              createNewConfig={createNewConfig}
+              mobileShowHamburger={showListingsTabs}
+              isMobileMenuOpen={isMobileMenuOpen}
+              onToggleMobileMenu={toggleMobileMenu}
+            />
           </div>
         </div>
       </div>
