@@ -46,3 +46,11 @@ export async function getTokensFromCookies(): Promise<AuthTokens | null> {
     return null;
   }
 }
+
+export async function clearAuthCookies() {
+  const cookieStore = await cookies();
+  cookieStore.delete("access_token");
+  cookieStore.delete("refresh_token");
+  cookieStore.delete("id_token");
+  cookieStore.delete("expires_in");
+}

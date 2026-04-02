@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Bell, Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserProfileDropdown } from "./UserProfileDropdown";
 
 interface Props {
   createNewText: string;
@@ -20,6 +21,8 @@ export const NavbarActions = ({
   onToggleMobileMenu,
 }: Props) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleNotificationClick = () => {
     // TODO
@@ -27,8 +30,34 @@ export const NavbarActions = ({
   };
 
   const handleAvatarClick = () => {
-    // TODO
+    setIsDropdownOpen(!isDropdownOpen);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [isDropdownOpen]);
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
@@ -78,21 +107,26 @@ export const NavbarActions = ({
       </Button>
 
       {/* user avatar */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="overflow-hidden rounded-full p-0 transition-opacity hover:opacity-80"
-        onClick={handleAvatarClick}
-        aria-label="User menu"
-      >
-        <Image
-          src="/images/default-avatar.png"
-          alt="User avatar"
-          width={40}
-          height={40}
-          className="rounded-full object-cover"
-        />
-      </Button>
+      <div className="relative" ref={containerRef}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="overflow-hidden rounded-full p-0 transition-opacity hover:opacity-80"
+          onClick={handleAvatarClick}
+          aria-label="User menu"
+          aria-expanded={isDropdownOpen}
+        >
+          <Image
+            src="/images/default-avatar.png"
+            alt="User avatar"
+            width={40}
+            height={40}
+            className="rounded-full object-cover"
+          />
+        </Button>
+
+        <UserProfileDropdown isOpen={isDropdownOpen} onClose={() => setIsDropdownOpen(false)} />
+      </div>
 
       {/* mobile only menu toggle */}
       {mobileShowHamburger && (

@@ -56,9 +56,6 @@ export function ItemForm() {
       imageUpload.clearImages();
       router.replace(`/items/${data.id}`);
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to create listing. Please try again.");
-    },
   });
 
   const onSubmit = (data: CreateItemFormData) => {

@@ -9,6 +9,7 @@ import { ListingImageGallery } from "@/components/listings/detail/ListingImageGa
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
 import { BackButton } from "@/components/listings/detail/BackButton";
+import { SubletMap } from "@/components/listings/detail/SubletMap";
 
 interface Props {
   listing: Item | Sublet;
@@ -30,6 +31,7 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
   const isFavorited = favoritesQuery.data ?? false;
 
   const toggleFavoriteMutation = useMutation({
+    meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
     mutationFn: async (shouldFavorite: boolean) => {
       if (shouldFavorite) {
         await addToUsersFavorites(listing.id);
@@ -53,6 +55,11 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
   const handleToggleFavorite = async () => {
     toggleFavoriteMutation.mutate(!isFavorited);
   };
+
+  const subletCoords =
+    listingType === "sublet" ? listing.additional_data : null;
+  const hasLocation =
+    subletCoords?.latitude != null && subletCoords?.longitude != null;
 
   return (
     <div className="mx-auto flex w-full max-w-[96rem] flex-col p-8 px-4 sm:px-12">
@@ -82,6 +89,20 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
             {...listing.additional_data}
           />
           <UserCard user={listing.seller} label={listingOwnerLabel} />
+          {hasLocation && (
+            <div className="space-y-3">
+              <div>
+                <h2 className="text-lg font-semibold">{"Where you'll be living"}</h2>
+                <p className="text-sm text-gray-500">
+                  Approximate location shown. The exact location will be shared once you connect with the owner.
+                </p>
+                </div>
+              <SubletMap
+                latitude={subletCoords.latitude!}
+                longitude={subletCoords.longitude!}
+              />
+            </div>
+          )}
           <ListingActions
             listingId={listing.id}
             listingPrice={listing.price}

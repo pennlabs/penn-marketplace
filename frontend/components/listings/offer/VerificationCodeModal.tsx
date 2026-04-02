@@ -44,8 +44,7 @@ export function VerificationCodeModal({ isOpen, onClose, phoneNumber, onVerified
       toast.success("Phone number verified!");
       onVerified();
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Invalid or expired code");
+    onError: () => {
       reset({ code: "" });
     },
   });
@@ -56,9 +55,6 @@ export function VerificationCodeModal({ isOpen, onClose, phoneNumber, onVerified
       toast.success("New code sent!");
       reset({ code: "" });
       setResendCooldown(30);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to resend code");
     },
   });
 
