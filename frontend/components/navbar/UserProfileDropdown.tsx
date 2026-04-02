@@ -51,7 +51,7 @@ export function UserProfileDropdown({ isOpen, onClose }: UserProfileDropdownProp
 
       <div className="text-foreground mt-1 px-3 py-1 text-xs font-bold">Buying</div>
       <Link
-        href="/"
+        href="/profile/saved"
         onClick={onClose}
         className={cn(
           "flex items-center gap-3 px-3 py-3 text-sm",

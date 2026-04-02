@@ -40,15 +40,15 @@ export const ProfileHeader = ({ user }: Props) => {
 
       <div className="mt-6 flex flex-wrap gap-x-12 gap-y-3 text-sm">
         <div>
-          <p className="text-brand font-medium">email</p>
+          <p className="text-brand font-medium">Email</p>
           <p className="text-gray-700">{user.email}</p>
         </div>
         <div>
-          <p className="text-brand font-medium">phone number</p>
+          <p className="text-brand font-medium">Phone number</p>
           <p className="text-gray-700">{user.phone_number || "Not set"}</p>
         </div>
         <div>
-          <p className="text-brand font-medium">notification method</p>
+          <p className="text-brand font-medium">Notification method</p>
           {/* TODO: replace with actual notification preference */}
           <p className="text-gray-700">Email</p>
         </div>
