@@ -1,18 +1,10 @@
 import Image from "next/image";
-import { Star, Mail, Phone } from "lucide-react";
+import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { User } from "@/lib/types";
 
 interface Props {
   user: User;
-}
-
-function maskPhoneNumber(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 4) return phone;
-  const areaCode = digits.slice(digits.length - 10, digits.length - 7);
-  const prefix = digits.slice(digits.length - 7, digits.length - 4);
-  return `(${areaCode}) ${prefix}-XXXX`;
 }
 
 export const ProfileHeader = ({ user }: Props) => {
@@ -32,6 +24,7 @@ export const ProfileHeader = ({ user }: Props) => {
           <div className="space-y-1">
             <h1 className="text-xl font-bold sm:text-2xl">{fullName}</h1>
             <div className="flex items-center gap-1.5 text-sm text-gray-600">
+              {/* TODO: replace with actual user rating */}
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -52,13 +45,12 @@ export const ProfileHeader = ({ user }: Props) => {
         </div>
         <div>
           <p className="text-brand font-medium">phone number</p>
-          <p className="text-gray-700">
-            {user.phone_number ? maskPhoneNumber(user.phone_number) : "Not set"}
-          </p>
+          <p className="text-gray-700">{user.phone_number || "Not set"}</p>
         </div>
         <div>
           <p className="text-brand font-medium">notification method</p>
-          <p className="text-gray-700">Email | SMS</p>
+          {/* TODO: replace with actual notification preference */}
+          <p className="text-gray-700">Email</p>
         </div>
       </div>
     </div>

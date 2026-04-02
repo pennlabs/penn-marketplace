@@ -104,7 +104,7 @@ export const MyListingsContent = ({ listings }: Props) => {
       {filtered.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-500">No listings found.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((listing) => (
             <ListingsCard
               key={listing.id}

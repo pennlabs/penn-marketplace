@@ -15,7 +15,7 @@ export const ListingSection = ({ title, count, listings, seeAllHref, icon }: Pro
   const Icon = icon === "listings" ? ShoppingBag : Bookmark;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Icon className="h-5 w-5" />

@@ -23,7 +23,7 @@ export default async function ProfilePage() {
         title="Saved Posts"
         count={savedPosts.count}
         listings={savedPosts.results}
-        seeAllHref="/profile"
+        seeAllHref="/profile/saved"
         icon="saved"
       />
     </div>
