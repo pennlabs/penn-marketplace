@@ -182,7 +182,7 @@ export async function getSublets({
 // ------------------------------------------------------------
 // single listing (items or sublets)
 // ------------------------------------------------------------
-async function getListing(id: string) {
+export async function getListing(id: string) {
   return await serverFetch<Item | Sublet>(`/market/listings/${id}/`);
 }
 

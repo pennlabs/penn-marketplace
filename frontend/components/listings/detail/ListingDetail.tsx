@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addToUsersFavorites, deleteFromUsersFavorites } from "@/lib/actions";
+import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
+import { queryKeys } from "@/lib/queryKeys";
 import { Heart, Share } from "lucide-react";
 import { Item, Sublet } from "@/lib/types";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
@@ -12,42 +13,40 @@ import { BackButton } from "@/components/listings/detail/BackButton";
 import { SubletMap } from "@/components/listings/detail/SubletMap";
 
 interface Props {
-  listing: Item | Sublet;
-  initialIsFavorited: boolean;
+  listingId: number;
 }
 
-export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
-  const listingType = listing.listing_type;
-  const priceLabel = listingType === "sublet" ? "/mo" : undefined;
-  const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
+export const ListingDetail = ({ listingId }: Props) => {
   const queryClient = useQueryClient();
-  const favoritesQuery = useQuery({
-    queryKey: ["favorite", listing.id],
-    queryFn: async () => initialIsFavorited,
-    initialData: initialIsFavorited,
-    staleTime: Infinity,
+  const queryKey = queryKeys.listing(listingId);
+
+  const { data: listing } = useQuery({
+    queryKey,
+    queryFn: () => getListing(String(listingId)),
   });
 
-  const isFavorited = favoritesQuery.data ?? false;
+  const isFavorited = listing?.is_favorited ?? false;
 
   const toggleFavoriteMutation = useMutation({
     meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
     mutationFn: async (shouldFavorite: boolean) => {
       if (shouldFavorite) {
-        await addToUsersFavorites(listing.id);
+        await addToUsersFavorites(listingId);
       } else {
-        await deleteFromUsersFavorites(listing.id);
+        await deleteFromUsersFavorites(listingId);
       }
     },
     onMutate: async (shouldFavorite: boolean) => {
-      await queryClient.cancelQueries({ queryKey: ["favorite", listing.id] });
-      const previous = queryClient.getQueryData<boolean>(["favorite", listing.id]);
-      queryClient.setQueryData(["favorite", listing.id], shouldFavorite);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Item | Sublet>(queryKey);
+      if (previous) {
+        queryClient.setQueryData(queryKey, { ...previous, is_favorited: shouldFavorite });
+      }
       return { previous };
     },
     onError: (_error, _shouldFavorite, context) => {
-      if (context?.previous !== undefined) {
-        queryClient.setQueryData(["favorite", listing.id], context.previous);
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
       }
     },
   });
@@ -55,6 +54,12 @@ export const ListingDetail = ({ listing, initialIsFavorited }: Props) => {
   const handleToggleFavorite = async () => {
     toggleFavoriteMutation.mutate(!isFavorited);
   };
+
+  if (!listing) return null;
+
+  const listingType = listing.listing_type;
+  const priceLabel = listingType === "sublet" ? "/mo" : undefined;
+  const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
 
   const subletCoords = listingType === "sublet" ? listing.additional_data : null;
   const hasLocation = subletCoords?.latitude != null && subletCoords?.longitude != null;
