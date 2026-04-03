@@ -6,15 +6,15 @@ from market.views import (
     DeleteImage,
     Favorites,
     Listings,
+    MyOfferForListing,
+    OfferDetailsUpdate,
     Offers,
     OffersMade,
     OffersReceived,
+    OfferStatusUpdate,
     Tags,
     UserFavorites,
-    change_offer_details,
-    change_offer_status,
     get_current_user,
-    get_my_offer_for_listing,
     get_phone_status,
     send_verification_code,
     verify_phone_code,
@@ -56,15 +56,19 @@ additional_urls = [
     # (Returns 404 when the user has no offer for that listing.)
     path(
         "listings/<int:listing_id>/offers/mine/",
-        get_my_offer_for_listing,
+        MyOfferForListing.as_view(),
         name="offers-mine",
     ),
-    # Update offer status (PATCH)
-    path("offers/<int:offer_id>/", change_offer_status, name="offer-status"),
-    # Update offer offered_price + message (PATCH)
+    # Update offer status only (PATCH; listing seller or superuser)
+    path(
+        "offers/<int:offer_id>/status/",
+        OfferStatusUpdate.as_view(),
+        name="offer-status",
+    ),
+    # Update offer offered_price + message (PATCH; offer owner or superuser)
     path(
         "offers/<int:offer_id>/details/",
-        change_offer_details,
+        OfferDetailsUpdate.as_view(),
         name="offer-details",
     ),
     # Image Creation

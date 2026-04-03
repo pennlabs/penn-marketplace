@@ -45,7 +45,7 @@ class ListingImageOwnerPermission(permissions.BasePermission):
 
 class ListingOwnerOffersPermission(permissions.BasePermission):
     """
-    Permission for listing-owner offer interactions:
+    Permission for the owner of a listing:
     - GET: listing seller can view offers on their listing
     - PATCH/PUT: listing seller can update offer status
     - DELETE: offer creator can delete/withdraw their own offer
@@ -62,3 +62,18 @@ class ListingOwnerOffersPermission(permissions.BasePermission):
             return obj.listing.seller == request.user
 
         return obj.user == request.user
+
+
+class OfferOwnerPermission(permissions.BasePermission):
+    """
+    Permission for the buyer who created an offer:
+    - PATCH/PUT: offer owner can edit their own offer (e.g. price/message)
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in ("PATCH", "PUT"):
+            return obj.user_id == request.user.id
+        return False

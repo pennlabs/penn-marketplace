@@ -41,8 +41,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const resolveConditionValue = (condition: string | undefined): ItemCondition | undefined => {
-  if (condition === undefined) return undefined;
+const resolveConditionValue = (condition: ItemCondition | string): ItemCondition => {
   const match = CONDITION_OPTIONS.find((option) => option.label === condition);
   return match ? match.value : (condition as ItemCondition);
 };
