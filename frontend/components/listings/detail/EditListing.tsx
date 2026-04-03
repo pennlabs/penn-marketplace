@@ -12,7 +12,14 @@ import { Input } from "@/components/ui/input";
 import { updateListing } from "@/lib/actions";
 import { BEDS_OPTIONS, BATHS_OPTIONS, CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/lib/constants";
 import { parsePriceString } from "@/lib/utils";
-import type { Item, Sublet, UpdateItemPayload, UpdateSubletPayload } from "@/lib/types";
+import type {
+  Item,
+  ItemCategory,
+  ItemCondition,
+  Sublet,
+  UpdateItemPayload,
+  UpdateSubletPayload,
+} from "@/lib/types";
 import {
   editItemSchema,
   editSubletSchema,
@@ -34,8 +41,11 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const resolveConditionValue = (condition: string) =>
-  CONDITION_OPTIONS.find((option) => option.label === condition)?.value ?? condition;
+const resolveConditionValue = (condition: string | undefined): ItemCondition | undefined => {
+  if (condition === undefined) return undefined;
+  const match = CONDITION_OPTIONS.find((option) => option.label === condition);
+  return match ? match.value : (condition as ItemCondition);
+};
 
 const EditItemContent = ({
   listing,
@@ -109,7 +119,7 @@ const EditItemContent = ({
           <FormSelect
             label="Product Category"
             value={field.value}
-            onChange={field.onChange}
+            onChange={(val) => field.onChange(val as ItemCategory)}
             options={CATEGORY_OPTIONS}
             placeholder="Select Category"
             error={errors.category?.message}
@@ -124,7 +134,7 @@ const EditItemContent = ({
           <FormSelect
             label="Condition"
             value={field.value}
-            onChange={field.onChange}
+            onChange={(val) => field.onChange(val as ItemCondition)}
             options={CONDITION_OPTIONS}
             placeholder="Select Condition"
             error={errors.condition?.message}

@@ -18,7 +18,7 @@ class Command(BaseCommand):
             "--listing-id",
             type=int,
             default=None,
-            help="Add offers to an existing listing by ID instead of creating a new one",
+            help="Add offers to an existing listing by ID",
         )
 
     def handle(self, *args, **options):
@@ -48,16 +48,24 @@ class Command(BaseCommand):
         bob.set_password("testpassword123")
         bob.save()
 
-        self.stdout.write(self.style.SUCCESS("Buyers ready: Alice Johnson, Bob Williams"))
+        self.stdout.write(
+            self.style.SUCCESS("Buyers ready: Alice Johnson, Bob Williams")
+        )
 
         listing_id = options["listing_id"]
         if listing_id:
             try:
                 listing = Listing.objects.get(pk=listing_id)
             except Listing.DoesNotExist:
-                self.stdout.write(self.style.ERROR(f"Listing with id={listing_id} not found"))
+                self.stdout.write(
+                    self.style.ERROR(f"Listing with id={listing_id} not found")
+                )
                 return
-            self.stdout.write(self.style.SUCCESS(f"Using existing listing: {listing.title} (id={listing.id})"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Using existing listing: {listing.title} (id={listing.id})"
+                )
+            )
         else:
             seller, _ = User.objects.get_or_create(
                 username="lautaro",
@@ -69,7 +77,9 @@ class Command(BaseCommand):
             )
             seller.set_password("testpassword123")
             seller.save()
-            self.stdout.write(self.style.SUCCESS(f"Seller ready: {seller.get_full_name()}"))
+            self.stdout.write(
+                self.style.SUCCESS(f"Seller ready: {seller.get_full_name()}")
+            )
 
             category, _ = Category.objects.get_or_create(name="Furniture")
             listing = Item.objects.create(
@@ -105,5 +115,11 @@ class Command(BaseCommand):
         new_count = sum([created_alice, created_bob])
         skipped = 2 - new_count
 
-        self.stdout.write(self.style.SUCCESS(f"Created {new_count} offers, skipped {skipped} (already existed)"))
-        self.stdout.write(self.style.SUCCESS(f"\nDone! Offers added to listing id={listing.id}"))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Created {new_count} offers, skipped {skipped} (already existed)"
+            )
+        )
+        self.stdout.write(
+            self.style.SUCCESS(f"\nDone! Offers added to listing id={listing.id}")
+        )

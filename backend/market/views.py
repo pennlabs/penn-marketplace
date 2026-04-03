@@ -21,8 +21,8 @@ from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
     ListingImageOwnerPermission,
-    ListingOwnerPermission,
     ListingOwnerOffersPermission,
+    ListingOwnerPermission,
 )
 from market.serializers import (
     ListingImageSerializer,
@@ -30,9 +30,9 @@ from market.serializers import (
     ListingSerializer,
     ListingSerializerList,
     ListingSerializerPublic,
+    OfferDetailsSerializer,
     OfferSerializer,
     OfferStatusSerializer,
-    OfferDetailsSerializer,
     TagSerializer,
     UserSerializer,
 )

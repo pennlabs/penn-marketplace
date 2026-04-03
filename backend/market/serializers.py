@@ -82,6 +82,7 @@ class OfferDetailsSerializer(ModelSerializer):
     Allows the offer owner to edit the offer's offered_price and message.
     Status is intentionally read-only (managed by the listing owner).
     """
+
     class Meta:
         model = Offer
         fields = ["id", "offered_price", "message", "status"]

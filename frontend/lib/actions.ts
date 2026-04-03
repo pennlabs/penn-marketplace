@@ -97,7 +97,10 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
 
     throw new APIError(errorMessage, response.status);
   }
-  return response.json();
+  // Some DELETE endpoints return `204 No Content`; attempting `response.json()` would throw.
+  if (response.status === 204) return null as unknown as T;
+
+  return response.json().catch(() => null as unknown as T);
 }
 
 // ------------------------------------------------------------
@@ -207,8 +210,8 @@ export async function createOffer({
   listingId: number;
   offeredPrice: number;
   message?: string;
-}) {
-  return await serverFetch(`/market/listings/${listingId}/offers/`, {
+}): Promise<Offer> {
+  return await serverFetch<Offer>(`/market/listings/${listingId}/offers/`, {
     method: "POST",
     body: JSON.stringify({
       offered_price: offeredPrice,
