@@ -1369,7 +1369,8 @@ class TestOffer(BaseMarketTest):
     def test_delete_offer(self):
         self.assertTrue(Offer.objects.filter(id=self.offers[0].id).exists())
         response = self.client.delete(f"/market/listings/{self.items[1].id}/offers/")
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"deleted": True})
         self.assertFalse(Offer.objects.filter(id=self.offers[0].id).exists())
 
     def test_delete_offer_nonexistent(self):

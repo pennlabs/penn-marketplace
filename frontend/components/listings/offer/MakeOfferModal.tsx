@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getPhoneStatus, createOffer } from "@/lib/actions";
 import { formatPhoneNumber } from "@/lib/utils";
 import { offerSchema, type OfferFormData } from "@/lib/validations";
+import type { Offer } from "@/lib/types";
 
 interface Props {
   isOpen: boolean;
@@ -59,9 +60,10 @@ export function MakeOfferModal({
 
   const createOfferMutation = useMutation({
     mutationFn: createOffer,
-    onSuccess: () => {
+    onSuccess: (createdOffer: Offer) => {
       toast.success(`Offer sent! The ${listingOwnerLabel.toLowerCase()} will contact you.`);
-      queryClient.invalidateQueries({ queryKey: ["offers"] });
+      queryClient.setQueryData(["myOffer", listingId], createdOffer);
+      queryClient.invalidateQueries({ queryKey: ["myOffer", listingId] });
       onClose();
     },
   });

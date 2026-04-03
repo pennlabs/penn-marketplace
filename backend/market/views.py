@@ -22,7 +22,7 @@ from market.permissions import (
     IsSuperUser,
     ListingImageOwnerPermission,
     ListingOwnerPermission,
-    OfferOwnerPermission,
+    ListingOwnerOffersPermission,
 )
 from market.serializers import (
     ListingImageSerializer,
@@ -32,6 +32,7 @@ from market.serializers import (
     ListingSerializerPublic,
     OfferSerializer,
     OfferStatusSerializer,
+    OfferDetailsSerializer,
     TagSerializer,
     UserSerializer,
 )
@@ -302,7 +303,7 @@ class Offers(viewsets.ModelViewSet):
     Delete the offer between the user and the listing matching the ID.
     """
 
-    permission_classes = [OfferOwnerPermission | IsSuperUser]
+    permission_classes = [ListingOwnerOffersPermission | IsSuperUser]
     serializer_class = OfferSerializer
     pagination_class = PageSizeOffsetPagination
 
@@ -343,7 +344,8 @@ class Offers(viewsets.ModelViewSet):
         obj = get_object_or_404(queryset, **filter)
         self.check_object_permissions(self.request, obj)
         self.perform_destroy(obj)
-        return Response({"deleted": True}, status=status.HTTP_204)
+        # Keep a JSON body so the frontend `serverFetch` can safely parse.
+        return Response({"deleted": True}, status=status.HTTP_200_OK)
 
     def list(self, request, *args, **kwargs):
         if not Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
@@ -354,15 +356,51 @@ class Offers(viewsets.ModelViewSet):
 
 
 @api_view(["PATCH"])
-@permission_classes([OfferOwnerPermission | IsSuperUser])
+@permission_classes([ListingOwnerOffersPermission | IsSuperUser])
 def change_offer_status(request, offer_id):
     offer = get_object_or_404(Offer, pk=offer_id)
     if not any(
         perm.has_object_permission(request, None, offer)
-        for perm in [OfferOwnerPermission(), IsSuperUser()]
+        for perm in [ListingOwnerOffersPermission(), IsSuperUser()]
     ):
         raise exceptions.PermissionDenied()
     serializer = OfferStatusSerializer(offer, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(OfferSerializer(offer).data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_my_offer_for_listing(request, listing_id: int):
+    """
+    Return the authenticated user's offer for the given listing.
+    If none exists, return 404 so callers can treat it as `null`.
+    """
+    try:
+        listing_id_int = int(listing_id)
+    except (TypeError, ValueError):
+        raise exceptions.NotFound("No Listing matches the given query")
+
+    offer = Offer.objects.filter(listing_id=listing_id_int, user=request.user).first()
+    if offer is None:
+        raise exceptions.NotFound("No offer for this listing")
+    return Response(OfferSerializer(offer).data)
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated | IsSuperUser])
+def change_offer_details(request, offer_id: int):
+    """
+    Allow the offer owner to edit offered_price and message.
+    Status remains read-only.
+    """
+    offer = get_object_or_404(Offer, pk=offer_id)
+
+    if not (request.user.is_superuser or offer.user_id == request.user.id):
+        raise exceptions.PermissionDenied("Only the offer owner can edit this offer")
+
+    serializer = OfferDetailsSerializer(offer, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     serializer.save()
     return Response(OfferSerializer(offer).data)

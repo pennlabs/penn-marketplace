@@ -236,6 +236,37 @@ export async function changeOfferStatus(offerId: number, status: Offer["status"]
   });
 }
 
+// ------------------------------------------------------------
+// offers: current user's offer for a listing
+// ------------------------------------------------------------
+export async function getMyOfferForListing(listingId: number): Promise<Offer | null> {
+  try {
+    return await serverFetch<Offer>(`/market/listings/${listingId}/offers/mine/`);
+  } catch (error) {
+    if (error instanceof APIError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+export async function updateMyOfferDetails(
+  offerId: number,
+  payload: { offeredPrice: number; message?: string }
+): Promise<Offer> {
+  return await serverFetch<Offer>(`/market/offers/${offerId}/details/`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      offered_price: payload.offeredPrice,
+      message: payload.message?.trim() || "",
+    }),
+  });
+}
+
+export async function deleteMyOfferForListing(listingId: number): Promise<{ deleted: boolean }> {
+  return await serverFetch<{ deleted: boolean }>(`/market/listings/${listingId}/offers/`, {
+    method: "DELETE",
+  });
+}
+
 export async function getPhoneStatus() {
   return await serverFetch<{
     phone_number: string | null;

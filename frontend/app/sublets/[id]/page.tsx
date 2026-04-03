@@ -1,5 +1,5 @@
 import { ListingDetail } from "@/components/listings/detail/ListingDetail";
-import { getCurrentUser, getListingOrNotFound, getOffersForListing } from "@/lib/actions";
+import { getCurrentUser, getListingOrNotFound, getMyOfferForListing, getOffersForListing } from "@/lib/actions";
 
 export default async function SubletPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -7,14 +7,15 @@ export default async function SubletPage({ params }: { params: Promise<{ id: str
   const isOwner = currentUser?.id === sublet.seller.id;
   const offersResponse = isOwner ? await getOffersForListing(sublet.id) : null;
   const offers = offersResponse?.results ?? [];
+  const initialMyOffer = !isOwner ? await getMyOfferForListing(sublet.id) : null;
 
   return (
     <ListingDetail
       listing={sublet}
       initialIsFavorited={sublet.is_favorited ?? false}
       offers={offers}
-      offersMode={isOwner ? "received" : "made"}
       isOwner={isOwner}
+      initialMyOffer={initialMyOffer}
     />
   );
 }

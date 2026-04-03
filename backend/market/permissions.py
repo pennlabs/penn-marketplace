@@ -43,11 +43,12 @@ class ListingImageOwnerPermission(permissions.BasePermission):
         )
 
 
-class OfferOwnerPermission(permissions.BasePermission):
+class ListingOwnerOffersPermission(permissions.BasePermission):
     """
-    - GET: offer owner can view offers on their listing
-    - DELETE: offer owner can delete their own offer
-    - PATCH: offer owner can update offer status
+    Permission for listing-owner offer interactions:
+    - GET: listing seller can view offers on their listing
+    - PATCH/PUT: listing seller can update offer status
+    - DELETE: offer creator can delete/withdraw their own offer
     """
 
     def has_permission(self, request, view):

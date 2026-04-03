@@ -141,3 +141,54 @@ export const createSubletSchema = z
   );
 
 export type CreateSubletFormData = z.infer<typeof createSubletSchema>;
+
+// ------------------------------------------------------------
+// edit schemas (same validation as create, without tags/images)
+// ------------------------------------------------------------
+export const editItemSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(200, "Title must be less than 200 characters"),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description is required")
+    .max(5000, "Description must be less than 5000 characters"),
+  price: priceSchema,
+  condition: z.enum(itemConditionValues, "Condition is required"),
+  category: z.enum(itemCategoryValues, "Category is required"),
+});
+
+export type EditItemFormData = z.infer<typeof editItemSchema>;
+
+export const editSubletSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(1, "Title is required")
+      .max(200, "Title must be less than 200 characters"),
+    description: z
+      .string()
+      .trim()
+      .min(1, "Description is required")
+      .max(5000, "Description must be less than 5000 characters"),
+    price: priceSchema,
+    street_address: z.string().trim().min(1, "Street address is required"),
+    beds: z.number().int().min(0, "Beds must be 0 or more"),
+    baths: z.number().int().min(0, "Baths must be 0 or more"),
+    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
+    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
+  })
+  .refine(
+    (data) => {
+      const start = Date.parse(data.start_date);
+      const end = Date.parse(data.end_date);
+      return Number.isFinite(start) && Number.isFinite(end) && end > start;
+    },
+    { message: "End date must be after start date", path: ["end_date"] }
+  );
+
+export type EditSubletFormData = z.infer<typeof editSubletSchema>;
