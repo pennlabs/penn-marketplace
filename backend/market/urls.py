@@ -4,13 +4,13 @@ from rest_framework import routers
 from market.views import (
     CreateImages,
     DeleteImage,
-    Favorites,
     Listings,
     Offers,
     OffersMade,
     OffersReceived,
+    SavedListings,
     Tags,
-    UserFavorites,
+    UserSavedListings,
     get_current_user,
     get_phone_status,
     send_verification_code,
@@ -28,18 +28,18 @@ additional_urls = [
     path("user/me/", get_current_user, name="current-user"),
     # List of all amenities
     path("tags/", Tags.as_view(), name="tags"),
-    # All favorites for user
-    path("favorites/", UserFavorites.as_view(), name="user-favorites"),
+    # All saved listings for user
+    path("saved/", UserSavedListings.as_view(), name="user-saved-listings"),
     # All offers made by user
     path("offers/made/", OffersMade.as_view(), name="offers-made"),
     # All offers for an listing owned by user
     path("offers/received/", OffersReceived.as_view(), name="offers-received"),
-    # Favorites
-    # post: add a listing to the user's favorites
-    # delete: remove a listing from the user's favorites
+    # Saved listings
+    # post: save a listing for the user
+    # delete: unsave a listing for the user
     path(
-        "listings/<listing_id>/favorites/",
-        Favorites.as_view({"post": "create", "delete": "destroy"}),
+        "listings/<listing_id>/saved/",
+        SavedListings.as_view({"post": "create", "delete": "destroy"}),
     ),
     # Offers
     # get: list all offers for an listing

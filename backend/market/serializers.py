@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -126,6 +125,7 @@ class SubletDataSerializer(ModelSerializer):
             return float(approx_lon)
         return None
 
+
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
 class ListingSerializer(ListingTypeMixin, ModelSerializer):
     LISTING_TYPE_CONFIG = {
@@ -156,7 +156,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
     seller = UserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
-    is_favorited = SerializerMethodField()
+    is_saved = SerializerMethodField()
     external_link = URLField(required=False, allow_blank=True, allow_null=True)
     negotiable = BooleanField(required=False, default=True)
     expires_at = DateTimeField(required=False, allow_null=True)
@@ -168,7 +168,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             "seller",
             "buyers",
             "tags",
-            "favorites",
+            "saved",
             "title",
             "description",
             "external_link",
@@ -179,7 +179,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             "images",
             "listing_type",
             "additional_data",
-            "is_favorited",
+            "is_saved",
         ]
         read_only_fields = [
             "id",
@@ -187,7 +187,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             "seller",
             "buyers",
             "images",
-            "favorites",
+            "saved",
         ]
 
     def validate(self, attrs):
@@ -221,11 +221,11 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
         return super().validate(attrs)
 
-    def get_is_favorited(self, obj):
+    def get_is_saved(self, obj):
         request = self.context.get("request")
         if not request or not request.user or not request.user.is_authenticated:
             return False
-        return request.user.listings_favorited.filter(id=obj.id).exists()
+        return request.user.listings_saved.filter(id=obj.id).exists()
 
     def validate_title(self, value):
         if self.contains_profanity(value):
@@ -290,7 +290,6 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
         latitude = additional_data.get("latitude")
         longitude = additional_data.get("longitude")
-
 
         if latitude is not None:
             latitude = float(latitude)
@@ -374,8 +373,8 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 # Read-only serializer for use when reading a single listing
 class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
     buyer_count = SerializerMethodField()
-    favorite_count = SerializerMethodField()
-    is_favorited = SerializerMethodField()
+    saved_count = SerializerMethodField()
+    is_saved = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
     seller = UserSerializer(read_only=True)
@@ -396,29 +395,29 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
             "negotiable",
             "expires_at",
             "images",
-            "favorite_count",
+            "saved_count",
             "listing_type",
             "additional_data",
-            "is_favorited",
+            "is_saved",
         ]
         read_only_fields = fields
 
     def get_buyer_count(self, obj):
         return obj.buyers.count()
 
-    def get_favorite_count(self, obj):
-        return obj.favorites.count()
+    def get_saved_count(self, obj):
+        return obj.saved.count()
 
-    def get_is_favorited(self, obj):
+    def get_is_saved(self, obj):
         request = self.context.get("request")
         if not request or not request.user or not request.user.is_authenticated:
             return False
-        return request.user.listings_favorited.filter(id=obj.id).exists()
+        return request.user.listings_saved.filter(id=obj.id).exists()
 
 
 # Read-only serializer for use when pulling all listings /etc
 class ListingSerializerList(ListingTypeMixin, ModelSerializer):
-    favorite_count = SerializerMethodField()
+    saved_count = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
     seller = UserSerializer(read_only=True)
@@ -435,11 +434,11 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
             "price",
             "expires_at",
             "images",
-            "favorite_count",
+            "saved_count",
             "listing_type",
             "additional_data",
         ]
         read_only_fields = fields
 
-    def get_favorite_count(self, obj):
-        return obj.favorites.count()
+    def get_saved_count(self, obj):
+        return obj.saved.count()

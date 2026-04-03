@@ -123,8 +123,8 @@ type BaseListing = {
   expires_at: string;
   images: string[];
   tags: string[];
-  favorite_count: number;
-  is_favorited?: boolean;
+  saved_count: number;
+  is_saved?: boolean;
   seller: User;
 };
 

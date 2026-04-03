@@ -1,9 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
+import { saveListing, unsaveListing, getListing } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
-import { Heart, Share } from "lucide-react";
+import { Bookmark, Share } from "lucide-react";
 import { Item, Sublet } from "@/lib/types";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
@@ -25,34 +25,34 @@ export const ListingDetail = ({ listingId }: Props) => {
     queryFn: () => getListing(String(listingId)),
   });
 
-  const isFavorited = listing?.is_favorited ?? false;
+  const isSaved = listing?.is_saved ?? false;
 
-  const toggleFavoriteMutation = useMutation({
+  const toggleSaveMutation = useMutation({
     meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
-    mutationFn: async (shouldFavorite: boolean) => {
-      if (shouldFavorite) {
-        await addToUsersFavorites(listingId);
+    mutationFn: async (shouldSave: boolean) => {
+      if (shouldSave) {
+        await saveListing(listingId);
       } else {
-        await deleteFromUsersFavorites(listingId);
+        await unsaveListing(listingId);
       }
     },
-    onMutate: async (shouldFavorite: boolean) => {
+    onMutate: async (shouldSave: boolean) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Item | Sublet>(queryKey);
       if (previous) {
-        queryClient.setQueryData(queryKey, { ...previous, is_favorited: shouldFavorite });
+        queryClient.setQueryData(queryKey, { ...previous, is_saved: shouldSave });
       }
       return { previous };
     },
-    onError: (_error, _shouldFavorite, context) => {
+    onError: (_error, _shouldSave, context) => {
       if (context?.previous) {
         queryClient.setQueryData(queryKey, context.previous);
       }
     },
   });
 
-  const handleToggleFavorite = async () => {
-    toggleFavoriteMutation.mutate(!isFavorited);
+  const handleToggleSave = async () => {
+    toggleSaveMutation.mutate(!isSaved);
   };
 
   if (!listing) return null;
@@ -73,11 +73,11 @@ export const ListingDetail = ({ listingId }: Props) => {
           <button
             type="button"
             className="cursor-pointer"
-            onClick={handleToggleFavorite}
-            aria-pressed={isFavorited}
-            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            onClick={handleToggleSave}
+            aria-pressed={isSaved}
+            aria-label={isSaved ? "Unsave listing" : "Save listing"}
           >
-            <Heart className={isFavorited ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"} />
+            <Bookmark className={isSaved ? "h-5 w-5 fill-blue-500 text-blue-500" : "h-5 w-5"} />
           </button>
         </div>
       </div>
