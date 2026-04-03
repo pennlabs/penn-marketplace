@@ -50,3 +50,7 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# git worktrees
+.worktrees/
+.claude/worktrees
