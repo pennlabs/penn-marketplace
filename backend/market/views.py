@@ -306,9 +306,17 @@ class Offers(viewsets.ModelViewSet):
     Delete the offer between the user and the listing matching the ID.
     """
 
-    permission_classes = [ListingOwnerOffersPermission | IsSuperUser]
     serializer_class = OfferSerializer
     pagination_class = PageSizeOffsetPagination
+
+    def get_permissions(self):
+        if self.action == "create":
+            return [IsAuthenticated()]
+        if self.action == "destroy":
+            return [(OfferOwnerPermission | IsSuperUser)()]
+        if self.action == "list":
+            return [(ListingOwnerOffersPermission | IsSuperUser)()]
+        return [(ListingOwnerOffersPermission | IsSuperUser)()]
 
     def get_queryset(self):
         if Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
