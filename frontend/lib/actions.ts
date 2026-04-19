@@ -225,7 +225,7 @@ export async function getOffersReceived() {
   return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
 }
 
-export async function getOffersForListing(listingId: number) {
+export async function getOffersReceivedForListing(listingId: number) {
   return await serverFetch<PaginatedResponse<Offer>>(`/market/listings/${listingId}/offers/`);
 }
 

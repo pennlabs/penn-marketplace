@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { deleteListing } from "@/lib/actions";
 import type { Item, Sublet } from "@/lib/types";
@@ -22,11 +22,15 @@ interface Props {
 
 export const DeleteListing = ({ listing, open, onOpenChange }: Props) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const typeLabel = listing.listing_type === "sublet" ? "Sublet" : "Item";
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteListing(listing.id),
     onSuccess: () => {
+      const listKey = listing.listing_type === "sublet" ? "sublets" : "items";
+      queryClient.invalidateQueries({ queryKey: [listKey] });
+      queryClient.removeQueries({ queryKey: ["listing", listing.id] });
       router.push(listing.listing_type === "sublet" ? "/sublets" : "/items");
     },
     onError: () => {

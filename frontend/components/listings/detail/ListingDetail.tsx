@@ -6,7 +6,7 @@ import { ListingImageGallery } from "@/components/listings/detail/ListingImageGa
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
-import { OffersSection } from "@/components/listings/offer/OffersSection";
+import { OffersReceivedSection } from "@/components/listings/offer/OffersSection";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import {
   addToUsersFavorites,
@@ -18,17 +18,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 interface Props {
   listing: Item | Sublet;
   initialIsFavorited: boolean;
-  offers: Offer[];
+  offersReceived: Offer[];
   isOwner: boolean;
-  initialMyOffer?: Offer | null;
+  myOfferGiven?: Offer | null;
 }
 
 export const ListingDetail = ({
   listing,
   initialIsFavorited,
-  offers,
+  offersReceived,
   isOwner,
-  initialMyOffer = null,
+  myOfferGiven = null,
 }: Props) => {
   const queryClient = useQueryClient();
 
@@ -142,9 +142,13 @@ export const ListingDetail = ({
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
             isOwner={isOwner}
-            initialMyOffer={initialMyOffer}
           />
-          {isOwner && <OffersSection offers={offers} />}
+          <OffersReceivedSection
+            isOwner={isOwner}
+            offersReceived={offersReceived}
+            myOfferGiven={myOfferGiven}
+            listingId={listingData.id}
+          />
         </div>
       </div>
     </div>
