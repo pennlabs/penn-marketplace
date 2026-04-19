@@ -62,19 +62,6 @@ export function UserProfileDropdown({ isOpen, onClose }: UserProfileDropdownProp
         <Bookmark className="h-5 w-5" />
         <span>Saved Listings</span>
       </Link>
-
-      <Link
-        href="/"
-        onClick={onClose}
-        className={cn(
-          "flex items-center gap-3 rounded-b-md px-3 py-3 text-sm",
-          "hover:bg-accent hover:text-accent-foreground transition-colors"
-        )}
-        role="menuitem"
-      >
-        <ClipboardList className="h-5 w-5" />
-        <span>My Purchases</span>
-      </Link>
     </div>
   );
 }
