@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import { Check, Clock, Star, X } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Offer } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { changeOfferStatus } from "@/lib/actions";
-import { formatDateTime } from "@/lib/utils";
+import { formatServerDateTimeToLocal } from "@/lib/utils";
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   accepted: { label: "Accepted", className: "bg-green-100 text-green-700" },
@@ -20,7 +20,11 @@ export const OfferCard = ({
   offer: Offer;
   onStatusChange: (id: number, status: Offer["status"]) => void;
 }) => {
-  const { date, time } = formatDateTime(offer.created_at);
+  const { data: localCreatedAt } = useQuery({
+    queryKey: ["localDateTime", offer.created_at],
+    queryFn: () => formatServerDateTimeToLocal(offer.created_at),
+    staleTime: Infinity,
+  });
 
   const mutation = useMutation({
     mutationFn: (status: Offer["status"]) => changeOfferStatus(offer.id, status),
@@ -53,7 +57,7 @@ export const OfferCard = ({
               <div className="flex items-center gap-1 text-xs text-gray-400">
                 <Clock className="h-3 w-3" />
                 <span>
-                  {date} at {time}
+                  {localCreatedAt ? `${localCreatedAt.date} at ${localCreatedAt.time}` : ""}
                 </span>
               </div>
             </div>

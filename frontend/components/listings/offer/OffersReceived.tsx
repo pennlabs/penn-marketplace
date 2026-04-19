@@ -5,8 +5,8 @@ import { Offer } from "@/lib/types";
 import { OfferCard } from "@/components/listings/offer/OfferCard";
 import { MyOfferCard } from "@/components/listings/offer/MyOfferCard";
 import { EditMyOfferModal } from "@/components/listings/offer/EditMyOfferModal";
-import { deleteMyOfferForListing } from "@/lib/actions";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteMyOfferForListing, getMyOfferForListing } from "@/lib/actions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export const OffersReceivedSection = ({
+export const OffersReceived = ({
   isOwner,
   offersReceived: initialOffersReceived,
   myOfferGiven,
@@ -32,6 +32,12 @@ export const OffersReceivedSection = ({
   const [isEditOfferOpen, setIsEditOfferOpen] = useState(false);
   const [isDeleteOfferOpen, setIsDeleteOfferOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { data: myOffer } = useQuery({
+    queryKey: ["myOffer", listingId],
+    queryFn: () => getMyOfferForListing(listingId),
+    enabled: !isOwner,
+    initialData: myOfferGiven,
+  });
 
   const handleStatusChange = (id: number, status: Offer["status"]) => {
     setOffersReceived((prev) => prev.map((offer) => (offer.id === id ? { ...offer, status } : offer)));
@@ -39,21 +45,34 @@ export const OffersReceivedSection = ({
 
   const deleteMyOfferMutation = useMutation({
     mutationFn: () => deleteMyOfferForListing(listingId),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["myOffer", listingId] });
+      const previousOffer = queryClient.getQueryData<Offer | null>(["myOffer", listingId]);
+      queryClient.setQueryData<Offer | null>(["myOffer", listingId], null);
+      return { previousOffer };
+    },
     onSuccess: () => {
       setIsDeleteOfferOpen(false);
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previousOffer !== undefined) {
+        queryClient.setQueryData(["myOffer", listingId], context.previousOffer);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["myOffer", listingId] });
     },
   });
 
   if (!isOwner) {
-    if (!myOfferGiven) return null;
+    if (!myOffer) return null;
 
     return (
       <>
         <div className="space-y-3">
           <h2 className="text-lg font-semibold">Your offer</h2>
           <MyOfferCard
-            offer={myOfferGiven}
+            offer={myOffer}
             onEdit={() => setIsEditOfferOpen(true)}
             onDelete={() => setIsDeleteOfferOpen(true)}
           />
@@ -62,7 +81,7 @@ export const OffersReceivedSection = ({
         <EditMyOfferModal
           isOpen={isEditOfferOpen}
           onClose={() => setIsEditOfferOpen(false)}
-          offer={myOfferGiven}
+          offer={myOffer}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ["myOffer", listingId] });
             setIsEditOfferOpen(false);
@@ -116,4 +135,3 @@ export const OffersReceivedSection = ({
     </div>
   );
 };
-

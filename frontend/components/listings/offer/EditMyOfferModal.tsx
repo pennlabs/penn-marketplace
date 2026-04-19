@@ -60,13 +60,29 @@ export function EditMyOfferModal({
         message: data.message?.trim() || "",
       });
     },
-    onSuccess: () => {
+    onMutate: async (data: OfferFormData) => {
+      await queryClient.cancelQueries({ queryKey: ["myOffer", offer.listing] });
+      const previousOffer = queryClient.getQueryData<Offer | null>(["myOffer", offer.listing]);
+      queryClient.setQueryData<Offer | null>(["myOffer", offer.listing], {
+        ...offer,
+        offered_price: parsePriceString(data.offeredPrice),
+        message: data.message?.trim() || "",
+      });
+      return { previousOffer };
+    },
+    onSuccess: (updatedOffer) => {
       toast.success("Offer updated!");
-      queryClient.invalidateQueries({ queryKey: ["myOffer", offer.listing] });
+      queryClient.setQueryData(["myOffer", offer.listing], updatedOffer);
       onSaved();
     },
-    onError: () => {
+    onError: (_error, _vars, context) => {
+      if (context?.previousOffer !== undefined) {
+        queryClient.setQueryData(["myOffer", offer.listing], context.previousOffer);
+      }
       toast.error("Failed to update offer.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["myOffer", offer.listing] });
     },
   });
 

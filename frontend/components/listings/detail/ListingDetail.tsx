@@ -6,7 +6,7 @@ import { ListingImageGallery } from "@/components/listings/detail/ListingImageGa
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
-import { OffersReceivedSection } from "@/components/listings/offer/OffersSection";
+import { OffersReceived } from "@/components/listings/offer/OffersReceived";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import {
   addToUsersFavorites,
@@ -142,8 +142,9 @@ export const ListingDetail = ({
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
             isOwner={isOwner}
+            initialMyOffer={myOfferGiven}
           />
-          <OffersReceivedSection
+          <OffersReceived
             isOwner={isOwner}
             offersReceived={offersReceived}
             myOfferGiven={myOfferGiven}

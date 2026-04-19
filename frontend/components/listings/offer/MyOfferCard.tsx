@@ -1,10 +1,11 @@
 "use client";
 
 import { Pencil, Trash2, Clock, Star } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import type { Offer } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { formatDateTime } from "@/lib/utils";
+import { formatServerDateTimeToLocal } from "@/lib/utils";
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-yellow-100 text-yellow-700" },
@@ -21,7 +22,11 @@ export function MyOfferCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const { date, time } = formatDateTime(offer.created_at);
+  const { data: localCreatedAt } = useQuery({
+    queryKey: ["localDateTime", offer.created_at],
+    queryFn: () => formatServerDateTimeToLocal(offer.created_at),
+    staleTime: Infinity,
+  });
   const badge = STATUS_BADGE[offer.status];
 
   return (
@@ -50,7 +55,7 @@ export function MyOfferCard({
               <div className="flex items-center gap-1 text-xs text-gray-400">
                 <Clock className="h-3 w-3" />
                 <span>
-                  {date} at {time}
+                  {localCreatedAt ? `${localCreatedAt.date} at ${localCreatedAt.time}` : ""}
                 </span>
               </div>
             </div>

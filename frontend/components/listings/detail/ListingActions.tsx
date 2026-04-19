@@ -9,8 +9,8 @@ import { PhoneInputModal } from "@/components/listings/offer/PhoneInputModal";
 import { VerificationCodeModal } from "@/components/listings/offer/VerificationCodeModal";
 import { DeleteListing } from "@/components/listings/detail/DeleteListing";
 import { Button } from "@/components/ui/button";
-import { getPhoneStatus } from "@/lib/actions";
-import type { Item, Sublet } from "@/lib/types";
+import { getMyOfferForListing, getPhoneStatus } from "@/lib/actions";
+import type { Item, Offer, Sublet } from "@/lib/types";
 
 interface Props {
   listing: Item | Sublet;
@@ -18,6 +18,7 @@ interface Props {
   listingOwnerLabel: string;
   priceLabel?: string;
   isOwner?: boolean;
+  initialMyOffer?: Offer | null;
 }
 
 type ModalState = "none" | "phone-input" | "verification" | "offer";
@@ -28,6 +29,7 @@ export const ListingActions = ({
   priceLabel,
   listingOwnerLabel,
   isOwner = false,
+  initialMyOffer = null,
 }: Props) => {
   const [modalState, setModalState] = useState<ModalState>("none");
   const [pendingPhoneNumber, setPendingPhoneNumber] = useState<string>("");
@@ -40,6 +42,12 @@ export const ListingActions = ({
     queryKey: ["phoneStatus"],
     queryFn: getPhoneStatus,
     enabled: !isOwner,
+  });
+  const { data: myOffer, isLoading: isLoadingMyOffer } = useQuery({
+    queryKey: ["myOffer", listing.id],
+    queryFn: () => getMyOfferForListing(listing.id),
+    enabled: !isOwner,
+    initialData: initialMyOffer,
   });
 
   if (isOwner) {
@@ -102,13 +110,15 @@ export const ListingActions = ({
 
   return (
     <>
-      <Button
-        onClick={handleMakeOfferClick}
-        className="bg-brand hover:bg-brand-hover h-12 w-full cursor-pointer text-base text-white"
-      >
-        <DollarSign className="mr-2 h-5 w-5" />
-        Make an Offer
-      </Button>
+      {!isLoadingMyOffer && !myOffer && (
+        <Button
+          onClick={handleMakeOfferClick}
+          className="bg-brand hover:bg-brand-hover h-12 w-full cursor-pointer text-base text-white"
+        >
+          <DollarSign className="mr-2 h-5 w-5" />
+          Make an Offer
+        </Button>
+      )}
 
       <PhoneInputModal
         isOpen={modalState === "phone-input"}

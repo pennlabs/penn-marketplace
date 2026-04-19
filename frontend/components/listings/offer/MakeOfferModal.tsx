@@ -60,11 +60,41 @@ export function MakeOfferModal({
 
   const createOfferMutation = useMutation({
     mutationFn: createOffer,
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["myOffer", listingId] });
+      const previousOffer = queryClient.getQueryData<Offer | null>(["myOffer", listingId]);
+      const optimisticOffer: Offer = {
+        id: -Date.now(),
+        user: previousOffer?.user ?? {
+          id: 0,
+          username: "you",
+          first_name: "You",
+          last_name: "",
+          email: "",
+          phone_number: null,
+          phone_verified: false,
+        },
+        listing: listingId,
+        offered_price: variables.offeredPrice,
+        message: variables.message ?? "",
+        status: "pending",
+        created_at: new Date().toISOString(),
+      };
+      queryClient.setQueryData(["myOffer", listingId], optimisticOffer);
+      return { previousOffer };
+    },
     onSuccess: (createdOffer: Offer) => {
       toast.success(`Offer sent! The ${listingOwnerLabel.toLowerCase()} will contact you.`);
       queryClient.setQueryData(["myOffer", listingId], createdOffer);
-      queryClient.invalidateQueries({ queryKey: ["myOffer", listingId] });
       onClose();
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previousOffer !== undefined) {
+        queryClient.setQueryData(["myOffer", listingId], context.previousOffer);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["myOffer", listingId] });
     },
   });
 
