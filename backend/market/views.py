@@ -16,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from market.mixins import DefaultOrderMixin
-from market.models import Listing, ListingImage, Offer, Tag
+from market.models import Listing, ListingImage, Offer, Rating, Tag
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
@@ -31,6 +31,7 @@ from market.serializers import (
     ListingSerializerList,
     ListingSerializerPublic,
     OfferSerializer,
+    RatingSerializer,
     TagSerializer,
     UserSerializer,
 )
@@ -189,7 +190,7 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
             serializer_class = ListingSerializer
         else:
             serializer_class = ListingSerializerPublic
-        serializer = serializer_class(instance)
+        serializer = serializer_class(instance, context={"request": request})
         return Response(serializer.data)
 
 
@@ -340,6 +341,38 @@ class Offers(viewsets.ModelViewSet):
         for offer in self.get_queryset():
             self.check_object_permissions(request, offer)
         return super().list(request, *args, **kwargs)
+
+
+class Ratings(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = RatingSerializer
+    permission_classes = [IsAuthenticated | IsSuperUser]
+
+    def get_queryset(self):
+        return Rating.objects.filter(listing_id=self.kwargs["listing_id"])
+    
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data["listing"] = int(self.kwargs["listing_id"])
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class UserBuyerRatings(ListAPIView, DefaultOrderMixin):
+    serializer_class = RatingSerializer
+    permission_classes = [IsAuthenticated | IsSuperUser]
+    default_ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return Rating.objects.filter(reviewed_user=self.request.user, rating_type="BUYER")
+
+class UserSellerRatings(ListAPIView, DefaultOrderMixin):
+    serializer_class = RatingSerializer
+    permission_classes = [IsAuthenticated | IsSuperUser]
+    default_ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return Rating.objects.filter(reviewed_user=self.request.user, rating_type="SELLER")
 
 
 @api_view(["POST"])
