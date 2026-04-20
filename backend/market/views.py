@@ -349,7 +349,7 @@ class Ratings(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericVi
 
     def get_queryset(self):
         return Rating.objects.filter(listing_id=self.kwargs["listing_id"])
-    
+
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data["listing"] = int(self.kwargs["listing_id"])
@@ -364,7 +364,9 @@ class UserBuyerRatings(ListAPIView, DefaultOrderMixin):
     default_ordering = ["-created_at"]
 
     def get_queryset(self):
-        return Rating.objects.filter(reviewed_user=self.request.user, rating_type="BUYER")
+        return Rating.objects.filter(
+            reviewed_user=self.request.user, rating_type="BUYER"
+        )
 
 class UserSellerRatings(ListAPIView, DefaultOrderMixin):
     serializer_class = RatingSerializer
@@ -372,7 +374,9 @@ class UserSellerRatings(ListAPIView, DefaultOrderMixin):
     default_ordering = ["-created_at"]
 
     def get_queryset(self):
-        return Rating.objects.filter(reviewed_user=self.request.user, rating_type="SELLER")
+        return Rating.objects.filter(
+            reviewed_user=self.request.user, rating_type="SELLER"
+        )
 
 
 @api_view(["POST"])

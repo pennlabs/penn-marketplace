@@ -14,7 +14,16 @@ from rest_framework.serializers import (
 )
 
 from market.mixins import ListingTypeMixin
-from market.models import Category, Item, Listing, ListingImage, Offer, Rating, Sublet, Tag
+from market.models import (
+    Category,
+    Item,
+    Listing,
+    ListingImage,
+    Offer,
+    Rating,
+    Sublet,
+    Tag,
+)
 
 
 User = get_user_model()
@@ -450,13 +459,13 @@ class RatingSerializer(ModelSerializer):
     class Meta:
         model = Rating
         fields = [
-            "id", 
-            "reviewer", 
-            "reviewed_user", 
-            "listing", 
-            "score", 
-            "rating_type", 
-            "comment", 
+            "id",
+            "reviewer",
+            "reviewed_user",
+            "listing",
+            "score",
+            "rating_type",
+            "comment",
             "created_at"
             ]
         read_only_fields = ["id", "created_at", "reviewer", "rating_type"]
@@ -468,16 +477,20 @@ class RatingSerializer(ModelSerializer):
 
         if reviewer == reviewed_user:
             raise ValidationError("You cannot review yourself.")
-        
+
         is_seller = listing.seller == reviewer
         is_buyer = listing.offers_received.filter(user=reviewer).exists()
         if not is_seller and not is_buyer:
-            raise ValidationError("You can only rate users on listings you have interacted with.")
-        
+            raise ValidationError(
+                "You can only rate users on listings you have interacted with."
+            )
+
         target_is_seller = listing.seller == reviewed_user
         target_is_buyer = listing.offers_received.filter(user=reviewed_user).exists()
         if not target_is_seller and not target_is_buyer:
-            raise ValidationError("You cannot rate a user who is not on either side of the transaction.")
+            raise ValidationError(
+                "You cannot rate a user who is not on either side of the transaction."
+            )
         attr["rating_type"] = "SELLER" if is_seller else "BUYER"
 
         return attr
