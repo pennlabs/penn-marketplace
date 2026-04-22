@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getItems, getSublets } from "@/lib/actions";
-import { ListingTypes, ListingDataMap, PaginatedResponse, Listing } from "@/lib/types";
+import { queryKeys } from "@/lib/queryKeys";
+import { ListingTypes, PaginatedResponse, Listing } from "@/lib/types";
 import { useFilters } from "@/providers/FiltersProvider";
 
 const LISTING_FETCHERS = {
@@ -12,30 +13,22 @@ const LISTING_FETCHERS = {
 
 export type UseListingsParams<T extends ListingTypes> = {
   type: T;
-  listings: PaginatedResponse<ListingDataMap[T]>;
 };
 
-export function useListings<T extends ListingTypes>({ type, listings }: UseListingsParams<T>) {
+export function useListings<T extends ListingTypes>({ type }: UseListingsParams<T>) {
   const { ref, inView } = useInView();
   const { debouncedFilters } = useFilters();
 
   const filters = debouncedFilters[type];
-  const queryKey = [type, "list", filters];
 
   const queryFn = ({ pageParam = 1 }: { pageParam: unknown }) =>
     LISTING_FETCHERS[type]({ pageParam, ...filters });
 
-  const hasActiveFilters = Object.values(filters).some((value) => {
-    if (typeof value === "string") return value.trim() !== "";
-    return value !== undefined;
-  });
-
   const { data, error, fetchNextPage, isFetchingNextPage, hasNextPage } = useInfiniteQuery<
     PaginatedResponse<Listing>
   >({
-    queryKey,
+    queryKey: queryKeys.listings(type, filters),
     queryFn,
-    initialData: hasActiveFilters ? undefined : { pages: [listings], pageParams: [1] },
     placeholderData: (previousData) => previousData,
     initialPageParam: 1,
     getNextPageParam(lastPage, allPages) {
