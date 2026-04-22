@@ -202,7 +202,7 @@ class TestItemGet(BaseMarketTest):
                     "price": 2000.0,
                     "expires_at": "3000-08-12T01:00:00-04:00",
                     "images": [],
-                    "favorite_count": 0,
+                    "saved_count": 0,
                     "listing_type": "item",
                     "additional_data": {
                         "condition": "NEW",
@@ -217,7 +217,7 @@ class TestItemGet(BaseMarketTest):
                     "price": 20.0,
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
-                    "favorite_count": 0,
+                    "saved_count": 0,
                     "listing_type": "item",
                     "additional_data": {
                         "condition": "GOOD",
@@ -232,7 +232,7 @@ class TestItemGet(BaseMarketTest):
                     "price": 400.0,
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
-                    "favorite_count": 0,
+                    "saved_count": 0,
                     "listing_type": "item",
                     "additional_data": {
                         "condition": "FAIR",
@@ -266,7 +266,7 @@ class TestItemGet(BaseMarketTest):
                     "price": 20.0,
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
-                    "favorite_count": 0,
+                    "saved_count": 0,
                     "listing_type": "item",
                     "additional_data": {
                         "condition": "GOOD",
@@ -291,7 +291,7 @@ class TestItemGet(BaseMarketTest):
             "seller": 1,
             "buyers": [],
             "tags": ["Used", "Textbook"],
-            "favorites": [],
+            "saved": [],
             "title": "Math Textbook",
             "description": "2023 version",
             "external_link": "https://example.com/book",
@@ -308,7 +308,7 @@ class TestItemGet(BaseMarketTest):
             response_json,
             expected_response,
             ["created_at"],
-            ["", "tags", "images", "buyers", "favorites"],
+            ["", "tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -332,7 +332,7 @@ class TestItemGet(BaseMarketTest):
             "negotiable": True,
             "expires_at": "3000-08-12T01:00:00-04:00",
             "images": [],
-            "favorite_count": 0,
+            "saved_count": 0,
             "listing_type": "item",
             "additional_data": {"condition": "NEW", "category": "Electronics"},
         }
@@ -369,7 +369,7 @@ class TestItemPost(BaseMarketTest):
             "seller": 1,
             "buyers": [],
             "tags": ["New"],
-            "favorites": [],
+            "saved": [],
             "title": "Math Textbook",
             "description": "2023 version",
             "external_link": "https://example.com/listing",
@@ -387,7 +387,7 @@ class TestItemPost(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["", "tags", "images", "buyers", "favorites"],
+            ["", "tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -402,7 +402,7 @@ class TestItemPost(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["", "tags", "images", "buyers", "favorites"],
+            ["", "tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -429,7 +429,7 @@ class TestItemPost(BaseMarketTest):
             "seller": 1,
             "buyers": [],
             "tags": ["New"],
-            "favorites": [],
+            "saved": [],
             "title": "Math Textbook",
             "description": "2023 version",
             "external_link": None,
@@ -447,7 +447,7 @@ class TestItemPost(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["", "tags", "images", "buyers", "favorites"],
+            ["", "tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -462,7 +462,7 @@ class TestItemPost(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["", "tags", "images", "buyers", "favorites"],
+            ["", "tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -570,7 +570,7 @@ class TestItemPatch(BaseMarketTest):
             "seller": self.users[0].id,
             "buyers": [],
             "tags": ["Used", "Textbook"],
-            "favorites": [],
+            "saved": [],
             "title": "Physics Textbook",
             "description": "2023 version",
             "external_link": "https://example.com/book",
@@ -588,7 +588,7 @@ class TestItemPatch(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "favorites", "buyers"],
+            ["tags", "images", "saved", "buyers"],
         )
         self.assertLessEqual(
             abs(
@@ -603,7 +603,7 @@ class TestItemPatch(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "favorites", "buyers"],
+            ["tags", "images", "saved", "buyers"],
         )
         self.assertLessEqual(
             abs(
@@ -638,7 +638,7 @@ class TestItemPatch(BaseMarketTest):
             "seller": self.users[0].id,
             "buyers": [],
             "tags": ["New"],
-            "favorites": [],
+            "saved": [],
             "title": "5 meal swipes",
             "description": "5 meal swipes for sale",
             "external_link": "https://example.com/meal-swipes",
@@ -656,7 +656,7 @@ class TestItemPatch(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "buyers", "favorites"],
+            ["tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -671,7 +671,7 @@ class TestItemPatch(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "buyers", "favorites"],
+            ["tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -780,7 +780,7 @@ class TestSubletGet(BaseMarketTest):
                     "price": 1350.0,
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
-                    "favorite_count": 0,
+                    "saved_count": 0,
                     "listing_type": "sublet",
                     "additional_data": {
                         "address": "Cira Green, Philadelphia, PA",
@@ -798,7 +798,7 @@ class TestSubletGet(BaseMarketTest):
                     "price": 1350.0,
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
-                    "favorite_count": 0,
+                    "saved_count": 0,
                     "listing_type": "sublet",
                     "additional_data": {
                         "address": "3901 Locust Walk, Philadelphia, PA",
@@ -815,7 +815,7 @@ class TestSubletGet(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["results", "results.tags", "results.images", "results.favorites"],
+            ["results", "results.tags", "results.images", "results.saved"],
         )
 
     def test_get_sublet_own(self):
@@ -826,7 +826,7 @@ class TestSubletGet(BaseMarketTest):
             "seller": self.users[0].id,
             "buyers": [],
             "tags": ["New"],
-            "favorites": [],
+            "saved": [],
             "title": "Cira Green Sublet",
             "description": (
                 "Fully furnished 3-bedroom apartment available for sublet "
@@ -852,7 +852,7 @@ class TestSubletGet(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["", "tags", "images", "buyers", "favorites"],
+            ["", "tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -880,7 +880,7 @@ class TestSubletGet(BaseMarketTest):
             "negotiable": False,
             "expires_at": "3000-12-12T00:00:00-05:00",
             "images": [],
-            "favorite_count": 0,
+            "saved_count": 0,
             "listing_type": "sublet",
             "additional_data": {
                 "address": "3901 Locust Walk, Philadelphia, PA",
@@ -894,7 +894,7 @@ class TestSubletGet(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["", "tags", "images", "buyers", "favorites"],
+            ["", "tags", "images", "buyers", "saved"],
         )
 
     def test_get_single_sublet_invalid_id(self):
@@ -923,7 +923,7 @@ class TestSubletPost(BaseMarketTest):
             "category": "Sublet",
             "buyers": [],
             "tags": ["New"],
-            "favorites": [],
+            "saved": [],
             "listing_type": "sublet",
             "additional_data": {
                 "address": "3901 Locust Walk, Philadelphia, PA",
@@ -950,7 +950,7 @@ class TestSubletPost(BaseMarketTest):
             "seller": self.users[0].id,
             "buyers": [],
             "tags": ["New"],
-            "favorites": [],
+            "saved": [],
             "listing_type": "sublet",
             "additional_data": {
                 "address": "3901 Locust Walk, Philadelphia, PA",
@@ -965,7 +965,7 @@ class TestSubletPost(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "buyers", "favorites"],
+            ["tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -980,7 +980,7 @@ class TestSubletPost(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "buyers", "favorites"],
+            ["tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -1016,7 +1016,7 @@ class TestSubletPatchDelete(BaseMarketTest):
             "seller": self.users[0].id,
             "buyers": [],
             "tags": ["Apartment", "Used"],
-            "favorites": [],
+            "saved": [],
             "listing_type": "sublet",
             "additional_data": {
                 "address": "3901 Locust Walk, Philadelphia, PA",
@@ -1034,7 +1034,7 @@ class TestSubletPatchDelete(BaseMarketTest):
             "seller": 1,
             "buyers": [],
             "tags": ["Used", "Apartment"],
-            "favorites": [],
+            "saved": [],
             "title": "Cira Green Sublet 2",
             "description": (
                 "Fully furnished 3-bedroom apartment available for sublet "
@@ -1060,7 +1060,7 @@ class TestSubletPatchDelete(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "buyers", "favorites"],
+            ["tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -1075,7 +1075,7 @@ class TestSubletPatchDelete(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "buyers", "favorites"],
+            ["tags", "images", "buyers", "saved"],
         )
         self.assertLessEqual(
             abs(
@@ -1091,7 +1091,7 @@ class TestSubletPatchDelete(BaseMarketTest):
             "seller": 1,
             "buyers": [],
             "tags": ["Used", "Apartment"],
-            "favorites": [],
+            "saved": [],
             "title": "Cira Green Sublet 2",
             "description": (
                 "Fully furnished 3-bedroom apartment available for sublet "
@@ -1127,7 +1127,7 @@ class TestSubletPatchDelete(BaseMarketTest):
             "seller": 1,
             "buyers": [],
             "tags": ["Used", "Apartment"],
-            "favorites": [],
+            "saved": [],
             "title": "Cira Green Sublet 2",
             "description": (
                 "Fully furnished 3-bedroom apartment available for sublet "
@@ -1380,23 +1380,23 @@ class TestOffer(BaseMarketTest):
         self.assertEqual(response.status_code, 404)
 
 
-class TestFavorites(BaseMarketTest):
+class TestSavedListings(BaseMarketTest):
     def setUp(self):
         super().setUp()
         self.items = self.load_items(
             "tests/market/self_user_items.json", self.users[0]
         ) + self.load_items("tests/market/user_1_items.json", self.users[1])
-        self.items[0].favorites.add(self.users[1])
-        self.items[1].favorites.add(self.users[0])
+        self.items[0].saved.add(self.users[1])
+        self.items[1].saved.add(self.users[0])
 
-    def test_get_favorites_for_item_owned(self):
+    def test_get_saved_for_item_owned(self):
         response = self.client.get(f"/market/listings/{self.items[0].id}/")
         expected_response = {
             "id": self.items[0].id,
             "seller": self.users[0].id,
             "buyers": [],
             "tags": ["Used", "Textbook"],
-            "favorites": [self.users[1].id],
+            "saved": [self.users[1].id],
             "title": "Math Textbook",
             "description": "2023 version",
             "external_link": "https://example.com/book",
@@ -1413,10 +1413,10 @@ class TestFavorites(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "buyers", "favorites"],
+            ["tags", "images", "buyers", "saved"],
         )
 
-    def test_get_favorites_for_item_other(self):
+    def test_get_saved_for_item_other(self):
         response = self.client.get(f"/market/listings/{self.items[1].id}/")
         expected_response = {
             "id": self.items[1].id,
@@ -1430,7 +1430,7 @@ class TestFavorites(BaseMarketTest):
             "negotiable": True,
             "expires_at": "3000-08-12T01:00:00-04:00",
             "images": [],
-            "favorite_count": 1,
+            "saved_count": 1,
             "listing_type": "item",
             "additional_data": {"condition": "NEW", "category": "Electronics"},
         }
@@ -1439,40 +1439,46 @@ class TestFavorites(BaseMarketTest):
             response.json(),
             expected_response,
             ["created_at"],
-            ["tags", "images", "buyers", "favorites"],
+            ["tags", "images", "buyers", "saved"],
         )
 
-    def test_post_favorite(self):
-        response = self.client.post(f"/market/listings/{self.items[2].id}/favorites/")
+    def test_save_listing(self):
+        response = self.client.post(f"/market/listings/{self.items[2].id}/saved/")
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(Item.objects.get(id=self.items[2].id).favorites.count(), 1)
+        self.assertEqual(Item.objects.get(id=self.items[2].id).saved.count(), 1)
         self.assertEqual(
-            Item.objects.get(id=self.items[2].id).favorites.first(),
+            Item.objects.get(id=self.items[2].id).saved.first(),
             self.users[0],
         )
 
-    def test_post_favorite_existing(self):
-        response = self.client.post(f"/market/listings/{self.items[1].id}/favorites/")
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), ["Favorite already exists"])
-        self.assertEqual(Item.objects.get(id=self.items[1].id).favorites.count(), 1)
+    def test_save_listing_existing(self):
+        response = self.client.post(f"/market/listings/{self.items[1].id}/saved/")
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.json(),
+            {"saved": True, "detail": "User has already saved the listing"},
+        )
+        self.assertEqual(Item.objects.get(id=self.items[1].id).saved.count(), 1)
 
-    def test_delete_favorite(self):
-        response = self.client.delete(f"/market/listings/{self.items[1].id}/favorites/")
-        self.assertEqual(response.status_code, 204)
-        self.assertEqual(Item.objects.get(id=self.items[1].id).favorites.count(), 0)
+    def test_unsave_listing(self):
+        response = self.client.delete(f"/market/listings/{self.items[1].id}/saved/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Item.objects.get(id=self.items[1].id).saved.count(), 0)
 
-    def test_delete_nonexistent_favorite(self):
-        response = self.client.delete(f"/market/listings/{self.items[2].id}/favorites/")
+    def test_unsave_nonexistent_listing(self):
+        response = self.client.delete(f"/market/listings/{self.items[2].id}/saved/")
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(Item.objects.get(id=self.items[2].id).favorites.count(), 0)
-        self.assertEqual(response.json(), {"detail": "Favorite does not exist."})
+        self.assertEqual(Item.objects.get(id=self.items[2].id).saved.count(), 0)
+        self.assertEqual(
+            response.json(),
+            {"saved": False, "detail": "User hasn't saved the listing yet"},
+        )
 
-    def test_delete_favorite_nonexistent_item(self):
+    def test_unsave_nonexistent_item(self):
         invalid_id = 1
         while Listing.objects.filter(id=invalid_id).exists():
             invalid_id += 1
-        response = self.client.delete(f"/market/listings/{invalid_id}/favorites/")
+        response = self.client.delete(f"/market/listings/{invalid_id}/saved/")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.json(), {"detail": "No Listing matches the given query."}

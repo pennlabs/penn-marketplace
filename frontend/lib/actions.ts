@@ -242,21 +242,21 @@ export async function verifyPhoneCode(phoneNumber: string, code: string) {
 }
 
 // ------------------------------------------------------------
-// adding and removing listings from favorites
+// saving and unsaving listings
 // ------------------------------------------------------------
-export async function addToUsersFavorites(listingId: number) {
-  return await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
+export async function saveListing(listingId: number) {
+  return await serverFetch<void>(`/market/listings/${listingId}/saved/`, {
     method: "POST",
   });
 }
-export async function deleteFromUsersFavorites(listingId: number) {
-  return await serverFetch<void>(`/market/listings/${listingId}/favorites/`, {
+export async function unsaveListing(listingId: number) {
+  return await serverFetch<void>(`/market/listings/${listingId}/saved/`, {
     method: "DELETE",
   });
 }
 
-export async function getUsersFavorites() {
-  return await serverFetch<PaginatedResponse<Item | Sublet>>("/market/favorites/");
+export async function getSavedListings() {
+  return await serverFetch<PaginatedResponse<Item | Sublet>>("/market/saved/");
 }
 
 // ------------------------------------------------------------

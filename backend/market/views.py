@@ -48,14 +48,14 @@ class Tags(ListAPIView, DefaultOrderMixin):
         return Tag.objects.all()
 
 
-class UserFavorites(ListAPIView, DefaultOrderMixin):
+class UserSavedListings(ListAPIView, DefaultOrderMixin):
     serializer_class = ListingSerializerList
     permission_classes = [IsAuthenticated]
     pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
         user = self.request.user
-        return user.listings_favorited.all()
+        return user.listings_saved.all()
 
 
 # TODO: Can add feature to filter for active offers only
@@ -245,7 +245,7 @@ class DeleteImage(DestroyAPIView):
 
 # TODO: We don't use the CreateModelMixin or DestroyModelMixin's functionality here.
 # Think about if there's a better way
-class Favorites(
+class SavedListings(
     mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet
 ):
     serializer_class = ListingSerializer
@@ -255,32 +255,32 @@ class Favorites(
 
     def get_queryset(self):
         user = self.request.user
-        return user.listings_favorited.all()
+        return user.listings_saved.all()
 
     def create(self, request, *args, **kwargs):
         listing_id = int(self.kwargs["listing_id"])
-        favorites = request.user.listings_favorited
-        if favorites.filter(id=listing_id).exists():
+        saved = request.user.listings_saved
+        if saved.filter(id=listing_id).exists():
             return Response(
-                {"liked": True, "detail": "User has already liked the listing"},
+                {"saved": True, "detail": "User has already saved the listing"},
                 status=status.HTTP_409_CONFLICT,
             )
         listing = get_object_or_404(Listing, id=listing_id)
-        favorites.add(listing)
-        return Response({"liked": True}, status=status.HTTP_201_CREATED)
+        saved.add(listing)
+        return Response({"saved": True}, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         listing_id = int(self.kwargs["listing_id"])
         listing = get_object_or_404(Listing, id=listing_id)
 
-        if listing not in request.user.listings_favorited.all():
+        if listing not in request.user.listings_saved.all():
             return Response(
-                {"liked": False, "detail": "User hasn't liked the listing yet"},
+                {"saved": False, "detail": "User hasn't saved the listing yet"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        request.user.listings_favorited.remove(listing)
-        return Response({"liked": False}, status=status.HTTP_200_OK)
+        request.user.listings_saved.remove(listing)
+        return Response({"saved": False}, status=status.HTTP_200_OK)
 
 
 class Offers(viewsets.ModelViewSet):
