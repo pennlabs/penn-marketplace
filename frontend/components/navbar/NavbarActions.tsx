@@ -91,7 +91,7 @@ export const NavbarActions = ({
       <Button
         variant="ghost"
         size="icon"
-        className="relative"
+        className="relative cursor-pointer"
         onClick={handleNotificationClick}
         aria-label={`Notifications${hasUnreadNotifications ? " (unread)" : ""}`}
       >
@@ -109,7 +109,7 @@ export const NavbarActions = ({
         <Button
           variant="ghost"
           size="icon"
-          className="overflow-hidden rounded-full p-0 transition-opacity hover:opacity-80"
+          className="cursor-pointer overflow-hidden rounded-full p-0 transition-opacity hover:opacity-80"
           onClick={handleAvatarClick}
           aria-label="User menu"
           aria-expanded={isDropdownOpen}
