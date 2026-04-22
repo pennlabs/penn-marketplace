@@ -189,7 +189,7 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
             serializer_class = ListingSerializer
         else:
             serializer_class = ListingSerializerPublic
-        serializer = serializer_class(instance)
+        serializer = serializer_class(instance, context={"request": request})
         return Response(serializer.data)
 
 
