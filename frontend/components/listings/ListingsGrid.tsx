@@ -5,22 +5,15 @@ import { Spinner } from "@/components/ui/spinner";
 import { ListingsCard } from "@/components/listings/ListingsCard";
 import { NoListingsFound } from "@/components/listings/NoListingsFound";
 import { useListings } from "@/hooks/useListings";
-import { Item, PaginatedResponse, Sublet, User } from "@/lib/types";
+import { ListingTypes, User } from "@/lib/types";
 
-type Props =
-  | {
-      type: "items";
-      listings: PaginatedResponse<Item>;
-      currentUser: User;
-    }
-  | {
-      type: "sublets";
-      listings: PaginatedResponse<Sublet>;
-      currentUser: User;
-    };
+type Props = {
+  type: ListingTypes;
+  currentUser: User;
+};
 
-export const ListingsGrid = ({ type, listings, currentUser }: Props) => {
-  const { data, error, isFetchingNextPage, hasNextPage, ref } = useListings({ type, listings });
+export const ListingsGrid = ({ type, currentUser }: Props) => {
+  const { data, error, isFetchingNextPage, hasNextPage, ref } = useListings({ type });
 
   const totalResults = data?.pages.reduce((acc, page) => acc + page.results.length, 0) || 0;
   const isEmpty = totalResults === 0;

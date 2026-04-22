@@ -1,3 +1,4 @@
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -98,10 +99,32 @@ class ItemDataSerializer(ModelSerializer):
 
 
 class SubletDataSerializer(ModelSerializer):
+    latitude = SerializerMethodField()
+    longitude = SerializerMethodField()
+
     class Meta:
         model = Sublet
-        fields = ["street_address", "beds", "baths", "start_date", "end_date"]
+        fields = [
+            "street_address",
+            "beds",
+            "baths",
+            "start_date",
+            "end_date",
+            "latitude",
+            "longitude",
+        ]
 
+    def get_latitude(self, obj):
+        approx_lat, _ = obj.approximate_location
+        if approx_lat is not None:
+            return float(approx_lat)
+        return None
+
+    def get_longitude(self, obj):
+        _, approx_lon = obj.approximate_location
+        if approx_lon is not None:
+            return float(approx_lon)
+        return None
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
 class ListingSerializer(ListingTypeMixin, ModelSerializer):
@@ -265,12 +288,23 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
     def _create_sublet(self, validated_data, additional_data):
         tags = validated_data.pop("tags", None)
 
+        latitude = additional_data.get("latitude")
+        longitude = additional_data.get("longitude")
+
+
+        if latitude is not None:
+            latitude = float(latitude)
+        if longitude is not None:
+            longitude = float(longitude)
+
         sublet = Sublet.objects.create(
             street_address=additional_data.get("street_address"),
             beds=additional_data.get("beds"),
             baths=additional_data.get("baths"),
             start_date=additional_data.get("start_date"),
             end_date=additional_data.get("end_date"),
+            latitude=latitude,
+            longitude=longitude,
             **validated_data,
         )
 
@@ -323,10 +357,16 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
     def _update_sublet(self, instance, additional_data):
         sublet = instance.sublet
-        sublet_fields = ["street_address", "beds", "baths", "start_date", "end_date"]
-        for field in sublet_fields:
+        str_fields = ["street_address", "beds", "baths", "start_date", "end_date"]
+        float_fields = ["latitude", "longitude"]
+        for field in str_fields:
             if field in additional_data:
                 setattr(sublet, field, additional_data[field])
+
+        for field in float_fields:
+            if field in additional_data:
+                value = additional_data[field]
+                setattr(sublet, field, float(value) if value is not None else None)
         sublet.full_clean()
         sublet.save()
 
