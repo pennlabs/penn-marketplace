@@ -52,6 +52,29 @@ services:
       - REDIS_URL=redis://redis:6379/0
     command: sh -c "uv run python manage.py migrate && uv run python manage.py runserver 0.0.0.0:8000"
 
+  celery:
+    platform: linux/amd64
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - penn-marketplace-backend-venv:/app/.venv
+    env_file:
+      - ./backend/.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/penn_marketplace
+      - REDIS_URL=redis://redis:6379/0
+    command: uv run celery -A config worker --loglevel=info
+
   frontend:
     build:
       context: ./frontend
