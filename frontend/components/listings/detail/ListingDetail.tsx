@@ -81,6 +81,16 @@ export const ListingDetail = ({ listingId }: Props) => {
           </button>
         </div>
       </div>
+      {listing.status === "PENDING" && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          This listing is under review and is not yet visible to others.
+        </div>
+      )}
+      {listing.status === "REJECTED" && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          This listing was rejected for violating our content policy and is not visible to others.
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <ListingImageGallery images={listing.images} />
         <div className="space-y-6">
