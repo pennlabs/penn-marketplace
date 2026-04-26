@@ -36,7 +36,9 @@ export default function RootLayout({
         <TanstackQueryProvider>
           <FiltersProvider>
             <Navbar />
-            <div className="flex-grow pt-16">{children}</div>
+            <div className="container mx-auto w-full max-w-[96rem] space-y-6 px-12 pt-22 pb-12">
+              {children}
+            </div>
             <Footer />
           </FiltersProvider>
           <ReactQueryDevtools />
