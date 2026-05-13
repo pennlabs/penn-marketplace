@@ -1,19 +1,21 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, Share } from "lucide-react";
-import { Item, Offer, PaginatedResponse, Sublet } from "@/lib/types";
+import { Item, Offer, Sublet } from "@/lib/types";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { OffersPanel } from "@/components/listings/offer/OffersPanel";
 import { BackButton } from "@/components/listings/detail/BackButton";
+import { SubletMap } from "@/components/listings/detail/SubletMap";
 import {
   addToUsersFavorites,
   deleteFromUsersFavorites,
   getListing,
 } from "@/lib/actions";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface Props {
   listing: Item | Sublet;
@@ -31,11 +33,15 @@ export const ListingDetail = ({
   myOfferGiven = null,
 }: Props) => {
   const queryClient = useQueryClient();
+  const queryKey = queryKeys.listing(listing.id);
 
   const listingQuery = useQuery({
-    queryKey: ["listing", listing.id],
+    queryKey,
     queryFn: () => getListing(listing.id.toString()),
-    initialData: listing,
+    initialData: {
+      ...listing,
+      is_favorited: listing.is_favorited ?? initialIsFavorited,
+    },
     staleTime: Infinity,
   });
   const listingData = listingQuery.data;
@@ -44,13 +50,7 @@ export const ListingDetail = ({
   const priceLabel = listingType === "sublet" ? "/mo" : undefined;
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
 
-  const favoritesQuery = useQuery({
-    queryKey: ["favorite", listing.id],
-    queryFn: async () => initialIsFavorited,
-    initialData: initialIsFavorited,
-    staleTime: Infinity,
-  });
-  const isFavorited = favoritesQuery.data ?? false;
+  const isFavorited = listingData.is_favorited ?? false;
 
   const toggleFavoriteMutation = useMutation({
     meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
@@ -62,51 +62,27 @@ export const ListingDetail = ({
       }
     },
     onMutate: async (shouldFavorite: boolean) => {
-      await queryClient.cancelQueries({ queryKey: ["favorite", listing.id] });
-      const previousFavorite = queryClient.getQueryData<boolean>(["favorite", listing.id]);
-      queryClient.setQueryData(["favorite", listing.id], shouldFavorite);
-      await queryClient.cancelQueries({ queryKey: ["favorites"] });
-      const previousFavoritesList = queryClient.getQueryData<PaginatedResponse<Item | Sublet>>([
-        "favorites",
-      ]);
-
-      if (previousFavoritesList) {
-        const exists = previousFavoritesList.results?.some(
-          (favorite) => favorite.id === listingData.id
-        );
-        let results = previousFavoritesList.results ?? [];
-
-        if (shouldFavorite && !exists) {
-          results = [...results, listingData];
-        }
-        if (!shouldFavorite && exists) {
-          results = results.filter((favorite) => favorite.id !== listingData.id);
-        }
-
-        queryClient.setQueryData<PaginatedResponse<Item | Sublet>>(["favorites"], {
-          ...previousFavoritesList,
-          results,
-        });
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Item | Sublet>(queryKey);
+      if (previous) {
+        queryClient.setQueryData(queryKey, { ...previous, is_favorited: shouldFavorite });
       }
-
-      return { previousFavorite, previousFavoritesList };
+      return { previous };
     },
     onError: (_error, _shouldFavorite, context) => {
-      if (context?.previousFavorite !== undefined) {
-        queryClient.setQueryData(["favorite", listing.id], context.previousFavorite);
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
       }
-      if (context?.previousFavoritesList !== undefined) {
-        queryClient.setQueryData(["favorites"], context.previousFavoritesList);
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
     },
   });
 
   const handleToggleFavorite = async () => {
     toggleFavoriteMutation.mutate(!isFavorited);
   };
+
+  const subletCoords =
+    listingData.listing_type === "sublet" ? listingData.additional_data : null;
+  const hasLocation = subletCoords?.latitude != null && subletCoords?.longitude != null;
 
   return (
     <div className="mx-auto flex w-full max-w-[96rem] flex-col p-8 px-4 sm:px-12">
@@ -136,6 +112,18 @@ export const ListingDetail = ({
             {...listingData.additional_data}
           />
           <UserCard user={listingData.seller} label={listingOwnerLabel} />
+          {hasLocation && (
+            <div className="space-y-3">
+              <div>
+                <h2 className="text-lg font-semibold">{"Where you'll be living"}</h2>
+                <p className="text-sm text-gray-500">
+                  Approximate location shown. The exact location will be shared once you connect with
+                  the owner.
+                </p>
+              </div>
+              <SubletMap latitude={subletCoords!.latitude!} longitude={subletCoords!.longitude!} />
+            </div>
+          )}
           <ListingActions
             listing={listingData}
             listingPrice={listingData.price}

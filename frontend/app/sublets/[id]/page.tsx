@@ -1,3 +1,4 @@
+import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { ListingDetail } from "@/components/listings/detail/ListingDetail";
 import {
   getCurrentUser,
@@ -5,6 +6,7 @@ import {
   getMyOfferForListing,
   getOffersReceivedForListing,
 } from "@/lib/actions";
+import { queryKeys } from "@/lib/queryKeys";
 
 export default async function SubletPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,13 +16,18 @@ export default async function SubletPage({ params }: { params: Promise<{ id: str
   const offersReceived = offersReceivedResponse?.results ?? [];
   const myOfferGiven = !isOwner ? await getMyOfferForListing(sublet.id) : null;
 
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(queryKeys.listing(sublet.id), sublet);
+
   return (
-    <ListingDetail
-      listing={sublet}
-      initialIsFavorited={sublet.is_favorited ?? false}
-      offersReceived={offersReceived}
-      isOwner={isOwner}
-      myOfferGiven={myOfferGiven}
-    />
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ListingDetail
+        listing={sublet}
+        initialIsFavorited={sublet.is_favorited ?? false}
+        offersReceived={offersReceived}
+        isOwner={isOwner}
+        myOfferGiven={myOfferGiven}
+      />
+    </HydrationBoundary>
   );
 }

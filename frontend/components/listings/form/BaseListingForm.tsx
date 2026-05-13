@@ -135,7 +135,7 @@ export const BaseListingForm = <T extends BaseCreatePayload>({
           >
             <Textarea
               {...field}
-              placeholder={`Enter ${displayLabel} Description`}
+              placeholder={`Enter description (optional)`}
               className="min-h-[120px] resize-y"
               aria-invalid={!!errors.description}
               disabled={disabled}

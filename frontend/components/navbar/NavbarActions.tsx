@@ -1,25 +1,26 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Bell, Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserProfileDropdown } from "./UserProfileDropdown";
 
 interface Props {
-  createNewText: string;
-  createNewHref: string;
+  createNewConfig: { text: string; href: string } | undefined;
   mobileShowHamburger: boolean;
   isMobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
 }
 
 export const NavbarActions = ({
-  createNewText,
-  createNewHref,
+  createNewConfig,
   mobileShowHamburger,
   isMobileMenuOpen,
   onToggleMobileMenu,
 }: Props) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleNotificationClick = () => {
     // TODO
@@ -27,44 +28,70 @@ export const NavbarActions = ({
   };
 
   const handleAvatarClick = () => {
-    // TODO
+    setIsDropdownOpen(!isDropdownOpen);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [isDropdownOpen]);
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      {/* desktop only new listing button */}
-      {
-        <Button
-          variant="outline"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden gap-2 md:flex"
-          asChild
-        >
-          <Link href={createNewHref} aria-label={createNewText}>
-            <Plus className="h-4 w-4" />
-            <span>{createNewText}</span>
-          </Link>
-        </Button>
-      }
+      {createNewConfig && (
+        <>
+          {/* desktop only new listing button */}
+          <Button
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden gap-2 md:flex"
+            asChild
+          >
+            <Link href={createNewConfig.href} aria-label={createNewConfig.text}>
+              <Plus className="h-4 w-4" />
+              <span>{createNewConfig.text}</span>
+            </Link>
+          </Button>
 
-      {/* mobile only new listing button (icon only) */}
-      {
-        <Button
-          variant="outline"
-          size="icon"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground md:hidden"
-          asChild
-        >
-          <Link href={createNewHref} aria-label={createNewText}>
-            <Plus className="h-4 w-4" />
-          </Link>
-        </Button>
-      }
+          {/* mobile only new listing button (icon only) */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground md:hidden"
+            asChild
+          >
+            <Link href={createNewConfig.href} aria-label={createNewConfig.text}>
+              <Plus className="h-4 w-4" />
+            </Link>
+          </Button>
+        </>
+      )}
 
       {/* notification bell */}
       <Button
         variant="ghost"
         size="icon"
-        className="relative"
+        className="relative cursor-pointer"
         onClick={handleNotificationClick}
         aria-label={`Notifications${hasUnreadNotifications ? " (unread)" : ""}`}
       >
@@ -78,21 +105,26 @@ export const NavbarActions = ({
       </Button>
 
       {/* user avatar */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="overflow-hidden rounded-full p-0 transition-opacity hover:opacity-80"
-        onClick={handleAvatarClick}
-        aria-label="User menu"
-      >
-        <Image
-          src="/images/default-avatar.png"
-          alt="User avatar"
-          width={40}
-          height={40}
-          className="rounded-full object-cover"
-        />
-      </Button>
+      <div className="relative" ref={containerRef}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="cursor-pointer overflow-hidden rounded-full p-0 transition-opacity hover:opacity-80"
+          onClick={handleAvatarClick}
+          aria-label="User menu"
+          aria-expanded={isDropdownOpen}
+        >
+          <Image
+            src="/images/default-avatar.png"
+            alt="User avatar"
+            width={40}
+            height={40}
+            className="rounded-full object-cover"
+          />
+        </Button>
+
+        <UserProfileDropdown isOpen={isDropdownOpen} onClose={() => setIsDropdownOpen(false)} />
+      </div>
 
       {/* mobile only menu toggle */}
       {mobileShowHamburger && (

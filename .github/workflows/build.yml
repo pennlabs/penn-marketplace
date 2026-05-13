@@ -1,6 +1,8 @@
 name: Build Marketplace
 
-on: push
+on:
+  push:
+  pull_request:
 
 jobs:
   backend-check:

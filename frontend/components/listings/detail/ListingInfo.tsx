@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils";
 interface Props {
   title: string;
   price: number;
-  description: string;
+  description?: string;
   category?: string;
   condition?: string;
   priceLabel?: string;
@@ -19,6 +19,7 @@ interface Props {
 }
 
 const MAX_DESCRIPTION_LENGTH = 250;
+const NO_DESCRIPTION = "No description";
 
 export const ListingInfo = ({
   title,
@@ -33,11 +34,13 @@ export const ListingInfo = ({
   end_date,
 }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const shouldTruncate = description.length > MAX_DESCRIPTION_LENGTH;
+  const hasDescription = description && description.trim().length > 0;
+  const descriptionText = hasDescription ? description : NO_DESCRIPTION;
+  const shouldTruncate = hasDescription && descriptionText.length > MAX_DESCRIPTION_LENGTH;
   const displayDescription =
     !shouldTruncate || isExpanded
-      ? description
-      : `${description.slice(0, MAX_DESCRIPTION_LENGTH)}...`;
+      ? descriptionText
+      : `${descriptionText.slice(0, MAX_DESCRIPTION_LENGTH)}...`;
 
   return (
     <div className="space-y-3">
