@@ -55,6 +55,7 @@ class Offer(models.Model):
     def __str__(self):
         return f"Offer for {self.listing} made by {self.user}"
 
+
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -178,7 +179,8 @@ class Sublet(Listing):
     def approximate_location(self):
         if self.latitude is not None and self.longitude is not None:
             approximate_location = self._calculate_approximate_location(
-                self.latitude, self.longitude)
+                self.latitude, self.longitude
+            )
             return approximate_location
         return None, None
 
