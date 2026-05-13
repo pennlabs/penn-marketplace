@@ -6,7 +6,7 @@ import { ListingImageGallery } from "@/components/listings/detail/ListingImageGa
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
-import { OffersReceived } from "@/components/listings/offer/OffersReceived";
+import { OffersPanel } from "@/components/listings/offer/OffersPanel";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import {
   addToUsersFavorites,
@@ -53,7 +53,7 @@ export const ListingDetail = ({
   const isFavorited = favoritesQuery.data ?? false;
 
   const toggleFavoriteMutation = useMutation({
-    meta: { suppressErrorToast: true },
+    meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
     mutationFn: async (shouldFavorite: boolean) => {
       if (shouldFavorite) {
         await addToUsersFavorites(listingData.id);
@@ -104,7 +104,7 @@ export const ListingDetail = ({
     },
   });
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = async () => {
     toggleFavoriteMutation.mutate(!isFavorited);
   };
 
@@ -144,7 +144,7 @@ export const ListingDetail = ({
             isOwner={isOwner}
             initialMyOffer={myOfferGiven}
           />
-          <OffersReceived
+          <OffersPanel
             isOwner={isOwner}
             offersReceived={offersReceived}
             myOfferGiven={myOfferGiven}

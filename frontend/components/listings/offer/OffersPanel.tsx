@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Offer } from "@/lib/types";
 import { OfferCard } from "@/components/listings/offer/OfferCard";
-import { MyOfferCard } from "@/components/listings/offer/MyOfferCard";
 import { EditMyOfferModal } from "@/components/listings/offer/EditMyOfferModal";
 import { deleteMyOfferForListing, getMyOfferForListing } from "@/lib/actions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export const OffersReceived = ({
+export const OffersPanel = ({
   isOwner,
   offersReceived: initialOffersReceived,
   myOfferGiven,
@@ -71,7 +70,8 @@ export const OffersReceived = ({
       <>
         <div className="space-y-3">
           <h2 className="text-lg font-semibold">Your offer</h2>
-          <MyOfferCard
+          <OfferCard
+            variant="mine"
             offer={myOffer}
             onEdit={() => setIsEditOfferOpen(true)}
             onDelete={() => setIsDeleteOfferOpen(true)}
@@ -126,6 +126,7 @@ export const OffersReceived = ({
           {offersReceived.map((offer) => (
             <OfferCard
               key={offer.id}
+              variant="received"
               offer={offer}
               onStatusChange={handleStatusChange}
             />

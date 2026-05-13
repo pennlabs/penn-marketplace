@@ -240,12 +240,7 @@ export async function changeOfferStatus(offerId: number, status: Offer["status"]
 // offers: current user's offer for a listing
 // ------------------------------------------------------------
 export async function getMyOfferForListing(listingId: number): Promise<Offer | null> {
-  try {
     return await serverFetch<Offer>(`/market/listings/${listingId}/offers/mine/`);
-  } catch (error) {
-    if (error instanceof APIError && error.status === 404) return null;
-    throw error;
-  }
 }
 
 export async function updateMyOfferDetails(

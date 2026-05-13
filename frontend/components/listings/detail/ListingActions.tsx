@@ -43,6 +43,7 @@ export const ListingActions = ({
     queryFn: getPhoneStatus,
     enabled: !isOwner,
   });
+
   const { data: myOffer, isLoading: isLoadingMyOffer } = useQuery({
     queryKey: ["myOffer", listing.id],
     queryFn: () => getMyOfferForListing(listing.id),
@@ -53,7 +54,7 @@ export const ListingActions = ({
   if (isOwner) {
     const typeLabel = listing.listing_type === "sublet" ? "Sublet" : "Item";
     const editHref =
-      listing.listing_type === "sublet" ? `/sublets/${listing.id}/edit` : `/items/${listing.id}/edit`;
+      listing.listing_type === "sublet" ? `/edit/sublet/${listing.id}` : `/edit/item/${listing.id}`;
 
     return (
       <>
