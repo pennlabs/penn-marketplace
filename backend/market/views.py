@@ -169,10 +169,11 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         if request.query_params.get("seller", "false").lower() == "true":
             queryset = queryset.filter(seller=request.user)
         else:
-            # Show listings that are not expired, or have no expiration
+            # Show only approved listings that are not expired
             now = timezone.now()
             queryset = queryset.filter(
-                Q(expires_at__gte=now) | Q(expires_at__isnull=True)
+                Q(expires_at__gte=now) | Q(expires_at__isnull=True),
+                status=Listing.Status.APPROVED,
             )
 
         page = self.paginate_queryset(queryset)
@@ -188,6 +189,8 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         if instance.seller == request.user:
             serializer_class = ListingSerializer
         else:
+            if instance.status != Listing.Status.APPROVED:
+                raise exceptions.NotFound()
             serializer_class = ListingSerializerPublic
         serializer = serializer_class(instance, context={"request": request})
         return Response(serializer.data)
