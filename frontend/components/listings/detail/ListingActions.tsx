@@ -1,53 +1,93 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { DollarSign } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MakeOfferModal } from "@/components/listings/offer/MakeOfferModal";
 import { PhoneInputModal } from "@/components/listings/offer/PhoneInputModal";
 import { VerificationCodeModal } from "@/components/listings/offer/VerificationCodeModal";
+import { DeleteListing } from "@/components/listings/detail/DeleteListing";
 import { Button } from "@/components/ui/button";
-import { getPhoneStatus } from "@/lib/actions";
+import { getMyOfferForListing, getPhoneStatus } from "@/lib/actions";
+import type { Item, Offer, Sublet } from "@/lib/types";
 
 interface Props {
-  listingId: number;
+  listing: Item | Sublet;
   listingPrice: number;
   listingOwnerLabel: string;
   priceLabel?: string;
+  isOwner?: boolean;
+  initialMyOffer?: Offer | null;
 }
 
 type ModalState = "none" | "phone-input" | "verification" | "offer";
 
 export const ListingActions = ({
-  listingId,
+  listing,
   listingPrice,
   priceLabel,
   listingOwnerLabel,
+  isOwner = false,
+  initialMyOffer = null,
 }: Props) => {
   const [modalState, setModalState] = useState<ModalState>("none");
   const [pendingPhoneNumber, setPendingPhoneNumber] = useState<string>("");
   const [isChangingPhone, setIsChangingPhone] = useState<boolean>(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
   const { data: phoneStatus } = useQuery({
     queryKey: ["phoneStatus"],
     queryFn: getPhoneStatus,
+    enabled: !isOwner,
   });
+
+  const { data: myOffer, isLoading: isLoadingMyOffer } = useQuery({
+    queryKey: ["myOffer", listing.id],
+    queryFn: () => getMyOfferForListing(listing.id),
+    enabled: !isOwner,
+    initialData: initialMyOffer,
+  });
+
+  if (isOwner) {
+    const typeLabel = listing.listing_type === "sublet" ? "Sublet" : "Item";
+    const editHref =
+      listing.listing_type === "sublet" ? `/edit/sublet/${listing.id}` : `/edit/item/${listing.id}`;
+
+    return (
+      <>
+        <div className="flex items-center justify-end gap-2">
+          <Button className="cursor-pointer" variant="outline" asChild>
+            <Link href={editHref}>Edit Listing</Link>
+          </Button>
+          <Button
+            className="cursor-pointer bg-red-500 text-white hover:bg-red-600"
+            onClick={() => setIsDeleteOpen(true)}
+          >
+            Delete {typeLabel}
+          </Button>
+        </div>
+        <DeleteListing
+          listing={listing}
+          open={isDeleteOpen}
+          onOpenChange={setIsDeleteOpen}
+        />
+      </>
+    );
+  }
 
   const handleMakeOfferClick = () => {
     if (!phoneStatus) return;
 
     if (!phoneStatus.phone_number || !phoneStatus.phone_verified) {
-      // no phone number or not verified - start with phone input
-      // if we already have a pending phone number, go to verification
       if (pendingPhoneNumber) {
         setModalState("verification");
       } else {
         setModalState("phone-input");
       }
     } else {
-      // phone verified - show create offer modal
       setModalState("offer");
     }
   };
@@ -71,13 +111,15 @@ export const ListingActions = ({
 
   return (
     <>
-      <Button
-        onClick={handleMakeOfferClick}
-        className="bg-brand hover:bg-brand-hover h-12 w-full cursor-pointer text-base text-white"
-      >
-        <DollarSign className="mr-2 h-5 w-5" />
-        Make an Offer
-      </Button>
+      {!isLoadingMyOffer && !myOffer && (
+        <Button
+          onClick={handleMakeOfferClick}
+          className="bg-brand hover:bg-brand-hover h-12 w-full cursor-pointer text-base text-white"
+        >
+          <DollarSign className="mr-2 h-5 w-5" />
+          Make an Offer
+        </Button>
+      )}
 
       <PhoneInputModal
         isOpen={modalState === "phone-input"}
@@ -97,7 +139,7 @@ export const ListingActions = ({
       <MakeOfferModal
         isOpen={modalState === "offer"}
         onClose={() => setModalState("none")}
-        listingId={listingId}
+        listingId={listing.id}
         listingPrice={listingPrice}
         listingOwnerLabel={listingOwnerLabel}
         priceLabel={priceLabel}

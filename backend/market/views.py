@@ -9,6 +9,8 @@ from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
     ListAPIView,
+    RetrieveAPIView,
+    UpdateAPIView,
     get_object_or_404,
 )
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -21,6 +23,7 @@ from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
     ListingImageOwnerPermission,
+    ListingOwnerOffersPermission,
     ListingOwnerPermission,
     OfferOwnerPermission,
 )
@@ -30,7 +33,9 @@ from market.serializers import (
     ListingSerializer,
     ListingSerializerList,
     ListingSerializerPublic,
+    OfferDetailsSerializer,
     OfferSerializer,
+    OfferStatusSerializer,
     TagSerializer,
     UserSerializer,
 )
@@ -192,6 +197,11 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         serializer = serializer_class(instance, context={"request": request})
         return Response(serializer.data)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"deleted": True}, status=status.HTTP_200_OK)
+
 
 # TODO: This doesn't use CreateAPIView's functionality
 # since we overrode the create method.
@@ -296,9 +306,17 @@ class Offers(viewsets.ModelViewSet):
     Delete the offer between the user and the listing matching the ID.
     """
 
-    permission_classes = [OfferOwnerPermission | IsSuperUser]
     serializer_class = OfferSerializer
     pagination_class = PageSizeOffsetPagination
+
+    def get_permissions(self):
+        if self.action == "create":
+            return [IsAuthenticated()]
+        if self.action == "destroy":
+            return [(OfferOwnerPermission | IsSuperUser)()]
+        if self.action == "list":
+            return [(ListingOwnerOffersPermission | IsSuperUser)()]
+        return [(ListingOwnerOffersPermission | IsSuperUser)()]
 
     def get_queryset(self):
         if Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
@@ -332,7 +350,7 @@ class Offers(viewsets.ModelViewSet):
         obj = get_object_or_404(queryset, **filter)
         self.check_object_permissions(self.request, obj)
         self.perform_destroy(obj)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"deleted": True}, status=status.HTTP_200_OK)
 
     def list(self, request, *args, **kwargs):
         if not Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
@@ -340,6 +358,56 @@ class Offers(viewsets.ModelViewSet):
         for offer in self.get_queryset():
             self.check_object_permissions(request, offer)
         return super().list(request, *args, **kwargs)
+
+
+class OfferStatusUpdate(UpdateAPIView):
+    """Allow the listing seller (or superuser) to update an offer's status (PATCH)."""
+
+    queryset = Offer.objects.all()
+    serializer_class = OfferStatusSerializer
+    permission_classes = [ListingOwnerOffersPermission | IsSuperUser]
+    lookup_url_kwarg = "offer_id"
+    http_method_names = ["patch"]
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(OfferSerializer(instance).data)
+
+
+class OfferDetailsUpdate(UpdateAPIView):
+    """Offer owner (or superuser) may PATCH offered_price and message."""
+
+    queryset = Offer.objects.all()
+    serializer_class = OfferDetailsSerializer
+    permission_classes = [OfferOwnerPermission | IsSuperUser]
+    lookup_url_kwarg = "offer_id"
+    http_method_names = ["patch"]
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(OfferSerializer(instance).data)
+
+
+class MyOfferForListing(RetrieveAPIView):
+    """Return the authenticated user's offer for a given listing (GET)."""
+
+    serializer_class = OfferSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        offer = Offer.objects.filter(
+            listing_id=self.kwargs["listing_id"],
+            user=self.request.user,
+        ).first()
+        if offer is None:
+            raise exceptions.NotFound("No offer for this listing")
+        return offer
 
 
 @api_view(["POST"])

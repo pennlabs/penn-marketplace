@@ -1,39 +1,64 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
-import { queryKeys } from "@/lib/queryKeys";
 import { Heart, Share } from "lucide-react";
-import { Item, Sublet } from "@/lib/types";
-import { ListingActions } from "@/components/listings/detail/ListingActions";
+import { Item, Offer, Sublet } from "@/lib/types";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
+import { ListingActions } from "@/components/listings/detail/ListingActions";
+import { OffersPanel } from "@/components/listings/offer/OffersPanel";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import { SubletMap } from "@/components/listings/detail/SubletMap";
+import {
+  addToUsersFavorites,
+  deleteFromUsersFavorites,
+  getListing,
+} from "@/lib/actions";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface Props {
-  listingId: number;
+  listing: Item | Sublet;
+  initialIsFavorited: boolean;
+  offersReceived: Offer[];
+  isOwner: boolean;
+  myOfferGiven?: Offer | null;
 }
 
-export const ListingDetail = ({ listingId }: Props) => {
+export const ListingDetail = ({
+  listing,
+  initialIsFavorited,
+  offersReceived,
+  isOwner,
+  myOfferGiven = null,
+}: Props) => {
   const queryClient = useQueryClient();
-  const queryKey = queryKeys.listing(listingId);
+  const queryKey = queryKeys.listing(listing.id);
 
-  const { data: listing } = useQuery({
+  const listingQuery = useQuery({
     queryKey,
-    queryFn: () => getListing(String(listingId)),
+    queryFn: () => getListing(listing.id.toString()),
+    initialData: {
+      ...listing,
+      is_favorited: listing.is_favorited ?? initialIsFavorited,
+    },
+    staleTime: Infinity,
   });
+  const listingData = listingQuery.data;
 
-  const isFavorited = listing?.is_favorited ?? false;
+  const listingType = listingData.listing_type;
+  const priceLabel = listingType === "sublet" ? "/mo" : undefined;
+  const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
+
+  const isFavorited = listingData.is_favorited ?? false;
 
   const toggleFavoriteMutation = useMutation({
     meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
     mutationFn: async (shouldFavorite: boolean) => {
       if (shouldFavorite) {
-        await addToUsersFavorites(listingId);
+        await addToUsersFavorites(listingData.id);
       } else {
-        await deleteFromUsersFavorites(listingId);
+        await deleteFromUsersFavorites(listingData.id);
       }
     },
     onMutate: async (shouldFavorite: boolean) => {
@@ -55,13 +80,8 @@ export const ListingDetail = ({ listingId }: Props) => {
     toggleFavoriteMutation.mutate(!isFavorited);
   };
 
-  if (!listing) return null;
-
-  const listingType = listing.listing_type;
-  const priceLabel = listingType === "sublet" ? "/mo" : undefined;
-  const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
-
-  const subletCoords = listingType === "sublet" ? listing.additional_data : null;
+  const subletCoords =
+    listingData.listing_type === "sublet" ? listingData.additional_data : null;
   const hasLocation = subletCoords?.latitude != null && subletCoords?.longitude != null;
 
   return (
@@ -82,33 +102,41 @@ export const ListingDetail = ({ listingId }: Props) => {
         </div>
       </div>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <ListingImageGallery images={listing.images} />
+        <ListingImageGallery images={listingData.images} />
         <div className="space-y-6">
           <ListingInfo
-            title={listing.title}
-            price={listing.price}
-            description={listing.description}
+            title={listingData.title}
+            price={listingData.price}
+            description={listingData.description}
             priceLabel={priceLabel}
-            {...listing.additional_data}
+            {...listingData.additional_data}
           />
-          <UserCard user={listing.seller} label={listingOwnerLabel} />
+          <UserCard user={listingData.seller} label={listingOwnerLabel} />
           {hasLocation && (
             <div className="space-y-3">
               <div>
                 <h2 className="text-lg font-semibold">{"Where you'll be living"}</h2>
                 <p className="text-sm text-gray-500">
-                  Approximate location shown. The exact location will be shared once you connect
-                  with the owner.
+                  Approximate location shown. The exact location will be shared once you connect with
+                  the owner.
                 </p>
               </div>
-              <SubletMap latitude={subletCoords.latitude!} longitude={subletCoords.longitude!} />
+              <SubletMap latitude={subletCoords!.latitude!} longitude={subletCoords!.longitude!} />
             </div>
           )}
           <ListingActions
-            listingId={listing.id}
-            listingPrice={listing.price}
+            listing={listingData}
+            listingPrice={listingData.price}
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
+            isOwner={isOwner}
+            initialMyOffer={myOfferGiven}
+          />
+          <OffersPanel
+            isOwner={isOwner}
+            offersReceived={offersReceived}
+            myOfferGiven={myOfferGiven}
+            listingId={listingData.id}
           />
         </div>
       </div>

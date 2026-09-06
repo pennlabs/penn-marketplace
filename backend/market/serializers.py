@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -47,12 +46,47 @@ class OfferSerializer(ModelSerializer):
 
     class Meta:
         model = Offer
-        fields = ["id", "user", "listing", "offered_price", "message", "created_at"]
-        read_only_fields = ["id", "created_at", "user"]
+        fields = [
+            "id",
+            "user",
+            "listing",
+            "offered_price",
+            "message",
+            "status",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "user", "status"]
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class OfferStatusSerializer(ModelSerializer):
+    class Meta:
+        model = Offer
+        fields = ["id", "status"]
+        read_only_fields = ["id"]
+
+    def validate_status(self, value):
+        valid_statuses = [choice[0] for choice in Offer.Status.choices]
+        if value not in valid_statuses:
+            raise ValidationError(
+                f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+            )
+        return value
+
+
+class OfferDetailsSerializer(ModelSerializer):
+    """
+    Allows the offer owner to edit the offer's offered_price and message.
+    Status is intentionally read-only (managed by the listing owner).
+    """
+
+    class Meta:
+        model = Offer
+        fields = ["id", "offered_price", "message", "status"]
+        read_only_fields = ["id", "status"]
 
 
 # Create/Update Image Serializer
@@ -125,6 +159,7 @@ class SubletDataSerializer(ModelSerializer):
         if approx_lon is not None:
             return float(approx_lon)
         return None
+
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
 class ListingSerializer(ListingTypeMixin, ModelSerializer):
@@ -290,7 +325,6 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
         latitude = additional_data.get("latitude")
         longitude = additional_data.get("longitude")
-
 
         if latitude is not None:
             latitude = float(latitude)
