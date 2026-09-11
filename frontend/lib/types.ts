@@ -110,6 +110,11 @@ export type ValidatedAddress = {
 };
 
 // ------------------------------------------------------------
+// listing status (content moderation)
+// ------------------------------------------------------------
+export type ListingStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+// ------------------------------------------------------------
 // base listing fields (shared by all listings)
 // ------------------------------------------------------------
 type BaseListing = {
@@ -126,6 +131,7 @@ type BaseListing = {
   favorite_count: number;
   is_favorited?: boolean;
   seller: User;
+  status: ListingStatus;
 };
 
 // ------------------------------------------------------------

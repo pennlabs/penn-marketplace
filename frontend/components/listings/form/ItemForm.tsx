@@ -50,7 +50,7 @@ export function ItemForm() {
   const { mutate, isPending } = useMutation({
     mutationFn: createListing,
     onSuccess: (data) => {
-      toast.success(`${DISPLAY_LABEL} created successfully!`);
+      toast.success(`${DISPLAY_LABEL} submitted and is under review.`);
       queryClient.invalidateQueries({ queryKey: ["items"] });
       reset();
       imageUpload.clearImages();

@@ -60,7 +60,7 @@ export function SubletForm() {
   const { mutate, isPending } = useMutation({
     mutationFn: createListing,
     onSuccess: (data) => {
-      toast.success(`${DISPLAY_LABEL} created successfully!`);
+      toast.success(`${DISPLAY_LABEL} submitted and is under review.`);
       queryClient.invalidateQueries({ queryKey: ["sublets"] });
       reset();
       imageUpload.clearImages();
