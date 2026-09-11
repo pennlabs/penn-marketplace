@@ -358,6 +358,7 @@ class Ratings(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericVi
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class UserBuyerRatings(ListAPIView, DefaultOrderMixin):
     serializer_class = RatingSerializer
     permission_classes = [IsAuthenticated | IsSuperUser]
@@ -367,6 +368,7 @@ class UserBuyerRatings(ListAPIView, DefaultOrderMixin):
         return Rating.objects.filter(
             reviewed_user=self.request.user, rating_type="BUYER"
         )
+
 
 class UserSellerRatings(ListAPIView, DefaultOrderMixin):
     serializer_class = RatingSerializer

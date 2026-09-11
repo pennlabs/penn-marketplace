@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -134,6 +133,7 @@ class SubletDataSerializer(ModelSerializer):
         if approx_lon is not None:
             return float(approx_lon)
         return None
+
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
 class ListingSerializer(ListingTypeMixin, ModelSerializer):
@@ -300,7 +300,6 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         latitude = additional_data.get("latitude")
         longitude = additional_data.get("longitude")
 
-
         if latitude is not None:
             latitude = float(latitude)
         if longitude is not None:
@@ -453,6 +452,7 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
     def get_favorite_count(self, obj):
         return obj.favorites.count()
 
+
 class RatingSerializer(ModelSerializer):
     reviewer = UserSerializer(read_only=True)
 
@@ -466,8 +466,8 @@ class RatingSerializer(ModelSerializer):
             "score",
             "rating_type",
             "comment",
-            "created_at"
-            ]
+            "created_at",
+        ]
         read_only_fields = ["id", "created_at", "reviewer", "rating_type"]
 
     def validate(self, attr):
@@ -491,10 +491,11 @@ class RatingSerializer(ModelSerializer):
             raise ValidationError(
                 "You cannot rate a user who is not on either side of the transaction."
             )
-        attr["rating_type"] = "SELLER" if is_seller else "BUYER"
+        if not (is_seller or target_is_seller):
+            raise ValidationError("Ratings must be between the seller and a buyer")
+        attr["rating_type"] = "SELLER" if target_is_seller else "BUYER"
 
         return attr
-
 
     def validate_comment(self, value):
         if self.contains_profanity(value):
