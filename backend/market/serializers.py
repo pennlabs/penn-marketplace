@@ -88,6 +88,14 @@ class OfferDetailsSerializer(ModelSerializer):
         fields = ["id", "offered_price", "message", "status"]
         read_only_fields = ["id", "status"]
 
+    def validate(self, attrs):
+        if self.instance and self.instance.status != Offer.Status.PENDING:
+            state = self.instance.get_status_display().lower()
+            raise ValidationError(
+                f"This offer has already been {state} and can no longer be edited."
+            )
+        return attrs
+
 
 # Create/Update Image Serializer
 class ListingImageSerializer(ModelSerializer):

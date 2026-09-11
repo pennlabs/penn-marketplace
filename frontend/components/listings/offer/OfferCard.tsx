@@ -103,7 +103,9 @@ function OfferCardReceived({ offer, onStatusChange }: ReceivedProps) {
                 disabled={mutation.isPending}
               >
                 <Check className="mr-1 h-3.5 w-3.5" />
-                {mutation.isPending && mutation.variables === "accepted" ? "Accepting..." : "Accept"}
+                {mutation.isPending && mutation.variables === "accepted"
+                  ? "Accepting..."
+                  : "Accept"}
               </Button>
               <Button
                 size="sm"
@@ -112,7 +114,9 @@ function OfferCardReceived({ offer, onStatusChange }: ReceivedProps) {
                 disabled={mutation.isPending}
               >
                 <X className="mr-1 h-3.5 w-3.5" />
-                {mutation.isPending && mutation.variables === "rejected" ? "Rejecting..." : "Reject"}
+                {mutation.isPending && mutation.variables === "rejected"
+                  ? "Rejecting..."
+                  : "Reject"}
               </Button>
             </div>
           )}
@@ -152,10 +156,12 @@ function OfferCardMine({ offer, onEdit, onDelete }: MineProps) {
             {offer.message?.trim() ? offer.message : "No message provided."}
           </p>
           <div className="mt-3 flex justify-end gap-2">
-            <Button size="sm" className="cursor-pointer" variant="outline" onClick={onEdit}>
-              <Pencil className="mr-1 h-3.5 w-3.5" />
-              Edit
-            </Button>
+            {offer.status === "pending" && (
+              <Button size="sm" className="cursor-pointer" variant="outline" onClick={onEdit}>
+                <Pencil className="mr-1 h-3.5 w-3.5" />
+                Edit
+              </Button>
+            )}
             <Button
               size="sm"
               className="cursor-pointer bg-red-500 text-white hover:bg-red-600"
@@ -186,11 +192,7 @@ export type OfferCardProps =
 
 export function OfferCard(props: OfferCardProps) {
   if (props.variant === "mine") {
-    return (
-      <OfferCardMine offer={props.offer} onEdit={props.onEdit} onDelete={props.onDelete} />
-    );
+    return <OfferCardMine offer={props.offer} onEdit={props.onEdit} onDelete={props.onDelete} />;
   }
-  return (
-    <OfferCardReceived offer={props.offer} onStatusChange={props.onStatusChange} />
-  );
+  return <OfferCardReceived offer={props.offer} onStatusChange={props.onStatusChange} />;
 }

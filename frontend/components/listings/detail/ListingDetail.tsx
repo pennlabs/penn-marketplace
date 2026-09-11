@@ -10,11 +10,7 @@ import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { OffersPanel } from "@/components/listings/offer/OffersPanel";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import { SubletMap } from "@/components/listings/detail/SubletMap";
-import {
-  addToUsersFavorites,
-  deleteFromUsersFavorites,
-  getListing,
-} from "@/lib/actions";
+import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
 
 interface Props {
@@ -80,8 +76,7 @@ export const ListingDetail = ({
     toggleFavoriteMutation.mutate(!isFavorited);
   };
 
-  const subletCoords =
-    listingData.listing_type === "sublet" ? listingData.additional_data : null;
+  const subletCoords = listingData.listing_type === "sublet" ? listingData.additional_data : null;
   const hasLocation = subletCoords?.latitude != null && subletCoords?.longitude != null;
 
   return (
@@ -117,8 +112,8 @@ export const ListingDetail = ({
               <div>
                 <h2 className="text-lg font-semibold">{"Where you'll be living"}</h2>
                 <p className="text-sm text-gray-500">
-                  Approximate location shown. The exact location will be shared once you connect with
-                  the owner.
+                  Approximate location shown. The exact location will be shared once you connect
+                  with the owner.
                 </p>
               </div>
               <SubletMap latitude={subletCoords!.latitude!} longitude={subletCoords!.longitude!} />

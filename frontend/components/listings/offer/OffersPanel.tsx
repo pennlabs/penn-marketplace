@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Offer } from "@/lib/types";
 import { OfferCard } from "@/components/listings/offer/OfferCard";
 import { EditMyOfferModal } from "@/components/listings/offer/EditMyOfferModal";
-import { deleteMyOfferForListing, getMyOfferForListing } from "@/lib/actions";
+import {
+  deleteMyOfferForListing,
+  getMyOfferForListing,
+  getOffersReceivedForListing,
+} from "@/lib/actions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +31,6 @@ export const OffersPanel = ({
   myOfferGiven: Offer | null;
   listingId: number;
 }) => {
-  const [offersReceived, setOffersReceived] = useState(initialOffersReceived);
   const [isEditOfferOpen, setIsEditOfferOpen] = useState(false);
   const [isDeleteOfferOpen, setIsDeleteOfferOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -38,8 +41,17 @@ export const OffersPanel = ({
     initialData: myOfferGiven,
   });
 
-  const handleStatusChange = (id: number, status: Offer["status"]) => {
-    setOffersReceived((prev) => prev.map((offer) => (offer.id === id ? { ...offer, status } : offer)));
+  const { data: offersReceived } = useQuery({
+    queryKey: ["offersReceived", listingId],
+    queryFn: async () => (await getOffersReceivedForListing(listingId)).results,
+    enabled: isOwner,
+    initialData: initialOffersReceived,
+    // the server just rendered this list; don't immediately refetch it on mount
+    staleTime: 30_000,
+  });
+
+  const handleStatusChange = () => {
+    queryClient.invalidateQueries({ queryKey: ["offersReceived", listingId] });
   };
 
   const deleteMyOfferMutation = useMutation({

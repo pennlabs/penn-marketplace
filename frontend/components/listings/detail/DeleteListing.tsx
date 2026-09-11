@@ -48,11 +48,7 @@ export const DeleteListing = ({ listing, open, onOpenChange }: Props) => {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button
-            className="cursor-pointer"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button className="cursor-pointer" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button

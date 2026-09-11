@@ -353,10 +353,11 @@ class Offers(viewsets.ModelViewSet):
         return Response({"deleted": True}, status=status.HTTP_200_OK)
 
     def list(self, request, *args, **kwargs):
-        if not Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
-            raise exceptions.NotFound("No Listing matches the given query")
-        for offer in self.get_queryset():
-            self.check_object_permissions(request, offer)
+        listing = get_object_or_404(Listing, pk=self.kwargs["listing_id"])
+        if not (request.user.is_superuser or listing.seller_id == request.user.id):
+            raise exceptions.PermissionDenied(
+                "Only the listing owner can view offers for this listing."
+            )
         return super().list(request, *args, **kwargs)
 
 

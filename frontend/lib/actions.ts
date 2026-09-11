@@ -240,7 +240,13 @@ export async function changeOfferStatus(offerId: number, status: Offer["status"]
 // offers: current user's offer for a listing
 // ------------------------------------------------------------
 export async function getMyOfferForListing(listingId: number): Promise<Offer | null> {
+  try {
     return await serverFetch<Offer>(`/market/listings/${listingId}/offers/mine/`);
+  } catch (error) {
+    // the endpoint 404s when the user hasn't made an offer, which isn't an error here
+    if (error instanceof APIError && error.status === 404) return null;
+    throw error;
+  }
 }
 
 export async function updateMyOfferDetails(
@@ -250,7 +256,7 @@ export async function updateMyOfferDetails(
   return await serverFetch<Offer>(`/market/offers/${offerId}/details/`, {
     method: "PATCH",
     body: JSON.stringify({
-      offered_price: payload.offeredPrice,
+      offered_priWce: payload.offeredPrice,
       message: payload.message?.trim() || "",
     }),
   });

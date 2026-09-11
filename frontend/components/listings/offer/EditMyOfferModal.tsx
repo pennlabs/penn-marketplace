@@ -94,10 +94,7 @@ export function EditMyOfferModal({
       description="Update the offered price and your message. Offer status is controlled by the listing owner."
       maxWidth="md"
     >
-      <form
-        onSubmit={handleSubmit((data) => editMutation.mutate(data))}
-        className="space-y-4"
-      >
+      <form onSubmit={handleSubmit((data) => editMutation.mutate(data))} className="space-y-4">
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Pencil className="h-4 w-4" />
           <span>Current status: {offer.status}</span>
@@ -119,9 +116,7 @@ export function EditMyOfferModal({
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 className={
-                  errors.offeredPrice && touchedFields.offeredPrice
-                    ? "border-destructive"
-                    : ""
+                  errors.offeredPrice && touchedFields.offeredPrice ? "border-destructive" : ""
                 }
                 min="0"
                 step="0.01"
@@ -160,10 +155,7 @@ export function EditMyOfferModal({
           <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={editMutation.isPending || isSubmitting || !isValid}
-          >
+          <Button type="submit" disabled={editMutation.isPending || isSubmitting || !isValid}>
             {editMutation.isPending ? "Saving..." : "Save"}
           </Button>
         </div>

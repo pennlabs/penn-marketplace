@@ -105,7 +105,7 @@ class BaseMarketTest(TestCase):
                     created_at=now(),
                     expires_at=sublet["expires_at"],
                     external_link=sublet["external_link"],
-                    address=sublet["address"],
+                    street_address=sublet["address"],
                     beds=sublet["beds"],
                     baths=sublet["baths"],
                     start_date=sublet["start_date"],

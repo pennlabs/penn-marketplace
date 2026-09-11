@@ -73,7 +73,7 @@ export function ListingFormShell({
                   {pendingLabel ?? "Creating..."}
                 </>
               ) : (
-                submitLabel ?? `Create ${displayLabel}`
+                (submitLabel ?? `Create ${displayLabel}`)
               )}
             </Button>
             <div className="sr-only" aria-live="polite" aria-atomic="true">

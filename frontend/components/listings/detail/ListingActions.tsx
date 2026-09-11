@@ -69,11 +69,7 @@ export const ListingActions = ({
             Delete {typeLabel}
           </Button>
         </div>
-        <DeleteListing
-          listing={listing}
-          open={isDeleteOpen}
-          onOpenChange={setIsDeleteOpen}
-        />
+        <DeleteListing listing={listing} open={isDeleteOpen} onOpenChange={setIsDeleteOpen} />
       </>
     );
   }
