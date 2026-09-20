@@ -9,7 +9,7 @@ import { FormSelect } from "@/components/common/FormSelect";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing } from "@/lib/actions";
+import { createListing, uploadListingImages } from "@/lib/actions";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/lib/constants";
 import { parsePriceString } from "@/lib/utils";
 import { type CreateItemFormData, createItemSchema } from "@/lib/validations";
@@ -49,7 +49,20 @@ export function ItemForm() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: createListing,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // images attach to an existing listing, so they upload in a second request.
+      // a failed upload still leaves a valid listing - don't block the redirect.
+      const files = imageUpload.getFiles();
+      if (files.length > 0) {
+        const formData = new FormData();
+        files.forEach((file) => formData.append("images", file));
+        try {
+          await uploadListingImages(data.id, formData);
+        } catch {
+          toast.error(`${DISPLAY_LABEL} created, but the images failed to upload.`);
+        }
+      }
+
       toast.success(`${DISPLAY_LABEL} created successfully!`);
       queryClient.invalidateQueries({ queryKey: ["items"] });
       reset();
