@@ -5,7 +5,7 @@ import math
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -46,6 +46,7 @@ class Offer(models.Model):
 
     def __str__(self):
         return f"Offer for {self.listing} made by {self.user}"
+
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -170,10 +171,52 @@ class Sublet(Listing):
     def approximate_location(self):
         if self.latitude is not None and self.longitude is not None:
             approximate_location = self._calculate_approximate_location(
-                self.latitude, self.longitude)
+                self.latitude, self.longitude
+            )
             return approximate_location
         return None, None
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class Rating(models.Model):
+    class RatingType(models.TextChoices):
+        BUYER = "BUYER", "Buyer Rating"
+        SELLER = "SELLER", "Seller Rating"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["reviewer", "reviewed_user", "listing"],
+                name="unique_rating_market",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["reviewer"]),
+            models.Index(fields=["reviewed_user"]),
+            models.Index(fields=["listing"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    reviewer = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="ratings_given"
+    )
+    reviewed_user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="ratings_received"
+    )
+    listing = models.ForeignKey(
+        Listing, on_delete=models.CASCADE, related_name="ratings"
+    )
+    score = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    rating_type = models.CharField(
+        max_length=10, choices=RatingType.choices, default=RatingType.BUYER
+    )
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Rating of {self.score} for {self.reviewed_user} by {self.reviewer}"
