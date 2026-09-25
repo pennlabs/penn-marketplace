@@ -13,7 +13,7 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="container mx-auto w-full max-w-[96rem] px-12 pt-4 pb-12">
+    <>
       <Link href={`/items/${listing.id}`}>
         <BackButton />
       </Link>
@@ -21,6 +21,6 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
       <h1 className="mb-8 pt-2 text-3xl font-bold">Edit Item</h1>
 
       <ItemForm initialListing={listing} />
-    </div>
+    </>
   );
 }

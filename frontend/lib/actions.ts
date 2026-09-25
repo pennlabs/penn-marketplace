@@ -256,7 +256,7 @@ export async function updateMyOfferDetails(
   return await serverFetch<Offer>(`/market/offers/${offerId}/details/`, {
     method: "PATCH",
     body: JSON.stringify({
-      offered_priWce: payload.offeredPrice,
+      offered_price: payload.offeredPrice,
       message: payload.message?.trim() || "",
     }),
   });
