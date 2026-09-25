@@ -22,6 +22,11 @@ class User(AbstractUser):
 
 
 class Offer(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACCEPTED = "accepted", "Accepted"
+        REJECTED = "rejected", "Rejected"
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -42,10 +47,14 @@ class Offer(models.Model):
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
     message = models.TextField(max_length=500, blank=True)
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.PENDING
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Offer for {self.listing} made by {self.user}"
+
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -170,7 +179,8 @@ class Sublet(Listing):
     def approximate_location(self):
         if self.latitude is not None and self.longitude is not None:
             approximate_location = self._calculate_approximate_location(
-                self.latitude, self.longitude)
+                self.latitude, self.longitude
+            )
             return approximate_location
         return None, None
 
