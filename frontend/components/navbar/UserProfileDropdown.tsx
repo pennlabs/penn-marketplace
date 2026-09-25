@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { UserCircle, ClipboardList, Bookmark } from "lucide-react";
+import { UserCircle, ClipboardList, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UserProfileDropdownProps {
@@ -59,8 +59,21 @@ export function UserProfileDropdown({ isOpen, onClose }: UserProfileDropdownProp
         )}
         role="menuitem"
       >
-        <Bookmark className="h-5 w-5" />
-        <span>Saved Listings</span>
+        <Heart className="h-5 w-5" />
+        <span>Favorite Listings</span>
+      </Link>
+
+      <Link
+        href="/"
+        onClick={onClose}
+        className={cn(
+          "flex items-center gap-3 rounded-b-md px-3 py-3 text-sm",
+          "hover:bg-accent hover:text-accent-foreground transition-colors"
+        )}
+        role="menuitem"
+      >
+        <ClipboardList className="h-5 w-5" />
+        <span>My Purchases</span>
       </Link>
     </div>
   );
