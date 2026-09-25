@@ -14,6 +14,7 @@ from rest_framework.serializers import (
 
 from market.mixins import ListingTypeMixin
 from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, Tag
+from utils.images import resize_image
 
 
 User = get_user_model()
@@ -62,22 +63,21 @@ class ListingImageSerializer(ModelSerializer):
         model = ListingImage
         fields = "__all__"
 
+    def validate_image(self, value):
+        if value and value.size > ListingImage.MAX_SIZE_BYTES:
+            raise ValidationError("Image must be 10MB or smaller.")
+        return resize_image(value) if value else value
+
 
 # Browse images
 class ListingImageURLSerializer(ModelSerializer):
     image_url = SerializerMethodField()
 
+    # relative (/media/...) in dev, absolute S3 url in prod; frontend's mediaUrl
+    # resolves relative paths. Don't build_absolute_uri: server-side fetches come
+    # in as backend:8000, a host the browser can't reach.
     def get_image_url(self, obj):
-        image = obj.image
-
-        if not image:
-            return None
-        if image.url.startswith("http"):
-            return image.url
-        elif "request" in self.context:
-            return self.context["request"].build_absolute_uri(image.url)
-        else:
-            return image.url
+        return obj.image.url if obj.image else None
 
     class Meta:
         model = ListingImage

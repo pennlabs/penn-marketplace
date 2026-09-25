@@ -22,7 +22,7 @@ venv/
 # Django
 *.sqlite3
 staticfiles/
-media/
+uploads/
 
 # Node/pnpm
 node_modules/

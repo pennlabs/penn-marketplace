@@ -1,4 +1,5 @@
 import datetime
+import io
 import json
 from unittest.mock import MagicMock
 
@@ -7,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.storage import Storage
 from django.test import TestCase
 from django.utils.timezone import now
+from PIL import Image
 from rest_framework.test import APIClient
 
 from market.models import (
@@ -18,6 +20,7 @@ from market.models import (
     Sublet,
     Tag,
 )
+from utils.images import resize_image
 
 
 User = get_user_model()
@@ -1504,6 +1507,28 @@ class TestImages(BaseMarketTest):
             self.assertEqual(Item.objects.get(id=self.items[0].id).images.count(), 1)
             img = Item.objects.get(id=self.items[0].id).images.first()
             self.assertIsNotNone(img)
+
+    def test_resize_image(self):
+        buf = io.BytesIO()
+        Image.new("RGB", (4000, 2000)).save(buf, format="JPEG")
+        buf.name = "photo.jpg"
+        out = Image.open(resize_image(buf, max_size=1600))
+        self.assertEqual(out.format, "WEBP")
+        self.assertEqual(out.size, (1600, 800))
+
+    def test_create_images_over_limit(self):
+        files = [open("tests/market/mock_image.jpg", "rb") for _ in range(6)]
+        try:
+            response = self.client.post(
+                f"/market/listings/{self.items[0].id}/images/",
+                {"images": files},
+                "multipart",
+            )
+        finally:
+            for f in files:
+                f.close()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.items[0].images.count(), 0)
 
     def test_create_image_other_users_item(self):
         with open("tests/market/mock_image.jpg", "rb") as image:

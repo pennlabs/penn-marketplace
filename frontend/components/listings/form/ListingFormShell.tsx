@@ -27,7 +27,7 @@ export function ListingFormShell({
   isFormDisabled,
   isPending,
   displayLabel,
-  maxFiles = 10,
+  maxFiles = 5,
   imageUpload,
   children,
 }: ListingFormShellProps) {

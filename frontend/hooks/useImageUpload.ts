@@ -17,7 +17,7 @@ type UseImageUploadOptions = {
   onError?: (message: string) => void;
 };
 
-const DEFAULT_MAX_FILES = 10;
+const DEFAULT_MAX_FILES = 5;
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024;
 const DEFAULT_ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/heic", "image/webp"];
 

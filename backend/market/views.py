@@ -215,6 +215,12 @@ class CreateImages(CreateAPIView):
         listing_id = int(self.kwargs["listing_id"])
         listing = get_object_or_404(Listing, id=listing_id)
         self.check_object_permissions(request, listing)
+        max_images = ListingImage.MAX_PER_LISTING
+        if listing.images.count() + len(images) > max_images:
+            return Response(
+                {"detail": f"A listing can have at most {max_images} images."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         instances = []
 
         for img in images:

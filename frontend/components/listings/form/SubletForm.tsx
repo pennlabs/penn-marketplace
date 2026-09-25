@@ -52,7 +52,7 @@ export function SubletForm() {
   });
 
   const imageUpload = useImageUpload({
-    maxFiles: 10,
+    maxFiles: 5,
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
   });
