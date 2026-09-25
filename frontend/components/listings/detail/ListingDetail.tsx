@@ -80,7 +80,7 @@ export const ListingDetail = ({
   const hasLocation = subletCoords?.latitude != null && subletCoords?.longitude != null;
 
   return (
-    <div className="mx-auto flex w-full max-w-[96rem] flex-col p-8 px-4 sm:px-12">
+    <>
       <div className="mb-4 flex items-center justify-between">
         <BackButton />
         <div className="flex items-center gap-3">
@@ -135,6 +135,6 @@ export const ListingDetail = ({
           />
         </div>
       </div>
-    </div>
+    </>
   );
 };

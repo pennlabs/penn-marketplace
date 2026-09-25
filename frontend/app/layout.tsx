@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "@/app/globals.css";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Footer } from "@/components/common/Footer";
 import { Navbar } from "@/components/navbar/Navbar";
@@ -36,7 +36,9 @@ export default function RootLayout({
         <TanstackQueryProvider>
           <FiltersProvider>
             <Navbar />
-            <div className="flex-grow pt-16">{children}</div>
+            <div className="container mx-auto w-full max-w-[96rem] grow space-y-6 px-4 pt-22 pb-12 sm:px-12">
+              {children}
+            </div>
             <Footer />
           </FiltersProvider>
           <ReactQueryDevtools />

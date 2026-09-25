@@ -21,12 +21,12 @@ export default async function ItemsPage() {
   ]);
 
   return (
-    <div className="container mx-auto w-full max-w-[96rem] space-y-6 px-12 pt-6">
+    <>
       <PageHeader title="Browse Items" description="Discover the latest items on sale at Penn" />
       <ItemFilters />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <ListingsGrid type="items" currentUser={currentUser} />
       </HydrationBoundary>
-    </div>
+    </>
   );
 }

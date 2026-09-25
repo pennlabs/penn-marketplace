@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Bell, Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserProfileDropdown } from "./UserProfileDropdown";
+import { UserProfileDropdown } from "@/components/navbar/UserProfileDropdown";
 
 interface Props {
   createNewConfig: { text: string; href: string } | undefined;
