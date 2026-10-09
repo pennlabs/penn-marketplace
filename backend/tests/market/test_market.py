@@ -1567,3 +1567,16 @@ class TestImages(BaseMarketTest):
                     ListingImage.objects.filter(id=saved_images[1]["id"]).exists()
                 )
                 self.assertEqual(1, ListingImage.objects.all().count())
+
+    def test_delete_image_deletes_stored_file(self):
+        with open("tests/market/mock_image.jpg", "rb") as image:
+            response = self.client.post(
+                f"/market/listings/{self.items[0].id}/images/",
+                {"images": image},
+            )
+        image_id = response.json()[0]["id"]
+        name = ListingImage.objects.get(id=image_id).image.name
+        storage = ListingImage._meta.get_field("image").storage
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.delete(f"/market/listings/images/{image_id}/")
+        storage.delete.assert_called_once_with(name)

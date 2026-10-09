@@ -19,7 +19,7 @@ type UseImageUploadOptions = {
 
 const DEFAULT_MAX_FILES = 5;
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024;
-const DEFAULT_ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/heic", "image/webp"];
+const DEFAULT_ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export function useImageUpload({
   maxFiles = DEFAULT_MAX_FILES,
@@ -46,7 +46,7 @@ export function useImageUpload({
   const validateFile = useCallback(
     (file: File): string | null => {
       if (!acceptedTypes.includes(file.type)) {
-        return `File type "${file.type}" is not supported. Please use PNG, JPG, or HEIC.`;
+        return `File type "${file.type}" is not supported. Please use PNG, JPG, or WebP.`;
       }
       if (file.size > maxSizeBytes) {
         const sizeMB = (maxSizeBytes / (1024 * 1024)).toFixed(0);

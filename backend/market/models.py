@@ -6,7 +6,9 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -115,6 +117,15 @@ class ListingImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.listing}"
+
+
+@receiver(post_delete, sender=ListingImage)
+def delete_image_file(sender, instance, **kwargs):
+    # also fires on cascade from Listing, so S3 doesn't accumulate orphans.
+    # on_commit: a rolled-back delete must not lose the file
+    if instance.image:
+        storage, name = instance.image.storage, instance.image.name
+        transaction.on_commit(lambda: storage.delete(name))
 
 
 class Item(Listing):

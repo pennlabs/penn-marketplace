@@ -62,6 +62,7 @@ export function SubletForm() {
     onSuccess: async (data) => {
       // images attach to an existing listing, so they upload in a second request.
       // a failed upload still leaves a valid listing - don't block the redirect.
+      let uploadFailed = false;
       const files = imageUpload.getFiles();
       if (files.length > 0) {
         const formData = new FormData();
@@ -69,11 +70,12 @@ export function SubletForm() {
         try {
           await uploadListingImages(data.id, formData);
         } catch {
+          uploadFailed = true;
           toast.error(`${DISPLAY_LABEL} created, but the images failed to upload.`);
         }
       }
 
-      toast.success(`${DISPLAY_LABEL} created successfully!`);
+      if (!uploadFailed) toast.success(`${DISPLAY_LABEL} created successfully!`);
       queryClient.invalidateQueries({ queryKey: ["sublets"] });
       reset();
       imageUpload.clearImages();
