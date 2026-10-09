@@ -15,6 +15,7 @@ type UseImageUploadOptions = {
   maxSizeBytes?: number;
   acceptedTypes?: string[];
   onError?: (message: string) => void;
+  initialUrls?: string[];
 };
 
 const DEFAULT_MAX_FILES = 10;
@@ -26,8 +27,18 @@ export function useImageUpload({
   maxSizeBytes = DEFAULT_MAX_SIZE,
   acceptedTypes = DEFAULT_ACCEPTED_TYPES,
   onError,
+  initialUrls = [],
 }: UseImageUploadOptions = {}) {
-  const [images, setImages] = useState<ImageFile[]>([]);
+  const [images, setImages] = useState<ImageFile[]>(() =>
+    initialUrls.map((url) => ({
+      file: new File([], `existing-image-${Math.random().toString(36).slice(2, 8)}.jpg`, {
+        type: "image/jpeg",
+      }),
+      id: Math.random().toString(36).slice(2, 11),
+      preview: url,
+      status: "uploaded",
+    }))
+  );
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 
