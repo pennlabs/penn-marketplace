@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
+from PIL import Image
 from profanity_check import predict
 from rest_framework.serializers import (
     BooleanField,
@@ -64,9 +65,16 @@ class ListingImageSerializer(ModelSerializer):
         fields = "__all__"
 
     def validate_image(self, value):
-        if value and value.size > ListingImage.MAX_SIZE_BYTES:
+        if not value:
+            return value
+        if value.size > ListingImage.MAX_SIZE_BYTES:
             raise ValidationError("Image must be 10MB or smaller.")
-        return resize_image(value) if value else value
+        try:
+            return resize_image(value)
+        except (OSError, ValueError, Image.DecompressionBombError) as e:
+            # verify() passes some broken files (e.g. truncated JPEGs); decoding is
+            # the real check
+            raise ValidationError("Upload a valid image.") from e
 
 
 # Browse images

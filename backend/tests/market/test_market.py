@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import pytz
 from django.contrib.auth import get_user_model
 from django.core.files.storage import Storage
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils.timezone import now
 from PIL import Image
@@ -1515,6 +1516,25 @@ class TestImages(BaseMarketTest):
         out = Image.open(resize_image(buf, max_size=1600))
         self.assertEqual(out.format, "WEBP")
         self.assertEqual(out.size, (1600, 800))
+
+    def test_truncated_image_returns_400(self):
+        buf = io.BytesIO()
+        Image.new("RGB", (2000, 2000)).save(buf, format="JPEG")
+        data = buf.getvalue()
+        half = SimpleUploadedFile("t.jpg", data[: len(data) // 2], "image/jpeg")
+        response = self.client.post(
+            f"/market/listings/{self.items[0].id}/images/", {"images": half}
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.items[0].images.count(), 0)
+
+    def test_resize_rejects_huge_dimensions(self):
+        buf = io.BytesIO()
+        Image.new("1", (9000, 9000)).save(buf, format="PNG")  # 81M px, tiny file
+        buf.seek(0)
+        buf.name = "big.png"
+        with self.assertRaises(ValueError):
+            resize_image(buf)
 
     def test_create_images_over_limit(self):
         files = [open("tests/market/mock_image.jpg", "rb") for _ in range(6)]

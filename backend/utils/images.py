@@ -5,15 +5,23 @@ from django.core.files.base import ContentFile
 from PIL import Image, ImageOps
 
 
+# ~8000x5000: above any phone camera, far below a decompression bomb
+MAX_PIXELS = 40_000_000
+
+
 def resize_image(file, max_size=1600, quality=85):
     """
     Shrinks an uploaded image to fit within max_size x max_size (keeping aspect
     ratio) and re-encodes it as WebP. Returns a ContentFile ready for an ImageField.
+    Raises ValueError if the image's dimensions exceed MAX_PIXELS.
     """
-    img = Image.open(file)
+    img = Image.open(file)  # reads only the header; pixels aren't decoded yet
+    if img.width * img.height > MAX_PIXELS:
+        raise ValueError("Image dimensions are too large.")
+    # shrink first so exif_transpose rotates the small copy, not the full-size one
+    img.thumbnail((max_size, max_size))  # no-op if already smaller
     # phone photos store rotation in EXIF; bake it in since WebP output drops it
     img = ImageOps.exif_transpose(img)
-    img.thumbnail((max_size, max_size))  # no-op if already smaller
 
     output = io.BytesIO()
     img.convert("RGBA" if img.has_transparency_data else "RGB").save(
