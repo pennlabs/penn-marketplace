@@ -1536,6 +1536,21 @@ class TestImages(BaseMarketTest):
         with self.assertRaises(ValueError):
             resize_image(buf)
 
+    def test_create_images_one_bad_file_saves_none(self):
+        bad = SimpleUploadedFile("bad.jpg", b"not an image", "image/jpeg")
+        with open("tests/market/mock_image.jpg", "rb") as good:
+            response = self.client.post(
+                f"/market/listings/{self.items[0].id}/images/",
+                {"images": [good, bad]},
+                "multipart",
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.items[0].images.count(), 0)
+
+    def test_create_images_no_files(self):
+        response = self.client.post(f"/market/listings/{self.items[0].id}/images/")
+        self.assertEqual(response.status_code, 400)
+
     def test_create_images_over_limit(self):
         files = [open("tests/market/mock_image.jpg", "rb") for _ in range(6)]
         try:

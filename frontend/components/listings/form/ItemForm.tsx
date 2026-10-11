@@ -9,7 +9,7 @@ import { FormSelect } from "@/components/common/FormSelect";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing, uploadListingImages } from "@/lib/actions";
+import { createListing, deleteListing, uploadListingImages } from "@/lib/actions";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/lib/constants";
 import { parsePriceString } from "@/lib/utils";
 import { type CreateItemFormData, createItemSchema } from "@/lib/validations";
@@ -50,22 +50,32 @@ export function ItemForm() {
   const { mutate, isPending } = useMutation({
     mutationFn: createListing,
     onSuccess: async (data) => {
-      // images attach to an existing listing, so they upload in a second request.
-      // a failed upload still leaves a valid listing - don't block the redirect.
-      let uploadFailed = false;
-      const files = imageUpload.getFiles();
-      if (files.length > 0) {
+      // images attach to an existing listing, so they upload after it's created.
+      // one request per file (in order) so we know which files fail. any failure
+      // rolls the listing back: no listing is published with missing images.
+      const failed: string[] = [];
+      for (const file of imageUpload.getFiles()) {
         const formData = new FormData();
-        files.forEach((file) => formData.append("images", file));
+        formData.append("images", file);
         try {
           await uploadListingImages(data.id, formData);
         } catch {
-          uploadFailed = true;
-          toast.error(`${DISPLAY_LABEL} created, but the images failed to upload.`);
+          failed.push(file.name);
         }
       }
 
-      if (!uploadFailed) toast.success(`${DISPLAY_LABEL} created successfully!`);
+      if (failed.length > 0) {
+        failed.forEach((name) => toast.error(`The file "${name}" could not be uploaded.`));
+        try {
+          await deleteListing(data.id); // cascades to any images already uploaded
+          toast.error(`${DISPLAY_LABEL} was not created. Replace the file(s) and try again.`);
+        } catch {
+          toast.error(`${DISPLAY_LABEL} was created with missing images. Please delete it.`);
+        }
+        return; // keep the form filled in so the user can fix the files
+      }
+
+      toast.success(`${DISPLAY_LABEL} created successfully!`);
       queryClient.invalidateQueries({ queryKey: ["items"] });
       reset();
       imageUpload.clearImages();

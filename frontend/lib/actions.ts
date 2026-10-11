@@ -98,6 +98,9 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
     throw new APIError(errorMessage, response.status);
   }
 
+  // 204 No Content (e.g. DELETE) has no body to parse
+  if (response.status === 204) return undefined as T;
+
   return response.json();
 }
 
@@ -283,4 +286,8 @@ export async function uploadListingImages(
     method: "POST",
     body: formData,
   });
+}
+
+export async function deleteListing(listingId: number): Promise<void> {
+  await serverFetch<void>(`/market/listings/${listingId}/`, { method: "DELETE" });
 }
