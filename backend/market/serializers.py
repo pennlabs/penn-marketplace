@@ -43,6 +43,13 @@ class UserSerializer(ModelSerializer):
         read_only_fields = fields
 
 
+class PublicUserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "first_name", "last_name"]
+        read_only_fields = fields
+
+
 class TagSerializer(ModelSerializer):
     class Meta:
         model = Tag
@@ -454,7 +461,7 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
 
 
 class RatingSerializer(ModelSerializer):
-    reviewer = UserSerializer(read_only=True)
+    reviewer = PublicUserSerializer(read_only=True)
 
     class Meta:
         model = Rating
@@ -469,6 +476,11 @@ class RatingSerializer(ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at", "reviewer", "rating_type"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["reviewed_user"] = PublicUserSerializer(instance.reviewed_user).data
+        return data
 
     def validate(self, attr):
         reviewer = self.context["request"].user
