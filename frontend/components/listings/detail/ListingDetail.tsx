@@ -3,13 +3,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
-import { Heart, Share } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Item, Sublet } from "@/lib/types";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
 import { ListingInfo } from "@/components/listings/detail/ListingInfo";
 import { UserCard } from "@/components/listings/detail/UserCard";
 import { BackButton } from "@/components/listings/detail/BackButton";
+import { ShareButton } from "@/components/listings/detail/ShareButton";
 import { SubletMap } from "@/components/listings/detail/SubletMap";
 
 interface Props {
@@ -60,6 +61,7 @@ export const ListingDetail = ({ listingId }: Props) => {
   const listingType = listing.listing_type;
   const priceLabel = listingType === "sublet" ? "/mo" : undefined;
   const listingOwnerLabel = listingType === "item" ? "Seller" : "Owner";
+  const shareText = `Check out "${listing.title}" on Penn Marketplace`;
 
   const subletCoords = listingType === "sublet" ? listing.additional_data : null;
   const hasLocation = subletCoords?.latitude != null && subletCoords?.longitude != null;
@@ -69,7 +71,7 @@ export const ListingDetail = ({ listingId }: Props) => {
       <div className="mb-4 flex items-center justify-between">
         <BackButton />
         <div className="flex items-center gap-3">
-          <Share className="h-5 w-5" />
+          <ShareButton title={listing.title} text={shareText} />
           <button
             type="button"
             className="cursor-pointer"
