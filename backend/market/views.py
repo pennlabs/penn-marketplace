@@ -366,7 +366,7 @@ class UserBuyerRatings(ListAPIView, DefaultOrderMixin):
 
     def get_queryset(self):
         return Rating.objects.filter(
-            reviewed_user=self.request.user, rating_type="BUYER"
+            reviewed_user=self.request.user, rating_type=Rating.RatingType.BUYER
         )
 
 
@@ -377,7 +377,7 @@ class UserSellerRatings(ListAPIView, DefaultOrderMixin):
 
     def get_queryset(self):
         return Rating.objects.filter(
-            reviewed_user=self.request.user, rating_type="SELLER"
+            reviewed_user=self.request.user, rating_type=Rating.RatingType.SELLER
         )
 
 

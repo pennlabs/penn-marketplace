@@ -493,7 +493,9 @@ class RatingSerializer(ModelSerializer):
             )
         if not (is_seller or target_is_seller):
             raise ValidationError("Ratings must be between the seller and a buyer")
-        attr["rating_type"] = "SELLER" if target_is_seller else "BUYER"
+        attr["rating_type"] = (
+            Rating.RatingType.SELLER if target_is_seller else Rating.RatingType.BUYER
+        )
 
         return attr
 
