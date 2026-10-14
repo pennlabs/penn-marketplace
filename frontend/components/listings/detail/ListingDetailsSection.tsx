@@ -1,0 +1,42 @@
+import { User } from "@/lib/types";
+
+interface Props {
+  seller: User;
+  ownerLabel: string;
+  createdAt: string;
+}
+
+// fixed time zone so the server render and client hydration always produce the same date
+function formatListingDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "America/New_York",
+  });
+}
+
+export const ListingDetailsSection = ({ seller, ownerLabel, createdAt }: Props) => {
+  const details = [
+    {
+      label: ownerLabel,
+      // fall back to the username for accounts without a first/last name
+      value: `${seller.first_name} ${seller.last_name}`.trim() || seller.username,
+    },
+    { label: "Listing Date", value: formatListingDate(createdAt) },
+  ];
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-2xl font-semibold">Details</h2>
+      <dl className="flex flex-wrap gap-x-16 gap-y-4">
+        {details.map(({ label, value }) => (
+          <div key={label}>
+            <dt className="text-sm text-gray-500">{label}</dt>
+            <dd className="text-sm">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+};
