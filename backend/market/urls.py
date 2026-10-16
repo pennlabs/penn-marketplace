@@ -9,8 +9,12 @@ from market.views import (
     Offers,
     OffersMade,
     OffersReceived,
+    Ratings,
     Tags,
+    UserAverageRating,
+    UserBuyerRatings,
     UserFavorites,
+    UserSellerRatings,
     get_current_user,
     get_phone_status,
     send_verification_code,
@@ -48,6 +52,29 @@ additional_urls = [
     path(
         "listings/<listing_id>/offers/",
         Offers.as_view({"get": "list", "post": "create", "delete": "destroy"}),
+    ),
+    # Ratings for a listing (list + create)
+    path(
+        "listings/<listing_id>/ratings/",
+        Ratings.as_view({"get": "list", "post": "create"}),
+        name="listing-ratings",
+    ),
+    # Current user's received ratings by type
+    path(
+        "user/ratings/buyer/",
+        UserBuyerRatings.as_view(),
+        name="user-ratings-buyer",
+    ),
+    path(
+        "user/ratings/seller/",
+        UserSellerRatings.as_view(),
+        name="user-ratings-seller",
+    ),
+    # Average rating summary (buyer/seller) for any user
+    path(
+        "users/<user_id>/ratings/average/",
+        UserAverageRating.as_view(),
+        name="user-ratings-average",
     ),
     # Image Creation
     path("listings/<listing_id>/images/", CreateImages.as_view()),
