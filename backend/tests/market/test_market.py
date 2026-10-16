@@ -345,6 +345,28 @@ class TestItemGet(BaseMarketTest):
 class TestItemPost(BaseMarketTest):
     def setUp(self):
         super().setUp()
+        self.user.phone_number = "+15555555555"
+        self.user.phone_verified = True
+        self.user.save()
+
+    def test_create_item_unverified_phone(self):
+        self.user.phone_verified = False
+        self.user.save()
+        payload = {
+            "tags": ["New"],
+            "title": "Math Textbook",
+            "description": "2023 version",
+            "price": 20.0,
+            "negotiable": True,
+            "listing_type": "item",
+            "additional_data": {"condition": "NEW", "category": "Book"},
+        }
+        response = self.client.post("/market/listings/", payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            ["You must verify your phone number before creating a listing"],
+        )
 
     def test_create_item_all_fields(self):
         payload = {
@@ -905,6 +927,33 @@ class TestSubletGet(BaseMarketTest):
 class TestSubletPost(BaseMarketTest):
     def setUp(self):
         super().setUp()
+        self.user.phone_number = "+15555555555"
+        self.user.phone_verified = True
+        self.user.save()
+
+    def test_create_sublet_unverified_phone(self):
+        self.user.phone_verified = False
+        self.user.save()
+        payload = {
+            "title": "Cira Green Sublet 2",
+            "description": "Fully furnished 3-bedroom apartment available for sublet.",
+            "price": 1350.0,
+            "negotiable": False,
+            "listing_type": "sublet",
+            "additional_data": {
+                "address": "3901 Locust Walk, Philadelphia, PA",
+                "beds": 4.0,
+                "baths": 1.0,
+                "start_date": "2024-01-01",
+                "end_date": "3000-05-31",
+            },
+        }
+        response = self.client.post("/market/listings/", payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            ["You must verify your phone number before creating a listing"],
+        )
 
     def test_create_sublet(self):
         payload = {

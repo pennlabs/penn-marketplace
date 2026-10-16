@@ -34,7 +34,11 @@ from market.serializers import (
     TagSerializer,
     UserSerializer,
 )
-from utils.sms import generate_verification_code, send_verification_sms
+from utils.sms import (
+    generate_verification_code,
+    send_offer_notification_sms,
+    send_verification_sms,
+)
 
 
 User = get_user_model()
@@ -87,6 +91,7 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
 
     create:
     Create a Listing (Item or Sublet based on listing_type).
+    User must have a verified phone number before creating a listing.
 
     partial_update:
     Update certain fields in the Listing. Only the owner can edit it.
@@ -103,6 +108,13 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         return Listing.objects.select_related("item", "sublet").prefetch_related(
             "tags", "images"
         )
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.phone_number or not request.user.phone_verified:
+            raise exceptions.ValidationError(
+                "You must verify your phone number before creating a listing"
+            )
+        return super().create(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -291,6 +303,7 @@ class Offers(viewsets.ModelViewSet):
     create:
     Create an offer on the listing matching the provided ID.
     User must have a verified phone number before making an offer.
+    Notifies the seller via SMS if they have a verified phone number.
 
     destroy:
     Delete the offer between the user and the listing matching the ID.
@@ -321,6 +334,13 @@ class Offers(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        seller = serializer.instance.listing.seller
+        if seller.phone_number and seller.phone_verified:
+            send_offer_notification_sms(
+                seller.phone_number, serializer.instance.listing.title
+            )
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
