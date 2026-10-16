@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice, formatCondition, formatDate } from "@/lib/utils";
+import { formatPrice, formatCondition, formatDate, cn } from "@/lib/utils";
 import { Item, Sublet } from "@/lib/types";
 
 const DEFAULT_IMAGE = "/images/default-image.jpg";
@@ -58,7 +58,12 @@ export const ListingsCard = ({ listing, previewImageUrl, href, isMyListing = fal
   return (
     <Link
       href={href}
-      className="group flex w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:shadow-lg"
+      className={cn(
+        "group flex w-full flex-col overflow-hidden rounded-xl border bg-white transition-all duration-200 hover:shadow-lg",
+        isMyListing && listing.status === "PENDING" && "border-amber-300 opacity-70",
+        isMyListing && listing.status === "REJECTED" && "border-red-300 opacity-50",
+        !(isMyListing && listing.status !== "APPROVED") && "border-gray-200"
+      )}
     >
       {/* image container */}
       <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
@@ -74,6 +79,20 @@ export const ListingsCard = ({ listing, previewImageUrl, href, isMyListing = fal
           <div className="absolute top-3 left-3">
             <Badge className="bg-brand hover:bg-brand-hover border-none text-white shadow-sm">
               My Listing
+            </Badge>
+          </div>
+        )}
+        {isMyListing && listing.status === "PENDING" && (
+          <div className="absolute top-3 right-3">
+            <Badge className="border-none bg-amber-500 text-white shadow-sm hover:bg-amber-600">
+              Under Review
+            </Badge>
+          </div>
+        )}
+        {isMyListing && listing.status === "REJECTED" && (
+          <div className="absolute top-3 right-3">
+            <Badge className="border-none bg-red-500 text-white shadow-sm hover:bg-red-600">
+              Rejected
             </Badge>
           </div>
         )}

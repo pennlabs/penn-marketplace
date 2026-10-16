@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -126,6 +125,7 @@ class SubletDataSerializer(ModelSerializer):
             return float(approx_lon)
         return None
 
+
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
 class ListingSerializer(ListingTypeMixin, ModelSerializer):
     LISTING_TYPE_CONFIG = {
@@ -176,6 +176,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             "negotiable",
             "created_at",
             "expires_at",
+            "status",
             "images",
             "listing_type",
             "additional_data",
@@ -188,6 +189,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             "buyers",
             "images",
             "favorites",
+            "status",
         ]
 
     def validate(self, attrs):
@@ -254,11 +256,18 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
             raise ValidationError({"listing_type": f"Must be one of: {valid_types}"})
 
         try:
-            return create_method(validated_data, additional_data)
+            instance = create_method(validated_data, additional_data)
         except ModelValidationError as e:
             raise ValidationError(
                 e.message_dict if hasattr(e, "message_dict") else e.messages
             ) from e
+
+        from django.db import transaction
+
+        from market.tasks import moderate_listing_task
+
+        transaction.on_commit(lambda: moderate_listing_task.delay(instance.id))
+        return instance
 
     def _create_item(self, validated_data, additional_data):
         category_name = additional_data.get("category")
@@ -291,7 +300,6 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         latitude = additional_data.get("latitude")
         longitude = additional_data.get("longitude")
 
-
         if latitude is not None:
             latitude = float(latitude)
         if longitude is not None:
@@ -314,6 +322,8 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         return sublet
 
     def update(self, instance, validated_data):
+        old_title = instance.title
+        old_description = instance.description
         listing_type = self.initial_data.get("listing_type")
         additional_data = self.initial_data.get("additional_data", {})
 
@@ -336,6 +346,20 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
                     self._update_sublet(instance, additional_data)
 
             instance.save()
+
+            # TODO: needs to also validate images when implemented
+            content_changed = (
+                instance.title != old_title or instance.description != old_description
+            )
+            if content_changed:
+                from django.db import transaction
+
+                from market.tasks import moderate_listing_task
+
+                instance.status = Listing.Status.PENDING
+                instance.save(update_fields=["status"])
+                transaction.on_commit(lambda: moderate_listing_task.delay(instance.id))
+
             return instance
 
         except ModelValidationError as e:
@@ -395,6 +419,7 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
             "price",
             "negotiable",
             "expires_at",
+            "status",
             "images",
             "favorite_count",
             "listing_type",
@@ -434,6 +459,7 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
             "title",
             "price",
             "expires_at",
+            "status",
             "images",
             "favorite_count",
             "listing_type",

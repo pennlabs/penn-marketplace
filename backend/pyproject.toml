@@ -36,6 +36,7 @@ dependencies = [
     "inflection",
     "firebase-admin",
     "twilio",
+    "requests",
 ]
 
 [dependency-groups]

@@ -47,6 +47,7 @@ class Offer(models.Model):
     def __str__(self):
         return f"Offer for {self.listing} made by {self.user}"
 
+
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -72,7 +73,13 @@ class Listing(models.Model):
             models.Index(fields=["created_at"]),
             models.Index(fields=["expires_at"]),
             models.Index(fields=["negotiable"]),
+            models.Index(fields=["status"]),
         ]
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Rejected"
 
     seller = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="listings_created"
@@ -94,6 +101,9 @@ class Listing(models.Model):
     negotiable = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
+    )
 
     def __str__(self):
         return f"{self.title} by {self.seller}"
@@ -170,7 +180,8 @@ class Sublet(Listing):
     def approximate_location(self):
         if self.latitude is not None and self.longitude is not None:
             approximate_location = self._calculate_approximate_location(
-                self.latitude, self.longitude)
+                self.latitude, self.longitude
+            )
             return approximate_location
         return None, None
 
