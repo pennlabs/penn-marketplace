@@ -13,7 +13,7 @@ import { AddressAutocomplete } from "@/components/listings/address/AddressAutoco
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing } from "@/lib/actions";
+import { createListing, deleteListing, uploadListingImages } from "@/lib/actions";
 import { BEDS_OPTIONS, BATHS_OPTIONS } from "@/lib/constants";
 import { parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
@@ -52,14 +52,39 @@ export function SubletForm() {
   });
 
   const imageUpload = useImageUpload({
-    maxFiles: 10,
+    maxFiles: 5,
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: createListing,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // images attach to an existing listing, so they upload after it's created.
+      // one request per file (in order) so we know which files fail. any failure
+      // rolls the listing back: no listing is published with missing images.
+      const failed: string[] = [];
+      for (const file of imageUpload.getFiles()) {
+        const formData = new FormData();
+        formData.append("images", file);
+        try {
+          await uploadListingImages(data.id, formData);
+        } catch {
+          failed.push(file.name);
+        }
+      }
+
+      if (failed.length > 0) {
+        failed.forEach((name) => toast.error(`The file "${name}" could not be uploaded.`));
+        try {
+          await deleteListing(data.id); // cascades to any images already uploaded
+          toast.error(`${DISPLAY_LABEL} was not created. Replace the file(s) and try again.`);
+        } catch {
+          toast.error(`${DISPLAY_LABEL} was created with missing images. Please delete it.`);
+        }
+        return; // keep the form filled in so the user can fix the files
+      }
+
       toast.success(`${DISPLAY_LABEL} created successfully!`);
       queryClient.invalidateQueries({ queryKey: ["sublets"] });
       reset();
