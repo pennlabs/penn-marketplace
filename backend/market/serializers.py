@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -125,6 +124,7 @@ class SubletDataSerializer(ModelSerializer):
         if approx_lon is not None:
             return float(approx_lon)
         return None
+
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
 class ListingSerializer(ListingTypeMixin, ModelSerializer):
@@ -291,7 +291,6 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         latitude = additional_data.get("latitude")
         longitude = additional_data.get("longitude")
 
-
         if latitude is not None:
             latitude = float(latitude)
         if longitude is not None:
@@ -394,6 +393,7 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
             "external_link",
             "price",
             "negotiable",
+            "created_at",
             "expires_at",
             "images",
             "favorite_count",
