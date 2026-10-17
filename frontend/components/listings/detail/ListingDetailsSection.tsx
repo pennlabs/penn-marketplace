@@ -6,7 +6,6 @@ interface Props {
   createdAt: string;
 }
 
-// fixed time zone so the server render and client hydration always produce the same date
 function formatListingDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "long",
@@ -20,7 +19,6 @@ export const ListingDetailsSection = ({ seller, ownerLabel, createdAt }: Props) 
   const details = [
     {
       label: ownerLabel,
-      // fall back to the username for accounts without a first/last name
       value: `${seller.first_name} ${seller.last_name}`.trim() || seller.username,
     },
     { label: "Listing Date", value: formatListingDate(createdAt) },

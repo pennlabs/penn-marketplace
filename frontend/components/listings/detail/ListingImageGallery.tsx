@@ -27,10 +27,6 @@ interface Props {
   images: string[];
 }
 
-/**
- * grid spans for the smaller images to the right of the main image, keyed by image count.
- * the grid is 4 columns x 2 rows and the main image always takes the left half.
- */
 const SIDE_IMAGE_SPANS: Record<number, string[]> = {
   2: ["col-span-2 row-span-2"],
   3: ["col-span-2", "col-span-2"],
@@ -38,7 +34,6 @@ const SIDE_IMAGE_SPANS: Record<number, string[]> = {
   5: ["", "", "", ""],
 };
 
-// tracks which slide a carousel is showing so it can be displayed in a "2 / 5" counter
 function useSelectedIndex(api: CarouselApi | undefined, initialIndex = 0) {
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
 
@@ -82,7 +77,6 @@ export const ListingImageGallery = ({ images }: Props) => {
 
   return (
     <>
-      {/* mobile: swipeable carousel */}
       <Carousel setApi={setMobileCarouselApi} className="overflow-hidden rounded-2xl md:hidden">
         <CarouselContent className="ml-0">
           {images.map((image, idx) => (
@@ -93,7 +87,6 @@ export const ListingImageGallery = ({ images }: Props) => {
                 aria-label={`View photo ${idx + 1} of ${images.length}`}
                 className="relative block aspect-[4/3] w-full overflow-hidden bg-gray-100"
               >
-                {/* cropped to a fixed 4:3 preview; tapping opens the full, uncropped photo */}
                 <Image src={image} alt="" fill sizes="100vw" className="object-cover" />
               </button>
             </CarouselItem>
@@ -106,7 +99,6 @@ export const ListingImageGallery = ({ images }: Props) => {
         )}
       </Carousel>
 
-      {/* desktop: main image + grid of up to 4 smaller images */}
       <div
         className={cn(
           "hidden h-96 overflow-hidden rounded-2xl md:grid",
@@ -164,8 +156,6 @@ export const ListingImageGallery = ({ images }: Props) => {
           <DialogDescription className="sr-only">
             Use the left and right arrow keys to browse photos.
           </DialogDescription>
-          {/* rendered inside DialogContent so it mounts fresh on each open and its key listener is
-              removed once the dialog finishes closing */}
           <ImageViewer images={images} startIndex={viewerStartIndex} />
         </DialogContent>
       </Dialog>
@@ -178,7 +168,6 @@ interface ContainedImageProps {
   sizes: string;
 }
 
-// shows the whole photo uncropped, with a blurred copy of it filling the leftover space
 const ContainedImage = ({ src, sizes }: ContainedImageProps) => {
   return (
     <>
@@ -203,15 +192,11 @@ interface ImageViewerProps {
 const ARROW_BUTTON_CLASS =
   "hidden size-12 border-none bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-30 md:inline-flex [&_svg]:size-6";
 
-// full-screen viewer for browsing every photo; swipe on touch screens, arrows/keys on desktop
 const ImageViewer = ({ images, startIndex }: ImageViewerProps) => {
   const [api, setApi] = useState<CarouselApi>();
   const currentIndex = useSelectedIndex(api, startIndex);
   const hasMultiple = images.length > 1;
 
-  // the carousel only handles arrow keys while focus is inside it, but clicking a photo or the
-  // background (or a nav arrow becoming disabled) moves focus outside it. listen on the window
-  // while the viewer is open, skipping keys the carousel already handled (it calls preventDefault)
   useEffect(() => {
     if (!api) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -233,8 +218,6 @@ const ImageViewer = ({ images, startIndex }: ImageViewerProps) => {
       <CarouselContent className="ml-0">
         {images.map((image, idx) => (
           <CarouselItem key={idx} className="relative h-dvh pl-0">
-            {/* leave room for the close button/counter on mobile. on desktop, photos fit inside a
-                  centered area at most 64rem wide and 80% of the screen tall, with room for the arrows */}
             <div className="absolute inset-x-0 inset-y-16 md:inset-x-[max(6rem,calc((100%_-_64rem)/2))] md:inset-y-[10vh]">
               <Image
                 src={image}

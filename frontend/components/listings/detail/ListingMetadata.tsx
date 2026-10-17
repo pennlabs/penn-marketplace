@@ -24,8 +24,6 @@ function getMetadataEntries(listing: Listing): MetadataEntry[] {
         },
       ];
     case "sublet": {
-      // street address is intentionally not shown; the exact location is shared once the
-      // buyer connects with the owner
       const { start_date, end_date, beds, baths } = listing.additional_data;
       return [
         {

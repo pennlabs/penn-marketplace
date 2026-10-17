@@ -100,7 +100,6 @@ export const ListingDetail = ({ listingId }: Props) => {
 
       <ListingImageGallery images={listing.images} />
 
-      {/* on mobile this stacks as title, price, metadata, offer button */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:gap-x-8 md:gap-y-6">
         <h1 className="text-2xl font-bold break-words md:text-4xl">{listing.title}</h1>
         <div className="flex items-baseline gap-1 md:justify-end md:self-center">
@@ -122,7 +121,6 @@ export const ListingDetail = ({ listingId }: Props) => {
 
       <hr className="border-gray-200" />
 
-      {/* sublets with a location get the map on the right; otherwise description takes that spot */}
       <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12">
         {hasLocation ? (
           <>
