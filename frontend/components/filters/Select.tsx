@@ -1,6 +1,5 @@
 "use client";
 
-import { X } from "lucide-react";
 import {
   Select as SelectShadcn,
   SelectContent,
@@ -10,13 +9,15 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+// item value can't be empty so use __all__ instead
+const ALL_VALUE = "__all__";
+
 interface Props {
   value: string;
   onValueChange: (value: string) => void;
   options: Array<{ value: string; label: string }>;
   placeholder: string;
   label?: string;
-  allowClear?: boolean;
   triggerClassName?: string;
 }
 
@@ -26,14 +27,19 @@ export const Select = ({
   options,
   placeholder,
   label,
-  allowClear = true,
   triggerClassName,
 }: Props) => {
+  const selectValue = value || ALL_VALUE;
+
+  const handleValueChange = (newValue: string) => {
+    onValueChange(newValue === ALL_VALUE ? "" : newValue);
+  };
+
   return (
     <div className="flex items-center gap-2">
       {label && <span className="text-sm whitespace-nowrap text-gray-600">{label}</span>}
-      <div className="relative w-full">
-        <SelectShadcn value={value} onValueChange={onValueChange}>
+      <div className="w-full">
+        <SelectShadcn value={selectValue} onValueChange={handleValueChange}>
           <SelectTrigger
             // height forced to h-10 to override shadcn default
             className={cn(
@@ -44,6 +50,7 @@ export const Select = ({
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value={ALL_VALUE}>{placeholder}</SelectItem>
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -51,17 +58,6 @@ export const Select = ({
             ))}
           </SelectContent>
         </SelectShadcn>
-        {allowClear && value && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onValueChange("");
-            }}
-            className="absolute top-1/2 right-8 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
       </div>
     </div>
   );
