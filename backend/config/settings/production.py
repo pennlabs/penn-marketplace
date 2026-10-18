@@ -35,16 +35,11 @@ PLATFORM_ACCOUNTS = {
     "CUSTOM_ADMIN": False,
 }
 
-# S3 media storage; boto3 reads AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from env
+# S3 media storage (AWS_* settings live in base.py)
 STORAGES = {
     "default": {"BACKEND": "storages.backends.s3.S3Storage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
-AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "us-east-1")
-# public-read URLs; signed URLs would expire in cached pages
-AWS_QUERYSTRING_AUTH = False
-AWS_S3_FILE_OVERWRITE = False
 
 # change if domain changes from pennmarketplace
 CORS_ALLOWED_ORIGINS = [

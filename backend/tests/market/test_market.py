@@ -1547,6 +1547,20 @@ class TestImages(BaseMarketTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.items[0].images.count(), 0)
 
+    def test_create_images_storage_failure_deletes_saved_files(self):
+        storage = ListingImage._meta.get_field("image").storage
+        storage.save.side_effect = ["first.webp", OSError("S3 down")]
+        with open("tests/market/mock_image.jpg", "rb") as a:
+            with open("tests/market/mock_image.jpg", "rb") as b:
+                with self.assertRaises(OSError):
+                    self.client.post(
+                        f"/market/listings/{self.items[0].id}/images/",
+                        {"images": [a, b]},
+                        "multipart",
+                    )
+        storage.delete.assert_called_once_with("first.webp")
+        self.assertEqual(self.items[0].images.count(), 0)
+
     def test_create_images_no_files(self):
         response = self.client.post(f"/market/listings/{self.items[0].id}/images/")
         self.assertEqual(response.status_code, 400)

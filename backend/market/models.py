@@ -125,7 +125,7 @@ def delete_image_file(sender, instance, **kwargs):
     # on_commit: a rolled-back delete must not lose the file
     if instance.image:
         storage, name = instance.image.storage, instance.image.name
-        transaction.on_commit(lambda: storage.delete(name))
+        transaction.on_commit(lambda: storage.delete(name), robust=True)
 
 
 class Item(Listing):

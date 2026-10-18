@@ -5,8 +5,11 @@ from django.core.files.base import ContentFile
 from PIL import Image, ImageOps
 
 
-# ~8000x5000: above any phone camera, far below a decompression bomb
-MAX_PIXELS = 40_000_000
+# ~6000x4000 (24MP phone default). PNG/WebP decode at full size (~100MB RGBA at
+# the cap) before shrinking; JPEG uses draft() and stays small.
+# ponytail: per-request cap only, add a bounded worker pool if concurrent uploads
+# exhaust worker memory
+MAX_PIXELS = 25_000_000
 
 
 def resize_image(file, max_size=1600, quality=85):
@@ -15,7 +18,9 @@ def resize_image(file, max_size=1600, quality=85):
     ratio) and re-encodes it as WebP. Returns a ContentFile ready for an ImageField.
     Raises ValueError if the image's dimensions exceed MAX_PIXELS.
     """
-    img = Image.open(file)  # reads only the header; pixels aren't decoded yet
+    # reads only the header; pixels aren't decoded yet. formats= keeps Pillow's
+    # other parsers (EPS -> Ghostscript, PSD, TIFF...) off the upload path
+    img = Image.open(file, formats=["JPEG", "PNG", "WEBP"])
     if img.width * img.height > MAX_PIXELS:
         raise ValueError("Image dimensions are too large.")
     # shrink first so exif_transpose rotates the small copy, not the full-size one
