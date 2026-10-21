@@ -1,18 +1,10 @@
 import { User } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
 
 interface Props {
   seller: User;
   ownerLabel: string;
   createdAt: string;
-}
-
-function formatListingDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "America/New_York",
-  });
 }
 
 export const ListingDetailsSection = ({ seller, ownerLabel, createdAt }: Props) => {
@@ -21,7 +13,10 @@ export const ListingDetailsSection = ({ seller, ownerLabel, createdAt }: Props) 
       label: ownerLabel,
       value: `${seller.first_name} ${seller.last_name}`.trim() || seller.username,
     },
-    { label: "Listing Date", value: formatListingDate(createdAt) },
+    {
+      label: "Listing Date",
+      value: formatDate(createdAt, { month: "long", day: "numeric", year: "numeric" }),
+    },
   ];
 
   return (

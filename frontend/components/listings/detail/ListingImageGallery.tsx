@@ -1,23 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState } from "react";
+import { ListingImageViewer } from "@/components/listings/detail/ListingImageViewer";
+import { Carousel, CarouselApi, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useCarouselIndex } from "@/hooks/useCarouselIndex";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_IMAGE = "/images/default-image.jpg";
@@ -34,29 +22,11 @@ const SIDE_IMAGE_SPANS: Record<number, string[]> = {
   5: ["", "", "", ""],
 };
 
-function useSelectedIndex(api: CarouselApi | undefined, initialIndex = 0) {
-  const [selectedIndex, setSelectedIndex] = useState(initialIndex);
-
-  useEffect(() => {
-    if (!api) return;
-    const update = () => setSelectedIndex(api.selectedScrollSnap());
-    update();
-    api.on("select", update);
-    api.on("reInit", update);
-    return () => {
-      api.off("select", update);
-      api.off("reInit", update);
-    };
-  }, [api]);
-
-  return selectedIndex;
-}
-
 export const ListingImageGallery = ({ images }: Props) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [viewerStartIndex, setViewerStartIndex] = useState(0);
   const [mobileCarouselApi, setMobileCarouselApi] = useState<CarouselApi>();
-  const mobileIndex = useSelectedIndex(mobileCarouselApi);
+  const mobileIndex = useCarouselIndex(mobileCarouselApi);
 
   if (images.length === 0) {
     return (
@@ -156,7 +126,7 @@ export const ListingImageGallery = ({ images }: Props) => {
           <DialogDescription className="sr-only">
             Use the left and right arrow keys to browse photos.
           </DialogDescription>
-          <ImageViewer images={images} startIndex={viewerStartIndex} />
+          <ListingImageViewer images={images} startIndex={viewerStartIndex} />
         </DialogContent>
       </Dialog>
     </>
@@ -181,72 +151,5 @@ const ContainedImage = ({ src, sizes }: ContainedImageProps) => {
       />
       <Image src={src} alt="" fill sizes={sizes} className="object-contain" />
     </>
-  );
-};
-
-interface ImageViewerProps {
-  images: string[];
-  startIndex: number;
-}
-
-const ARROW_BUTTON_CLASS =
-  "hidden size-12 border-none bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-30 md:inline-flex [&_svg]:size-6";
-
-const ImageViewer = ({ images, startIndex }: ImageViewerProps) => {
-  const [api, setApi] = useState<CarouselApi>();
-  const currentIndex = useSelectedIndex(api, startIndex);
-  const hasMultiple = images.length > 1;
-
-  useEffect(() => {
-    if (!api) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.defaultPrevented) return;
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        api.scrollPrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        api.scrollNext();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [api]);
-
-  return (
-    <Carousel opts={{ startIndex }} setApi={setApi} className="h-full">
-      <CarouselContent className="ml-0">
-        {images.map((image, idx) => (
-          <CarouselItem key={idx} className="relative h-dvh pl-0">
-            <div className="absolute inset-x-0 inset-y-16 md:inset-x-[max(6rem,calc((100%_-_64rem)/2))] md:inset-y-[10vh]">
-              <Image
-                src={image}
-                alt={`Photo ${idx + 1} of ${images.length}`}
-                fill
-                sizes="100vw"
-                className="object-contain"
-              />
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-
-      {hasMultiple && (
-        <>
-          <CarouselPrevious variant="ghost" className={cn(ARROW_BUTTON_CLASS, "left-6")} />
-          <CarouselNext variant="ghost" className={cn(ARROW_BUTTON_CLASS, "right-6")} />
-          <span className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 text-sm font-medium text-white">
-            {currentIndex + 1} / {images.length}
-          </span>
-        </>
-      )}
-
-      <DialogClose
-        aria-label="Close photos"
-        className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 flex size-10 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-      >
-        <X className="h-5 w-5" />
-      </DialogClose>
-    </Carousel>
   );
 };

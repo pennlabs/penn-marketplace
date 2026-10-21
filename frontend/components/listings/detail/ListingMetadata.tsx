@@ -1,6 +1,6 @@
 import { Bath, BedDouble, Calendar, BadgeCheck, Tag } from "lucide-react";
 import { Listing } from "@/lib/types";
-import { formatCondition, formatDate } from "@/lib/utils";
+import { formatBaths, formatBeds, formatCondition, formatDateRange } from "@/lib/utils";
 
 interface Props {
   listing: Listing;
@@ -28,15 +28,15 @@ function getMetadataEntries(listing: Listing): MetadataEntry[] {
       return [
         {
           icon: <Calendar className={ICON_CLASS} />,
-          text: `${formatDate(start_date)} - ${formatDate(end_date)}`,
+          text: formatDateRange(start_date, end_date),
         },
         {
           icon: <BedDouble className={ICON_CLASS} />,
-          text: beds === 0 ? "Studio" : `${beds} ${beds === 1 ? "bed" : "beds"}`,
+          text: formatBeds(beds),
         },
         {
           icon: <Bath className={ICON_CLASS} />,
-          text: `${baths} ${baths === 1 ? "bath" : "baths"}`,
+          text: formatBaths(baths),
         },
       ];
     }
