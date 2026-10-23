@@ -9,18 +9,23 @@ import { FormSelect } from "@/components/common/FormSelect";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing } from "@/lib/actions";
+import { createListing, updateListing } from "@/lib/actions";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/lib/constants";
 import { parsePriceString } from "@/lib/utils";
 import { type CreateItemFormData, createItemSchema } from "@/lib/validations";
-import type { CreateItemPayload } from "@/lib/types";
+import type { CreateItemPayload, Item, UpdateItemPayload } from "@/lib/types";
 
 const DISPLAY_LABEL = "Item";
 const EXAMPLE_TITLE = "e.g., Nike Air Force 1";
 
-export function ItemForm() {
+type ItemFormProps = {
+  initialListing?: Item;
+};
+
+export function ItemForm({ initialListing }: ItemFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const isEditMode = Boolean(initialListing);
 
   const {
     control,
@@ -32,12 +37,12 @@ export function ItemForm() {
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: {
-      title: "",
-      price: "",
-      description: "",
+      title: initialListing?.title ?? "",
+      price: initialListing ? String(initialListing.price) : "",
+      description: initialListing?.description ?? "",
       tags: [],
-      condition: undefined,
-      category: undefined,
+      condition: initialListing?.additional_data.condition,
+      category: initialListing?.additional_data.category,
     },
   });
 
@@ -45,30 +50,51 @@ export function ItemForm() {
     maxFiles: 10,
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
+    initialUrls: initialListing?.images,
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: createListing,
+    mutationFn: (payload: CreateItemPayload | UpdateItemPayload) =>
+      isEditMode && initialListing
+        ? updateListing(initialListing.id, payload as UpdateItemPayload)
+        : createListing(payload as CreateItemPayload),
     onSuccess: (data) => {
-      toast.success(`${DISPLAY_LABEL} created successfully!`);
+      toast.success(`${DISPLAY_LABEL} ${isEditMode ? "updated" : "created"} successfully!`);
+      if (isEditMode) {
+        queryClient.invalidateQueries({ queryKey: ["listing", initialListing?.id] });
+      }
       queryClient.invalidateQueries({ queryKey: ["items"] });
-      reset();
-      imageUpload.clearImages();
+      if (!isEditMode) {
+        reset();
+        imageUpload.clearImages();
+      }
       router.replace(`/items/${data.id}`);
     },
   });
 
   const onSubmit = (data: CreateItemFormData) => {
-    const payload: CreateItemPayload = {
-      title: data.title,
-      description: data.description,
-      price: String(parsePriceString(data.price)),
-      listing_type: "item",
-      additional_data: {
-        condition: data.condition,
-        category: data.category,
-      },
-    };
+    const parsedPrice = parsePriceString(data.price);
+    const payload: CreateItemPayload | UpdateItemPayload = isEditMode
+      ? {
+          title: data.title,
+          description: data.description,
+          price: parsedPrice,
+          listing_type: "item",
+          additional_data: {
+            condition: data.condition,
+            category: data.category,
+          },
+        }
+      : {
+          title: data.title,
+          description: data.description,
+          price: String(parsedPrice),
+          listing_type: "item",
+          additional_data: {
+            condition: data.condition,
+            category: data.category,
+          },
+        };
     mutate(payload);
   };
 
@@ -116,6 +142,8 @@ export function ItemForm() {
       isPending={isPending}
       displayLabel={DISPLAY_LABEL}
       imageUpload={imageUpload}
+      submitLabel={isEditMode ? "Save Changes" : undefined}
+      pendingLabel={isEditMode ? "Saving..." : undefined}
     >
       <BaseListingForm<CreateItemFormData>
         control={control}
