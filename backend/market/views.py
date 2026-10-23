@@ -16,7 +16,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from market.mixins import DefaultOrderMixin
-from market.models import Listing, ListingImage, Offer, Tag
+from market.models import Listing, ListingImage, Notification, Offer, Tag
+from market.notifications import notify
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
@@ -30,6 +31,7 @@ from market.serializers import (
     ListingSerializer,
     ListingSerializerList,
     ListingSerializerPublic,
+    NotificationSerializer,
     OfferSerializer,
     TagSerializer,
     UserSerializer,
@@ -81,6 +83,15 @@ class OffersReceived(ListAPIView, DefaultOrderMixin):
     def get_queryset(self):
         user = self.request.user
         return Offer.objects.filter(listing__seller=user)
+
+
+class NotificationsList(ListAPIView, DefaultOrderMixin):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = PageSizeOffsetPagination
+
+    def get_queryset(self):
+        return self.request.user.notifications.all()
 
 
 class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
@@ -341,6 +352,17 @@ class Offers(viewsets.ModelViewSet):
                 seller.phone_number, serializer.instance.listing.title
             )
 
+        if seller != request.user:
+            notify(
+                recipient=seller,
+                type=Notification.Type.OFFER_RECEIVED,
+                data={
+                    "listing_id": serializer.instance.listing.id,
+                    "listing_title": serializer.instance.listing.title,
+                    "offer_id": serializer.instance.id,
+                },
+            )
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
@@ -436,3 +458,22 @@ def get_phone_status(request):
             "phone_verified": user.phone_verified,
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_notification_read(request, notification_id):
+    notification = get_object_or_404(request.user.notifications, id=notification_id)
+    if notification.read_at is None:
+        notification.read_at = timezone.now()
+        notification.save(update_fields=["read_at"])
+    return Response(NotificationSerializer(notification).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_all_notifications_read(request):
+    request.user.notifications.filter(read_at__isnull=True).update(
+        read_at=timezone.now()
+    )
+    return Response({"success": True})

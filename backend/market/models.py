@@ -47,6 +47,29 @@ class Offer(models.Model):
     def __str__(self):
         return f"Offer for {self.listing} made by {self.user}"
 
+
+class Notification(models.Model):
+    class Type(models.TextChoices):
+        OFFER_RECEIVED = "offer_received", "Offer Received"
+
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="notifications"
+    )
+    type = models.CharField(max_length=50, choices=Type.choices)
+    data = models.JSONField(default=dict, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.type} notification for {self.recipient}"
+
+
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -170,7 +193,8 @@ class Sublet(Listing):
     def approximate_location(self):
         if self.latitude is not None and self.longitude is not None:
             approximate_location = self._calculate_approximate_location(
-                self.latitude, self.longitude)
+                self.latitude, self.longitude
+            )
             return approximate_location
         return None, None
 

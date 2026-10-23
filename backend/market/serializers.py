@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
@@ -14,7 +13,16 @@ from rest_framework.serializers import (
 )
 
 from market.mixins import ListingTypeMixin
-from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, Tag
+from market.models import (
+    Category,
+    Item,
+    Listing,
+    ListingImage,
+    Notification,
+    Offer,
+    Sublet,
+    Tag,
+)
 
 
 User = get_user_model()
@@ -53,6 +61,13 @@ class OfferSerializer(ModelSerializer):
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class NotificationSerializer(ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ["id", "type", "data", "read_at", "created_at"]
+        read_only_fields = fields
 
 
 # Create/Update Image Serializer
@@ -125,6 +140,7 @@ class SubletDataSerializer(ModelSerializer):
         if approx_lon is not None:
             return float(approx_lon)
         return None
+
 
 # Unified serializer for all listing types (Items and Sublets); used for CRUD operations
 class ListingSerializer(ListingTypeMixin, ModelSerializer):
@@ -290,7 +306,6 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
         latitude = additional_data.get("latitude")
         longitude = additional_data.get("longitude")
-
 
         if latitude is not None:
             latitude = float(latitude)
