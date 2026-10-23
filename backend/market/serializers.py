@@ -13,7 +13,16 @@ from rest_framework.serializers import (
 )
 
 from market.mixins import ListingTypeMixin
-from market.models import Category, Item, Listing, ListingImage, Offer, Sublet, Tag
+from market.models import (
+    Category,
+    Item,
+    Listing,
+    ListingImage,
+    Notification,
+    Offer,
+    Sublet,
+    Tag,
+)
 
 
 User = get_user_model()
@@ -52,6 +61,13 @@ class OfferSerializer(ModelSerializer):
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class NotificationSerializer(ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ["id", "type", "data", "read_at", "created_at"]
+        read_only_fields = fields
 
 
 # Create/Update Image Serializer
