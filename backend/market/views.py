@@ -200,7 +200,7 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        return Response({"deleted": True}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # TODO: This doesn't use CreateAPIView's functionality
@@ -330,6 +330,11 @@ class Offers(viewsets.ModelViewSet):
         if not request.user.phone_number or not request.user.phone_verified:
             raise exceptions.ValidationError(
                 "You must verify your phone number before making an offer"
+            )
+        listing = get_object_or_404(Listing, pk=self.kwargs["listing_id"])
+        if listing.seller_id == request.user.id:
+            raise exceptions.ValidationError(
+                "You cannot make an offer on your own listing"
             )
         data = request.data.copy()
         if self.get_queryset().filter(user=self.request.user).exists():

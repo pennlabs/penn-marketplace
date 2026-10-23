@@ -37,7 +37,7 @@ export function SubletForm({ initialListing }: SubletFormProps) {
     control,
     handleSubmit,
     reset,
-    formState: { errors, touchedFields, isDirty, isSubmitting },
+    formState: { errors, touchedFields, dirtyFields, isDirty, isSubmitting },
   } = useForm<CreateSubletFormData>({
     resolver: zodResolver(createSubletSchema),
     mode: "onBlur",
@@ -61,7 +61,7 @@ export function SubletForm({ initialListing }: SubletFormProps) {
     maxFiles: 10,
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
-    initialUrls: initialListing?.images,
+    initialImages: initialListing?.images,
   });
 
   const { mutate, isPending } = useMutation({
@@ -87,27 +87,29 @@ export function SubletForm({ initialListing }: SubletFormProps) {
     const parsedPrice = parsePriceString(data.price);
     const additional_data = {
       street_address: data.street_address,
-      latitude: data.latitude,
-      longitude: data.longitude,
       beds: data.beds,
       baths: data.baths,
       start_date: data.startDate,
       end_date: data.endDate,
     };
+    const coords = { latitude: data.latitude, longitude: data.longitude };
+    // edit form is prefilled with the backend's approximate coords; only send them
+    // after a fresh address selection, else the stored exact location drifts on save
+    const addressChanged = dirtyFields.latitude || dirtyFields.longitude;
     const payload: CreateSubletPayload | UpdateSubletPayload = isEditMode
       ? {
           title: data.title,
           description: data.description ?? "",
           price: parsedPrice,
           listing_type: "sublet",
-          additional_data,
+          additional_data: addressChanged ? { ...additional_data, ...coords } : additional_data,
         }
       : {
           title: data.title,
           description: data.description ?? "",
           price: String(parsedPrice),
           listing_type: "sublet",
-          additional_data,
+          additional_data: { ...additional_data, ...coords },
         };
     mutate(payload);
   };

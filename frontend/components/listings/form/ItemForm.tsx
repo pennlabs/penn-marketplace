@@ -50,7 +50,7 @@ export function ItemForm({ initialListing }: ItemFormProps) {
     maxFiles: 10,
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
-    initialUrls: initialListing?.images,
+    initialImages: initialListing?.images,
   });
 
   const { mutate, isPending } = useMutation({

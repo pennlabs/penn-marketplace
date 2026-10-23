@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Check, Clock, Pencil, Star, Trash2, X } from "lucide-react";
+import { Check, Clock, Pencil, Star, Trash2, Undo2, X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Offer } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -94,19 +94,35 @@ function OfferCardReceived({ offer, onStatusChange }: ReceivedProps) {
             </div>
           </div>
           {offer.message && <p className="mt-1.5 text-sm text-gray-500">{offer.message}</p>}
-          {offer.status === "pending" && (
+          {offer.status !== "rejected" && (
             <div className="mt-3 flex justify-end gap-2">
-              <Button
-                size="sm"
-                className="cursor-pointer bg-green-600 text-white hover:bg-green-700"
-                onClick={() => mutation.mutate("accepted")}
-                disabled={mutation.isPending}
-              >
-                <Check className="mr-1 h-3.5 w-3.5" />
-                {mutation.isPending && mutation.variables === "accepted"
-                  ? "Accepting..."
-                  : "Accept"}
-              </Button>
+              {offer.status === "pending" ? (
+                <Button
+                  size="sm"
+                  className="cursor-pointer bg-green-600 text-white hover:bg-green-700"
+                  onClick={() => mutation.mutate("accepted")}
+                  disabled={mutation.isPending}
+                >
+                  <Check className="mr-1 h-3.5 w-3.5" />
+                  {mutation.isPending && mutation.variables === "accepted"
+                    ? "Accepting..."
+                    : "Accept"}
+                </Button>
+              ) : (
+                // accepted offers can be reverted to pending or rejected
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => mutation.mutate("pending")}
+                  disabled={mutation.isPending}
+                >
+                  <Undo2 className="mr-1 h-3.5 w-3.5" />
+                  {mutation.isPending && mutation.variables === "pending"
+                    ? "Reverting..."
+                    : "Revert to pending"}
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="cursor-pointer bg-red-500 text-white hover:bg-red-600"

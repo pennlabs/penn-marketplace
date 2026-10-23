@@ -114,6 +114,11 @@ export type ValidatedAddress = {
 // ------------------------------------------------------------
 // base listing fields (shared by all listings)
 // ------------------------------------------------------------
+export type ListingImage = {
+  id: number;
+  image_url: string;
+};
+
 type BaseListing = {
   id: number;
   title: string;
@@ -123,7 +128,7 @@ type BaseListing = {
   negotiable: boolean;
   created_at: string;
   expires_at: string;
-  images: string[];
+  images: ListingImage[];
   tags: string[];
   favorite_count: number;
   is_favorited?: boolean;

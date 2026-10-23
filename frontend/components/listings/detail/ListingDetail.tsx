@@ -107,7 +107,7 @@ export const ListingDetail = ({
         </div>
       </div>
 
-      <ListingImageGallery images={listing.images} />
+      <ListingImageGallery images={listing.images.map((img) => img.image_url)} />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:gap-x-8 md:gap-y-6">
         <h1 className="text-2xl font-bold break-words md:text-4xl">{listing.title}</h1>

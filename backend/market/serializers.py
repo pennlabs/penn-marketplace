@@ -68,11 +68,20 @@ class OfferStatusSerializer(ModelSerializer):
         fields = ["id", "status"]
         read_only_fields = ["id"]
 
+    # any transition is allowed (e.g. accepted -> pending/rejected to revert), but a
+    # listing can have only one accepted offer; the DB constraint covers races
     def validate_status(self, value):
-        valid_statuses = [choice[0] for choice in Offer.Status.choices]
-        if value not in valid_statuses:
+        if (
+            value == Offer.Status.ACCEPTED
+            and Offer.objects.filter(
+                listing_id=self.instance.listing_id, status=Offer.Status.ACCEPTED
+            )
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
             raise ValidationError(
-                f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+                "This listing already has an accepted offer. "
+                "Revert or reject it before accepting another."
             )
         return value
 
@@ -188,7 +197,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         },
     }
 
-    images = ListingImageSerializer(many=True, required=False, read_only=True)
+    images = ListingImageURLSerializer(many=True, read_only=True)
     tags = SlugRelatedField(
         many=True,
         slug_field="name",

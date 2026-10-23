@@ -31,7 +31,12 @@ class Offer(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "listing"], name="unique_offer_market"
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["listing"],
+                condition=models.Q(status="accepted"),
+                name="one_accepted_offer_per_listing",
+            ),
         ]
         indexes = [
             models.Index(fields=["user"]),

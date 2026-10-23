@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ListingImage } from "@/lib/types";
 
 export type ImageFile = {
   file: File;
@@ -15,7 +16,7 @@ type UseImageUploadOptions = {
   maxSizeBytes?: number;
   acceptedTypes?: string[];
   onError?: (message: string) => void;
-  initialUrls?: string[];
+  initialImages?: ListingImage[];
 };
 
 const DEFAULT_MAX_FILES = 10;
@@ -27,15 +28,14 @@ export function useImageUpload({
   maxSizeBytes = DEFAULT_MAX_SIZE,
   acceptedTypes = DEFAULT_ACCEPTED_TYPES,
   onError,
-  initialUrls = [],
+  initialImages = [],
 }: UseImageUploadOptions = {}) {
   const [images, setImages] = useState<ImageFile[]>(() =>
-    initialUrls.map((url) => ({
-      file: new File([], `existing-image-${Math.random().toString(36).slice(2, 8)}.jpg`, {
-        type: "image/jpeg",
-      }),
-      id: Math.random().toString(36).slice(2, 11),
-      preview: url,
+    initialImages.map((img) => ({
+      file: new File([], `existing-image-${img.id}.jpg`, { type: "image/jpeg" }),
+      // keep the backend id so existing images can be deleted/reordered later
+      id: String(img.id),
+      preview: img.image_url,
       status: "uploaded",
     }))
   );
