@@ -6,6 +6,7 @@ from market.views import (
     DeleteImage,
     Favorites,
     Listings,
+    NotificationsList,
     Offers,
     OffersMade,
     OffersReceived,
@@ -13,6 +14,8 @@ from market.views import (
     UserFavorites,
     get_current_user,
     get_phone_status,
+    mark_all_notifications_read,
+    mark_notification_read,
     send_verification_code,
     verify_phone_code,
 )
@@ -34,6 +37,18 @@ additional_urls = [
     path("offers/made/", OffersMade.as_view(), name="offers-made"),
     # All offers for an listing owned by user
     path("offers/received/", OffersReceived.as_view(), name="offers-received"),
+    # Notifications
+    path("notifications/", NotificationsList.as_view(), name="notifications"),
+    path(
+        "notifications/<int:notification_id>/read/",
+        mark_notification_read,
+        name="mark-notification-read",
+    ),
+    path(
+        "notifications/read-all/",
+        mark_all_notifications_read,
+        name="mark-all-notifications-read",
+    ),
     # Favorites
     # post: add a listing to the user's favorites
     # delete: remove a listing from the user's favorites
