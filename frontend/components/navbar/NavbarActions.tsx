@@ -18,13 +18,14 @@ export const NavbarActions = ({
   isMobileMenuOpen,
   onToggleMobileMenu,
 }: Props) => {
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  // FILLER count until the notifications API lands; replace with useNotifications()
+  const [unreadCount, setUnreadCount] = useState(3);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleNotificationClick = () => {
-    // TODO
-    setHasUnreadNotifications(false);
+    // TODO: open the notifications dropdown
+    setUnreadCount(0);
   };
 
   const handleAvatarClick = () => {
@@ -93,14 +94,16 @@ export const NavbarActions = ({
         size="icon"
         className="relative cursor-pointer"
         onClick={handleNotificationClick}
-        aria-label={`Notifications${hasUnreadNotifications ? " (unread)" : ""}`}
+        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
       >
         <Bell className="h-5 w-5" />
-        {hasUnreadNotifications && (
+        {unreadCount > 0 && (
           <span
-            className="bg-primary absolute top-1 right-1 h-2 w-2 rounded-full"
+            className="bg-brand absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-medium text-white"
             aria-hidden="true"
-          />
+          >
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
         )}
       </Button>
 
