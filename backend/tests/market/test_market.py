@@ -1603,6 +1603,9 @@ class TestNotification(BaseMarketTest):
         self.other_user_items = self.load_items(
             "tests/market/user_1_items.json", self.users[1]
         )
+        self.own_items = self.load_items(
+            "tests/market/self_user_items.json", self.users[0]
+        )
 
     def test_create_offer_creates_notification(self):
         response = self.client.post(
@@ -1614,8 +1617,20 @@ class TestNotification(BaseMarketTest):
         notification = Notification.objects.get(recipient=self.users[1])
         self.assertEqual(notification.type, Notification.Type.OFFER_RECEIVED)
         self.assertEqual(notification.data["listing_id"], self.other_user_items[0].id)
+        self.assertEqual(
+            notification.data["listing_title"], self.other_user_items[0].title
+        )
         self.assertEqual(notification.data["offer_id"], response.json()["id"])
         self.assertIsNone(notification.read_at)
+
+    def test_self_offer_does_not_create_notification(self):
+        response = self.client.post(
+            f"/market/listings/{self.own_items[0].id}/offers/",
+            {"offered_price": "10.00", "message": "I want this"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertFalse(Notification.objects.filter(recipient=self.users[0]).exists())
 
     def test_list_notifications_scoped_to_user(self):
         Notification.objects.create(

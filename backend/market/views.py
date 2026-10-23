@@ -347,11 +347,6 @@ class Offers(viewsets.ModelViewSet):
         serializer.save()
 
         seller = serializer.instance.listing.seller
-        if seller.phone_number and seller.phone_verified:
-            send_offer_notification_sms(
-                seller.phone_number, serializer.instance.listing.title
-            )
-
         if seller != request.user:
             notify(
                 recipient=seller,
@@ -361,6 +356,11 @@ class Offers(viewsets.ModelViewSet):
                     "listing_title": serializer.instance.listing.title,
                     "offer_id": serializer.instance.id,
                 },
+            )
+
+        if seller.phone_number and seller.phone_verified:
+            send_offer_notification_sms(
+                seller.phone_number, serializer.instance.listing.title
             )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
