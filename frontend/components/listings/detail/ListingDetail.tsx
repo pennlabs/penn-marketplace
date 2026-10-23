@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
 import { Heart } from "lucide-react";
-import { Item, Sublet } from "@/lib/types";
+import { Item, Offer, Sublet } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
@@ -14,15 +14,24 @@ import { ListingMetadata } from "@/components/listings/detail/ListingMetadata";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import { ShareButton } from "@/components/listings/detail/ShareButton";
 import { SubletMap } from "@/components/listings/detail/SubletMap";
+import { OffersPanel } from "@/components/listings/offer/OffersPanel";
 
 interface Props {
   listingId: number;
+  isOwner: boolean;
+  offersReceived: Offer[];
+  myOfferGiven?: Offer | null;
 }
 
 const ICON_BUTTON_CLASS =
   "flex size-10 cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white transition-colors hover:bg-gray-50";
 
-export const ListingDetail = ({ listingId }: Props) => {
+export const ListingDetail = ({
+  listingId,
+  isOwner,
+  offersReceived,
+  myOfferGiven = null,
+}: Props) => {
   const queryClient = useQueryClient();
   const queryKey = queryKeys.listing(listingId);
 
@@ -111,13 +120,22 @@ export const ListingDetail = ({ listingId }: Props) => {
         </div>
         <div className="md:justify-self-end">
           <ListingActions
-            listingId={listing.id}
+            listing={listing}
             listingPrice={listing.price}
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
+            isOwner={isOwner}
+            initialMyOffer={myOfferGiven}
           />
         </div>
       </div>
+
+      <OffersPanel
+        isOwner={isOwner}
+        offersReceived={offersReceived}
+        myOfferGiven={myOfferGiven}
+        listingId={listing.id}
+      />
 
       <hr className="border-gray-200" />
 
