@@ -102,6 +102,20 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
+# Media files (user uploads)
+# Served by Django in development only; production overrides STORAGES to use S3.
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
+
+# S3 settings; only used when STORAGES["default"] is S3Storage (production, or
+# development with USE_S3=1). boto3 reads AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME") or "us-east-1"
+# public-read URLs; signed URLs would expire in cached pages
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_FILE_OVERWRITE = False
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 

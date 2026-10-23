@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
@@ -211,18 +212,43 @@ class CreateImages(CreateAPIView):
 
     # takes an image multipart form data and creates a new image object
     def post(self, request, *args, **kwargs):
-        images = request.data.getlist("images", [])
+        images = request.FILES.getlist("images")
         listing_id = int(self.kwargs["listing_id"])
         listing = get_object_or_404(Listing, id=listing_id)
         self.check_object_permissions(request, listing)
-        instances = []
-
-        for img in images:
-            img_serializer = self.get_serializer(
-                data={"listing": listing_id, "image": img}
+        if not images:
+            return Response(
+                {"detail": "No images provided."}, status=status.HTTP_400_BAD_REQUEST
             )
-            img_serializer.is_valid(raise_exception=True)
-            instances.append(img_serializer.save())
+
+        max_images = ListingImage.MAX_PER_LISTING
+        instances = []
+        try:
+            with transaction.atomic():
+                # lock the listing so concurrent uploads can't both pass the limit;
+                # count before validating so over-limit requests skip the resize
+                Listing.objects.select_for_update().get(pk=listing_id)
+                if listing.images.count() + len(images) > max_images:
+                    return Response(
+                        {"detail": f"A listing can have at most {max_images} images."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                # validate every file before saving any, so a bad file can't leave
+                # a partial set behind
+                serializers = [
+                    self.get_serializer(data={"listing": listing_id, "image": img})
+                    for img in images
+                ]
+                for img_serializer in serializers:
+                    img_serializer.is_valid(raise_exception=True)
+                for img_serializer in serializers:
+                    instances.append(img_serializer.save())
+        except Exception:
+            # rolled-back rows don't fire post_delete, so remove their files here.
+            # ponytail: a file written whose own insert then fails still orphans
+            for instance in instances:
+                instance.image.storage.delete(instance.image.name)
+            raise
 
         data = ListingImageURLSerializer(instances, many=True).data
         return Response(data, status=status.HTTP_201_CREATED)

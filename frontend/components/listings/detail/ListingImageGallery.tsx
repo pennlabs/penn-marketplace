@@ -6,13 +6,14 @@ import { ListingImageViewer } from "@/components/listings/detail/ListingImageVie
 import { Carousel, CarouselApi, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useCarouselIndex } from "@/hooks/useCarouselIndex";
-import { cn } from "@/lib/utils";
+import type { ListingImage } from "@/lib/types";
+import { cn, mediaUrl } from "@/lib/utils";
 
 const DEFAULT_IMAGE = "/images/default-image.jpg";
 const MAX_GRID_IMAGES = 5;
 
 interface Props {
-  images: string[];
+  images: ListingImage[];
 }
 
 const SIDE_IMAGE_SPANS: Record<number, string[]> = {
@@ -22,7 +23,8 @@ const SIDE_IMAGE_SPANS: Record<number, string[]> = {
   5: ["", "", "", ""],
 };
 
-export const ListingImageGallery = ({ images }: Props) => {
+export const ListingImageGallery = ({ images: listingImages }: Props) => {
+  const images = listingImages.map((image) => mediaUrl(image.image_url));
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [viewerStartIndex, setViewerStartIndex] = useState(0);
   const [mobileCarouselApi, setMobileCarouselApi] = useState<CarouselApi>();

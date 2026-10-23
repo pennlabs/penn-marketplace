@@ -10,6 +10,7 @@ import {
   CreateSubletPayload,
   Item,
   Listing,
+  ListingImage,
   PaginatedResponse,
   Sublet,
   User,
@@ -66,7 +67,8 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
     ...(options.headers as Record<string, string>),
   };
 
-  if (options.body) {
+  // FormData must set its own Content-Type so the multipart boundary is included
+  if (options.body && !(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -95,6 +97,9 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
 
     throw new APIError(errorMessage, response.status);
   }
+
+  // 204 No Content (e.g. DELETE) has no body to parse
+  if (response.status === 204) return undefined as T;
 
   return response.json();
 }
@@ -269,4 +274,20 @@ export async function createListing(payload: CreateListingPayload): Promise<List
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+// images are uploaded after the listing exists, since they attach to a listing id.
+// formData field name must be "images" (repeated once per file) to match the backend.
+export async function uploadListingImages(
+  listingId: number,
+  formData: FormData
+): Promise<ListingImage[]> {
+  return await serverFetch<ListingImage[]>(`/market/listings/${listingId}/images/`, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function deleteListing(listingId: number): Promise<void> {
+  await serverFetch<void>(`/market/listings/${listingId}/`, { method: "DELETE" });
 }

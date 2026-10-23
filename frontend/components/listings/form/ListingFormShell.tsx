@@ -27,7 +27,7 @@ export function ListingFormShell({
   isFormDisabled,
   isPending,
   displayLabel,
-  maxFiles = 10,
+  maxFiles = 5,
   imageUpload,
   children,
 }: ListingFormShellProps) {
@@ -37,20 +37,24 @@ export function ListingFormShell({
         <div className="space-y-6">{children}</div>
 
         <div className="space-y-6">
-          <ImageDropzone
-            images={imageUpload.images}
-            isDragging={imageUpload.isDragging}
-            canAddMore={imageUpload.canAddMore}
-            remainingSlots={imageUpload.remainingSlots}
-            maxFiles={maxFiles}
-            label={`${displayLabel} Photos`}
-            onDragEnter={imageUpload.handleDragEnter}
-            onDragLeave={imageUpload.handleDragLeave}
-            onDragOver={imageUpload.handleDragOver}
-            onDrop={imageUpload.handleDrop}
-            onFileSelect={imageUpload.handleFileSelect}
-            onRemove={imageUpload.removeImage}
-          />
+          {/* uploads run from a snapshot taken at submit, so lock the photos until done;
+              fieldset disables the remove buttons, drops need their own guard */}
+          <fieldset disabled={isFormDisabled} className="contents">
+            <ImageDropzone
+              images={imageUpload.images}
+              isDragging={imageUpload.isDragging}
+              canAddMore={imageUpload.canAddMore && !isFormDisabled}
+              remainingSlots={imageUpload.remainingSlots}
+              maxFiles={maxFiles}
+              label={`${displayLabel} Photos`}
+              onDragEnter={imageUpload.handleDragEnter}
+              onDragLeave={imageUpload.handleDragLeave}
+              onDragOver={imageUpload.handleDragOver}
+              onDrop={isFormDisabled ? (e) => e.preventDefault() : imageUpload.handleDrop}
+              onFileSelect={imageUpload.handleFileSelect}
+              onRemove={imageUpload.removeImage}
+            />
+          </fieldset>
           <div className="pt-4">
             <Button
               type="submit"

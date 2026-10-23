@@ -22,7 +22,8 @@ venv/
 # Django
 *.sqlite3
 staticfiles/
-media/
+# local user uploads (dev only; prod uses S3) - never commit
+uploads/
 
 # Node/pnpm
 node_modules/

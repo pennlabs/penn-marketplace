@@ -35,6 +35,12 @@ PLATFORM_ACCOUNTS = {
     "CUSTOM_ADMIN": False,
 }
 
+# S3 media storage (AWS_* settings live in base.py)
+STORAGES = {
+    "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
 # change if domain changes from pennmarketplace
 CORS_ALLOWED_ORIGINS = [
     "https://pennmarketplace.com",
