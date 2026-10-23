@@ -401,6 +401,7 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
             "external_link",
             "price",
             "negotiable",
+            "created_at",
             "expires_at",
             "images",
             "favorite_count",

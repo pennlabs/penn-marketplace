@@ -2,13 +2,15 @@
 
 import { Share } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface Props {
   title: string;
   text: string;
+  className?: string;
 }
 
-export const ShareButton = ({ title, text }: Props) => {
+export const ShareButton = ({ title, text, className }: Props) => {
   const copyLink = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
@@ -39,7 +41,7 @@ export const ShareButton = ({ title, text }: Props) => {
   return (
     <button
       type="button"
-      className="cursor-pointer"
+      className={cn("cursor-pointer", className)}
       onClick={handleShare}
       aria-label="Share listing"
     >
