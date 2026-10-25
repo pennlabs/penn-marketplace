@@ -1,12 +1,19 @@
 import datetime
+import io
 import json
-from unittest.mock import MagicMock
+from contextlib import ExitStack
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import MagicMock, call, patch
 
 import pytz
 from django.contrib.auth import get_user_model
-from django.core.files.storage import Storage
+from django.core.files.storage import FileSystemStorage, Storage
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import DatabaseError, connection
 from django.test import TestCase
 from django.utils.timezone import now
+from PIL import Image
 from rest_framework.test import APIClient
 
 from market.models import (
@@ -18,6 +25,7 @@ from market.models import (
     Sublet,
     Tag,
 )
+from utils.images import resize_image
 
 
 User = get_user_model()
@@ -1504,6 +1512,163 @@ class TestImages(BaseMarketTest):
             self.assertEqual(Item.objects.get(id=self.items[0].id).images.count(), 1)
             img = Item.objects.get(id=self.items[0].id).images.first()
             self.assertIsNotNone(img)
+            self.assertEqual(
+                response.json(),
+                [
+                    {
+                        "id": img.id,
+                        "image_url": "http://penn-mobile.com/mock-image.png",
+                        "order": img.order,
+                    }
+                ],
+            )
+
+    def test_resize_image(self):
+        buf = io.BytesIO()
+        Image.new("RGB", (4000, 2000)).save(buf, format="JPEG")
+        buf.name = "photo.jpg"
+        out = Image.open(resize_image(buf, max_size=1600))
+        self.assertEqual(out.format, "WEBP")
+        self.assertEqual(out.size, (1600, 800))
+
+    def test_truncated_image_returns_400(self):
+        buf = io.BytesIO()
+        Image.new("RGB", (2000, 2000)).save(buf, format="JPEG")
+        data = buf.getvalue()
+        half = SimpleUploadedFile("t.jpg", data[: len(data) // 2], "image/jpeg")
+        response = self.client.post(
+            f"/market/listings/{self.items[0].id}/images/", {"images": half}
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.items[0].images.count(), 0)
+
+    def test_resize_rejects_huge_dimensions(self):
+        buf = io.BytesIO()
+        Image.new("1", (9000, 9000)).save(buf, format="PNG")  # 81M px, tiny file
+        buf.seek(0)
+        buf.name = "big.png"
+        with self.assertRaises(ValueError):
+            resize_image(buf)
+
+    def test_create_images_one_bad_file_saves_none(self):
+        bad = SimpleUploadedFile("bad.jpg", b"not an image", "image/jpeg")
+        with open("tests/market/mock_image.jpg", "rb") as good:
+            response = self.client.post(
+                f"/market/listings/{self.items[0].id}/images/",
+                {"images": [good, bad]},
+                "multipart",
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.items[0].images.count(), 0)
+
+    def test_create_images_storage_failure_deletes_saved_files(self):
+        storage = ListingImage._meta.get_field("image").storage
+        storage.save.side_effect = ["first.webp", OSError("S3 down")]
+        with open("tests/market/mock_image.jpg", "rb") as a:
+            with open("tests/market/mock_image.jpg", "rb") as b:
+                with self.assertRaises(OSError):
+                    self.client.post(
+                        f"/market/listings/{self.items[0].id}/images/",
+                        {"images": [a, b]},
+                        "multipart",
+                    )
+        storage.delete.assert_called_once_with("first.webp")
+        self.assertEqual(self.items[0].images.count(), 0)
+
+    def test_database_insert_failure_deletes_all_written_files(self):
+        for failed_insert in (1, 2):
+            with self.subTest(failed_insert=failed_insert):
+                upload_error = DatabaseError("Image insert failed")
+                inserts = 0
+
+                with TemporaryDirectory() as directory, ExitStack() as stack:
+                    storage = FileSystemStorage(location=directory)
+                    stack.enter_context(
+                        patch.object(
+                            ListingImage._meta.get_field("image"), "storage", storage
+                        )
+                    )
+                    images = [
+                        stack.enter_context(open("tests/market/mock_image.jpg", "rb"))
+                        for _ in range(2)
+                    ]
+
+                    def fail_insert(execute, sql, params, many, context):
+                        nonlocal inserts
+                        if (
+                            sql.startswith("INSERT INTO")
+                            and ListingImage._meta.db_table in sql
+                        ):
+                            inserts += 1
+                            if inserts == failed_insert:
+                                self.assertEqual(
+                                    len(list(Path(directory).rglob("*.webp"))),
+                                    failed_insert,
+                                )
+                                raise upload_error
+                        return execute(sql, params, many, context)
+
+                    with connection.execute_wrapper(fail_insert):
+                        with self.assertRaises(DatabaseError) as raised:
+                            self.client.post(
+                                f"/market/listings/{self.items[0].id}/images/",
+                                {"images": images},
+                                "multipart",
+                            )
+
+                    self.assertIs(raised.exception, upload_error)
+                    self.assertEqual(self.items[0].images.count(), 0)
+                    self.assertFalse(
+                        any(path.is_file() for path in Path(directory).rglob("*"))
+                    )
+
+    def test_cleanup_failure_preserves_upload_error_and_continues(self):
+        storage = ListingImage._meta.get_field("image").storage
+        upload_error = OSError("Upload timed out")
+        cleanup_error = OSError("Delete timed out")
+        storage.save.side_effect = ["first.webp", "second.webp", upload_error]
+        storage.delete.side_effect = [cleanup_error, None]
+
+        with ExitStack() as stack:
+            images = [
+                stack.enter_context(open("tests/market/mock_image.jpg", "rb"))
+                for _ in range(3)
+            ]
+            with self.assertLogs("market.views", level="ERROR") as logs:
+                with self.assertRaises(OSError) as raised:
+                    self.client.post(
+                        f"/market/listings/{self.items[0].id}/images/",
+                        {"images": images},
+                        "multipart",
+                    )
+
+        self.assertIs(raised.exception, upload_error)
+        self.assertEqual(
+            storage.delete.call_args_list,
+            [call("first.webp"), call("second.webp")],
+        )
+        self.assertEqual(len(logs.records), 1)
+        self.assertIn("first.webp", logs.records[0].getMessage())
+        self.assertIs(logs.records[0].exc_info[1], cleanup_error)
+        self.assertEqual(self.items[0].images.count(), 0)
+
+    def test_create_images_no_files(self):
+        response = self.client.post(f"/market/listings/{self.items[0].id}/images/")
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_images_over_limit(self):
+        files = [open("tests/market/mock_image.jpg", "rb") for _ in range(6)]
+        try:
+            response = self.client.post(
+                f"/market/listings/{self.items[0].id}/images/",
+                {"images": files},
+                "multipart",
+            )
+        finally:
+            for f in files:
+                f.close()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.items[0].images.count(), 0)
 
     def test_create_image_other_users_item(self):
         with open("tests/market/mock_image.jpg", "rb") as image:
@@ -1542,3 +1707,16 @@ class TestImages(BaseMarketTest):
                     ListingImage.objects.filter(id=saved_images[1]["id"]).exists()
                 )
                 self.assertEqual(1, ListingImage.objects.all().count())
+
+    def test_delete_image_deletes_stored_file(self):
+        with open("tests/market/mock_image.jpg", "rb") as image:
+            response = self.client.post(
+                f"/market/listings/{self.items[0].id}/images/",
+                {"images": image},
+            )
+        image_id = response.json()[0]["id"]
+        name = ListingImage.objects.get(id=image_id).image.name
+        storage = ListingImage._meta.get_field("image").storage
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.delete(f"/market/listings/images/{image_id}/")
+        storage.delete.assert_called_once_with(name)

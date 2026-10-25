@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// backend returns relative media paths in dev (/media/...) and absolute S3 urls in prod
+export function mediaUrl(url: string): string {
+  return url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_API_URL}${url}`;
+}
+
 export function formatPrice(price: number, showMonthly: boolean = false) {
   const formatted = `$${price.toLocaleString("en-US", {
     minimumFractionDigits: 0,
