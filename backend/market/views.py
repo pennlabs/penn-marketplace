@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -38,6 +40,7 @@ from market.serializers import (
 from utils.sms import generate_verification_code, send_verification_sms
 
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -242,12 +245,26 @@ class CreateImages(CreateAPIView):
                 for img_serializer in serializers:
                     img_serializer.is_valid(raise_exception=True)
                 for img_serializer in serializers:
-                    instances.append(img_serializer.save())
+                    instance = ListingImage(**img_serializer.validated_data)
+                    # Store and track the file before inserting its database row,
+                    # so an insert failure can still clean up this upload.
+                    instance.image.save(
+                        instance.image.name, instance.image.file, save=False
+                    )
+                    instances.append(instance)
+                    instance.save()
         except Exception:
             # rolled-back rows don't fire post_delete, so remove their files here.
-            # ponytail: a file written whose own insert then fails still orphans
             for instance in instances:
-                instance.image.storage.delete(instance.image.name)
+                try:
+                    instance.image.storage.delete(instance.image.name)
+                except Exception:
+                    logger.exception(
+                        "Failed to delete image %s while rolling back uploads "
+                        "for listing %s",
+                        instance.image.name,
+                        listing_id,
+                    )
             raise
 
         data = ListingImageURLSerializer(instances, many=True).data

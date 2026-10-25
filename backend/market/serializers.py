@@ -89,8 +89,8 @@ class ListingImageURLSerializer(ModelSerializer):
 
     class Meta:
         model = ListingImage
-        fields = "__all__"
-        read_only_fields = [field.name for field in model._meta.fields]
+        fields = ["id", "image_url", "order"]
+        read_only_fields = fields
 
 
 class ItemDataSerializer(ModelSerializer):

@@ -40,12 +40,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
-# opt-in: set USE_S3=1 in backend/.env to store uploads in S3 like production;
-# any other value (0, false, empty) keeps local storage
-if os.environ.get("USE_S3") == "1":
-    STORAGES = {
-        "default": {"BACKEND": "storages.backends.s3.S3Storage"},
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
-        },
-    }
+# Set a dedicated development bucket to enable S3; otherwise use local storage.
+# Never fall back to the production bucket setting.
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_DEV_STORAGE_BUCKET_NAME", "").strip()
+if AWS_STORAGE_BUCKET_NAME:
+    STORAGES = S3_STORAGES

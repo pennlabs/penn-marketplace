@@ -51,18 +51,18 @@ export function ItemForm() {
     mutationFn: createListing,
     onSuccess: async (data) => {
       // images attach to an existing listing, so they upload after it's created.
-      // one request per file (in order) so we know which files fail. any failure
-      // rolls the listing back: no listing is published with missing images.
-      const failed: string[] = [];
-      for (const file of imageUpload.getFiles()) {
-        const formData = new FormData();
-        formData.append("images", file);
-        try {
+      // wait for every upload to settle before rolling back on any failure.
+      const files = imageUpload.getFiles();
+      const results = await Promise.allSettled(
+        files.map(async (file) => {
+          const formData = new FormData();
+          formData.append("images", file);
           await uploadListingImages(data.id, formData);
-        } catch {
-          failed.push(file.name);
-        }
-      }
+        })
+      );
+      const failed = files
+        .filter((_, index) => results[index].status === "rejected")
+        .map((file) => file.name);
 
       if (failed.length > 0) {
         failed.forEach((name) => toast.error(`The file "${name}" could not be uploaded.`));
