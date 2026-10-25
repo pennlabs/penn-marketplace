@@ -105,7 +105,7 @@ class BaseMarketTest(TestCase):
                     created_at=now(),
                     expires_at=sublet["expires_at"],
                     external_link=sublet["external_link"],
-                    address=sublet["address"],
+                    street_address=sublet["address"],
                     beds=sublet["beds"],
                     baths=sublet["baths"],
                     start_date=sublet["start_date"],
@@ -753,6 +753,74 @@ class TestItemDelete(BaseMarketTest):
         )
 
 
+class TestOfferOwnListing(BaseMarketTest):
+    def setUp(self):
+        super().setUp()
+        self.items = self.load_items("tests/market/self_user_items.json", self.users[0])
+        self.users[0].phone_number = "+12155550100"
+        self.users[0].phone_verified = True
+        self.users[0].save()
+
+    def test_create_offer_on_own_listing(self):
+        response = self.client.post(
+            f"/market/listings/{self.items[0].id}/offers/",
+            {"offered_price": 50},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Offer.objects.filter(listing=self.items[0]).exists())
+
+
+class TestOfferStatus(BaseMarketTest):
+    def setUp(self):
+        super().setUp()
+        self.item = self.load_items("tests/market/self_user_items.json", self.users[0])[
+            0
+        ]
+        buyer2 = self.load_user("buyer2", "buyer2@gmail.com", "buyer2", False, False)
+        self.offers = [
+            Offer.objects.create(user=u, listing=self.item, offered_price=10)
+            for u in (self.users[1], buyer2)
+        ]
+
+    def set_status(self, offer, status):
+        return self.client.patch(
+            f"/market/offers/{offer.id}/status/", {"status": status}, format="json"
+        )
+
+    def test_only_one_accepted_offer_per_listing(self):
+        self.assertEqual(self.set_status(self.offers[0], "accepted").status_code, 200)
+        self.assertEqual(self.set_status(self.offers[1], "accepted").status_code, 400)
+        self.assertEqual(
+            Offer.objects.filter(listing=self.item, status="accepted").count(), 1
+        )
+
+    def test_revert_accepted_then_accept_another(self):
+        self.set_status(self.offers[0], "accepted")
+        self.assertEqual(self.set_status(self.offers[0], "pending").status_code, 200)
+        self.assertEqual(self.set_status(self.offers[1], "accepted").status_code, 200)
+        self.assertEqual(self.set_status(self.offers[1], "rejected").status_code, 200)
+        self.assertEqual(self.set_status(self.offers[0], "accepted").status_code, 200)
+
+    def test_revert_rejected_offer_to_pending(self):
+        self.assertEqual(self.set_status(self.offers[0], "rejected").status_code, 200)
+        response = self.set_status(self.offers[0], "pending")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "pending")
+        self.offers[0].refresh_from_db()
+        self.assertEqual(self.offers[0].status, "pending")
+
+    def test_buyer_cannot_revert_rejected_offer(self):
+        self.set_status(self.offers[0], "rejected")
+        self.client.force_authenticate(self.users[1])
+        self.assertEqual(self.set_status(self.offers[0], "pending").status_code, 403)
+        self.offers[0].refresh_from_db()
+        self.assertEqual(self.offers[0].status, "rejected")
+
+    def test_invalid_status(self):
+        self.assertEqual(self.set_status(self.offers[0], "sold").status_code, 400)
+
+
 class TestSubletGet(BaseMarketTest):
     def setUp(self):
         super().setUp()
@@ -1369,7 +1437,8 @@ class TestOffer(BaseMarketTest):
     def test_delete_offer(self):
         self.assertTrue(Offer.objects.filter(id=self.offers[0].id).exists())
         response = self.client.delete(f"/market/listings/{self.items[1].id}/offers/")
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"deleted": True})
         self.assertFalse(Offer.objects.filter(id=self.offers[0].id).exists())
 
     def test_delete_offer_nonexistent(self):

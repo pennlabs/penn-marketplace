@@ -13,41 +13,47 @@ import { AddressAutocomplete } from "@/components/listings/address/AddressAutoco
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing } from "@/lib/actions";
+import { createListing, updateListing } from "@/lib/actions";
+import { queryKeys } from "@/lib/queryKeys";
 import { BEDS_OPTIONS, BATHS_OPTIONS } from "@/lib/constants";
 import { parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
-import type { CreateSubletPayload } from "@/lib/types";
+import type { CreateSubletPayload, Sublet, UpdateSubletPayload } from "@/lib/types";
 import type { CreateSubletFormData } from "@/lib/validations";
 
 const DISPLAY_LABEL = "Listing";
 const EXAMPLE_TITLE = "e.g., Spacious 2BR near campus";
 
-export function SubletForm() {
+type SubletFormProps = {
+  initialListing?: Sublet;
+};
+
+export function SubletForm({ initialListing }: SubletFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const isEditMode = Boolean(initialListing);
 
   const {
     control,
     handleSubmit,
     reset,
-    formState: { errors, touchedFields, isDirty, isSubmitting },
+    formState: { errors, touchedFields, dirtyFields, isDirty, isSubmitting },
   } = useForm<CreateSubletFormData>({
     resolver: zodResolver(createSubletSchema),
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: {
-      title: "",
-      price: "",
-      description: "",
+      title: initialListing?.title ?? "",
+      price: initialListing ? String(initialListing.price) : "",
+      description: initialListing?.description ?? "",
       tags: [],
-      street_address: "",
-      latitude: 0,
-      longitude: 0,
-      beds: 0,
-      baths: 0,
-      startDate: "",
-      endDate: "",
+      street_address: initialListing?.additional_data.street_address ?? "",
+      latitude: initialListing?.additional_data.latitude ?? 0,
+      longitude: initialListing?.additional_data.longitude ?? 0,
+      beds: initialListing?.additional_data.beds ?? 0,
+      baths: initialListing?.additional_data.baths ?? 0,
+      startDate: initialListing?.additional_data.start_date?.slice(0, 10) ?? "",
+      endDate: initialListing?.additional_data.end_date?.slice(0, 10) ?? "",
     },
   });
 
@@ -55,35 +61,56 @@ export function SubletForm() {
     maxFiles: 10,
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
+    initialImages: initialListing?.images,
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: createListing,
+    mutationFn: (payload: CreateSubletPayload | UpdateSubletPayload) =>
+      isEditMode && initialListing
+        ? updateListing(initialListing.id, payload as UpdateSubletPayload)
+        : createListing(payload as CreateSubletPayload),
     onSuccess: (data) => {
-      toast.success(`${DISPLAY_LABEL} created successfully!`);
+      toast.success(`${DISPLAY_LABEL} ${isEditMode ? "updated" : "created"} successfully!`);
+      if (isEditMode && initialListing) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.listing(initialListing.id) });
+      }
       queryClient.invalidateQueries({ queryKey: ["sublets"] });
-      reset();
-      imageUpload.clearImages();
+      if (!isEditMode) {
+        reset();
+        imageUpload.clearImages();
+      }
       router.replace(`/sublets/${data.id}`);
     },
   });
 
   const onSubmit = (data: CreateSubletFormData) => {
-    const payload: CreateSubletPayload = {
-      title: data.title,
-      description: data.description,
-      price: String(parsePriceString(data.price)),
-      listing_type: "sublet",
-      additional_data: {
-        street_address: data.street_address,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        beds: data.beds,
-        baths: data.baths,
-        start_date: data.startDate,
-        end_date: data.endDate,
-      },
+    const parsedPrice = parsePriceString(data.price);
+    const additional_data = {
+      street_address: data.street_address,
+      beds: data.beds,
+      baths: data.baths,
+      start_date: data.startDate,
+      end_date: data.endDate,
     };
+    const coords = { latitude: data.latitude, longitude: data.longitude };
+    // edit form is prefilled with the backend's approximate coords; only send them
+    // after a fresh address selection, else the stored exact location drifts on save
+    const addressChanged = dirtyFields.latitude || dirtyFields.longitude;
+    const payload: CreateSubletPayload | UpdateSubletPayload = isEditMode
+      ? {
+          title: data.title,
+          description: data.description ?? "",
+          price: parsedPrice,
+          listing_type: "sublet",
+          additional_data: addressChanged ? { ...additional_data, ...coords } : additional_data,
+        }
+      : {
+          title: data.title,
+          description: data.description ?? "",
+          price: String(parsedPrice),
+          listing_type: "sublet",
+          additional_data: { ...additional_data, ...coords },
+        };
     mutate(payload);
   };
 
@@ -225,6 +252,8 @@ export function SubletForm() {
       isPending={isPending}
       displayLabel={DISPLAY_LABEL}
       imageUpload={imageUpload}
+      submitLabel={isEditMode ? "Save Changes" : undefined}
+      pendingLabel={isEditMode ? "Saving..." : undefined}
     >
       <BaseListingForm<CreateSubletFormData>
         control={control}

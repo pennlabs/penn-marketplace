@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
 import { Heart } from "lucide-react";
-import { Item, Sublet } from "@/lib/types";
+import { Item, Offer, PaginatedResponse, Sublet } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
@@ -14,21 +14,31 @@ import { ListingMetadata } from "@/components/listings/detail/ListingMetadata";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import { ShareButton } from "@/components/listings/detail/ShareButton";
 import { SubletMap } from "@/components/listings/detail/SubletMap";
+import { OffersPanel } from "@/components/listings/offer/OffersPanel";
 
 interface Props {
   listingId: number;
+  isOwner: boolean;
+  offersReceived: PaginatedResponse<Offer> | null;
+  myOfferGiven?: Offer | null;
 }
 
 const ICON_BUTTON_CLASS =
   "flex size-10 cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white transition-colors hover:bg-gray-50";
 
-export const ListingDetail = ({ listingId }: Props) => {
+export const ListingDetail = ({
+  listingId,
+  isOwner,
+  offersReceived,
+  myOfferGiven = null,
+}: Props) => {
   const queryClient = useQueryClient();
   const queryKey = queryKeys.listing(listingId);
 
   const { data: listing } = useQuery({
     queryKey,
     queryFn: () => getListing(String(listingId)),
+    staleTime: 30_000,
   });
 
   const isFavorited = listing?.is_favorited ?? false;
@@ -98,7 +108,7 @@ export const ListingDetail = ({ listingId }: Props) => {
         </div>
       </div>
 
-      <ListingImageGallery images={listing.images} />
+      <ListingImageGallery images={listing.images.map((img) => img.image_url)} />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:gap-x-8 md:gap-y-6">
         <h1 className="text-2xl font-bold break-words md:text-4xl">{listing.title}</h1>
@@ -111,13 +121,23 @@ export const ListingDetail = ({ listingId }: Props) => {
         </div>
         <div className="md:justify-self-end">
           <ListingActions
-            listingId={listing.id}
+            listing={listing}
             listingPrice={listing.price}
             priceLabel={priceLabel}
             listingOwnerLabel={listingOwnerLabel}
+            isOwner={isOwner}
+            initialMyOffer={myOfferGiven}
           />
         </div>
       </div>
+
+      <OffersPanel
+        key={listing.id}
+        isOwner={isOwner}
+        offersReceived={offersReceived}
+        myOfferGiven={myOfferGiven}
+        listingId={listing.id}
+      />
 
       <hr className="border-gray-200" />
 

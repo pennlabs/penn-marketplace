@@ -14,6 +14,8 @@ export type User = {
   first_name: string;
   last_name: string;
   email: string;
+  phone_number: string | null;
+  phone_verified: boolean;
 };
 
 // ------------------------------------------------------------
@@ -112,6 +114,11 @@ export type ValidatedAddress = {
 // ------------------------------------------------------------
 // base listing fields (shared by all listings)
 // ------------------------------------------------------------
+export type ListingImage = {
+  id: number;
+  image_url: string;
+};
+
 type BaseListing = {
   id: number;
   title: string;
@@ -121,7 +128,7 @@ type BaseListing = {
   negotiable: boolean;
   created_at: string;
   expires_at: string;
-  images: string[];
+  images: ListingImage[];
   tags: string[];
   favorite_count: number;
   is_favorited?: boolean;
@@ -149,6 +156,18 @@ export type Sublet = BaseListing & {
 // ------------------------------------------------------------
 export type Listing = Item | Sublet;
 export type ListingTypes = "items" | "sublets";
+
+export type OfferStatus = "pending" | "accepted" | "rejected";
+
+export type Offer = {
+  id: number;
+  user: User;
+  listing: number;
+  offered_price: number;
+  message: string | null;
+  status: OfferStatus;
+  created_at: string;
+};
 
 // ------------------------------------------------------------
 // api responses
@@ -221,3 +240,25 @@ export type CreateSubletPayload = BaseCreatePayload & {
   listing_type: "sublet";
   additional_data: SubletAdditionalData;
 };
+
+// ------------------------------------------------------------
+// update payload types
+// ------------------------------------------------------------
+type BaseUpdatePayload = {
+  title?: string;
+  description?: string;
+  price?: number;
+  expires_at?: string;
+};
+
+export type UpdateItemPayload = BaseUpdatePayload & {
+  listing_type: "item";
+  additional_data?: Partial<ItemAdditionalData>;
+};
+
+export type UpdateSubletPayload = BaseUpdatePayload & {
+  listing_type: "sublet";
+  additional_data?: Partial<SubletAdditionalData>;
+};
+
+export type UpdateListingPayload = UpdateItemPayload | UpdateSubletPayload;

@@ -2,6 +2,7 @@
 
 import { notFound, redirect } from "next/navigation";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
+import { OFFERS_PAGE_SIZE } from "@/constants/offers";
 import { clearAuthCookies, getTokensFromCookies } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
@@ -10,8 +11,10 @@ import {
   CreateSubletPayload,
   Item,
   Listing,
+  Offer,
   PaginatedResponse,
   Sublet,
+  UpdateListingPayload,
   User,
 } from "@/lib/types";
 
@@ -95,7 +98,8 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
 
     throw new APIError(errorMessage, response.status);
   }
-
+  // 204 No Content (e.g. DELETE) has no body to parse
+  if (response.status === 204) return undefined as T;
   return response.json();
 }
 
@@ -206,13 +210,70 @@ export async function createOffer({
   listingId: number;
   offeredPrice: number;
   message?: string;
-}) {
-  return await serverFetch(`/market/listings/${listingId}/offers/`, {
+}): Promise<Offer> {
+  return await serverFetch<Offer>(`/market/listings/${listingId}/offers/`, {
     method: "POST",
     body: JSON.stringify({
       offered_price: offeredPrice,
       message,
     }),
+  });
+}
+
+export async function getOffersMade() {
+  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/made/");
+}
+
+export async function getOffersReceived() {
+  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
+}
+
+export async function getOffersReceivedForListing(listingId: number, page = 1) {
+  const params = new URLSearchParams({
+    limit: String(OFFERS_PAGE_SIZE),
+    offset: String((page - 1) * OFFERS_PAGE_SIZE),
+  });
+  return await serverFetch<PaginatedResponse<Offer>>(
+    `/market/listings/${listingId}/offers/?${params}`
+  );
+}
+
+export async function changeOfferStatus(offerId: number, status: Offer["status"]) {
+  return await serverFetch<Offer>(`/market/offers/${offerId}/status/`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+// ------------------------------------------------------------
+// offers: current user's offer for a listing
+// ------------------------------------------------------------
+export async function getMyOfferForListing(listingId: number): Promise<Offer | null> {
+  try {
+    return await serverFetch<Offer>(`/market/listings/${listingId}/offers/mine/`);
+  } catch (error) {
+    // the endpoint 404s when the user hasn't made an offer, which isn't an error here
+    if (error instanceof APIError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+export async function updateMyOfferDetails(
+  offerId: number,
+  payload: { offeredPrice: number; message?: string }
+): Promise<Offer> {
+  return await serverFetch<Offer>(`/market/offers/${offerId}/details/`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      offered_price: payload.offeredPrice,
+      message: payload.message?.trim() || "",
+    }),
+  });
+}
+
+export async function deleteMyOfferForListing(listingId: number): Promise<{ deleted: boolean }> {
+  return await serverFetch<{ deleted: boolean }>(`/market/listings/${listingId}/offers/`, {
+    method: "DELETE",
   });
 }
 
@@ -268,5 +329,21 @@ export async function createListing(payload: CreateListingPayload): Promise<List
   return await serverFetch<Listing>("/market/listings/", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function updateListing(
+  listingId: number,
+  payload: UpdateListingPayload
+): Promise<Listing> {
+  return await serverFetch<Listing>(`/market/listings/${listingId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteListing(listingId: number): Promise<void> {
+  return await serverFetch<void>(`/market/listings/${listingId}/`, {
+    method: "DELETE",
   });
 }

@@ -4,8 +4,10 @@
 .env*.local
 
 # Python
+**/__pycache__/
 __pycache__/
 *.py[cod]
+*.pyc
 *.pyo
 *.pyd
 .Python
@@ -23,6 +25,7 @@ venv/
 *.sqlite3
 staticfiles/
 media/
+/backend/uploads/
 
 # Node/pnpm
 node_modules/

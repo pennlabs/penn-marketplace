@@ -46,12 +46,76 @@ class OfferSerializer(ModelSerializer):
 
     class Meta:
         model = Offer
-        fields = ["id", "user", "listing", "offered_price", "message", "created_at"]
-        read_only_fields = ["id", "created_at", "user"]
+        fields = [
+            "id",
+            "user",
+            "listing",
+            "offered_price",
+            "message",
+            "status",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "user", "status"]
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class OfferStatusSerializer(ModelSerializer):
+    class Meta:
+        model = Offer
+        fields = ["id", "status"]
+        read_only_fields = ["id"]
+
+    # any transition is allowed (e.g. accepted -> pending/rejected to revert), but a
+    # listing can have only one accepted offer; the DB constraint covers races
+    def validate_status(self, value):
+        if (
+            value == Offer.Status.ACCEPTED
+            and Offer.objects.filter(
+                listing_id=self.instance.listing_id, status=Offer.Status.ACCEPTED
+            )
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                "This listing already has an accepted offer. "
+                "Revert or reject it before accepting another."
+            )
+        return value
+
+
+class OfferDetailsSerializer(ModelSerializer):
+    """
+    Allows the offer owner to edit the offer's offered_price and message.
+    Status is intentionally read-only (managed by the listing owner).
+    """
+
+    class Meta:
+        model = Offer
+        fields = ["id", "offered_price", "message", "status"]
+        read_only_fields = ["id", "status"]
+
+    def validate(self, attrs):
+        if self.instance and self.instance.status != Offer.Status.PENDING:
+            state = self.instance.get_status_display().lower()
+            raise ValidationError(
+                f"This offer has already been {state} and can no longer be edited."
+            )
+        return attrs
+
+    def update(self, instance, validated_data):
+        # Update only editable fields, and check status in the write itself.
+        # A stale pending instance must never undo a seller's decision.
+        if validated_data and not Offer.objects.filter(
+            pk=instance.pk, status=Offer.Status.PENDING
+        ).update(**validated_data):
+            raise ValidationError(
+                "This offer is no longer pending and cannot be edited."
+            )
+        instance.refresh_from_db()
+        return instance
 
 
 # Create/Update Image Serializer
@@ -145,7 +209,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         },
     }
 
-    images = ListingImageSerializer(many=True, required=False, read_only=True)
+    images = ListingImageURLSerializer(many=True, read_only=True)
     tags = SlugRelatedField(
         many=True,
         slug_field="name",

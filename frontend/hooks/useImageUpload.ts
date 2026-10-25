@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ListingImage } from "@/lib/types";
 
 export type ImageFile = {
   file: File;
@@ -15,6 +16,7 @@ type UseImageUploadOptions = {
   maxSizeBytes?: number;
   acceptedTypes?: string[];
   onError?: (message: string) => void;
+  initialImages?: ListingImage[];
 };
 
 const DEFAULT_MAX_FILES = 10;
@@ -26,8 +28,17 @@ export function useImageUpload({
   maxSizeBytes = DEFAULT_MAX_SIZE,
   acceptedTypes = DEFAULT_ACCEPTED_TYPES,
   onError,
+  initialImages = [],
 }: UseImageUploadOptions = {}) {
-  const [images, setImages] = useState<ImageFile[]>([]);
+  const [images, setImages] = useState<ImageFile[]>(() =>
+    initialImages.map((img) => ({
+      file: new File([], `existing-image-${img.id}.jpg`, { type: "image/jpeg" }),
+      // keep the backend id so existing images can be deleted/reordered later
+      id: String(img.id),
+      preview: img.image_url,
+      status: "uploaded",
+    }))
+  );
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 

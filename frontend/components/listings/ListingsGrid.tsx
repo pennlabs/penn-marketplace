@@ -37,8 +37,7 @@ export const ListingsGrid = ({ type, currentUser }: Props) => {
             {data?.pages.map((group, i) => (
               <React.Fragment key={i}>
                 {group.results.map((post) => {
-                  const previewImageUrl =
-                    post.images && post.images.length > 0 ? post.images[0] : undefined;
+                  const previewImageUrl = post.images?.[0]?.image_url;
 
                   return (
                     <ListingsCard
