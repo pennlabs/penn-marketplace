@@ -802,6 +802,21 @@ class TestOfferStatus(BaseMarketTest):
         self.assertEqual(self.set_status(self.offers[1], "rejected").status_code, 200)
         self.assertEqual(self.set_status(self.offers[0], "accepted").status_code, 200)
 
+    def test_revert_rejected_offer_to_pending(self):
+        self.assertEqual(self.set_status(self.offers[0], "rejected").status_code, 200)
+        response = self.set_status(self.offers[0], "pending")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "pending")
+        self.offers[0].refresh_from_db()
+        self.assertEqual(self.offers[0].status, "pending")
+
+    def test_buyer_cannot_revert_rejected_offer(self):
+        self.set_status(self.offers[0], "rejected")
+        self.client.force_authenticate(self.users[1])
+        self.assertEqual(self.set_status(self.offers[0], "pending").status_code, 403)
+        self.offers[0].refresh_from_db()
+        self.assertEqual(self.offers[0].status, "rejected")
+
     def test_invalid_status(self):
         self.assertEqual(self.set_status(self.offers[0], "sold").status_code, 400)
 

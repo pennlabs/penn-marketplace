@@ -13,7 +13,6 @@ export default async function SubletPage({ params }: { params: Promise<{ id: str
   const [sublet, currentUser] = await Promise.all([getListingOrNotFound(id), getCurrentUser()]);
   const isOwner = currentUser?.id === sublet.seller.id;
   const offersReceivedResponse = isOwner ? await getOffersReceivedForListing(sublet.id) : null;
-  const offersReceived = offersReceivedResponse?.results ?? [];
   const myOfferGiven = !isOwner ? await getMyOfferForListing(sublet.id) : null;
 
   // seed the cache with the already-fetched listing (no additional fetch).
@@ -25,7 +24,7 @@ export default async function SubletPage({ params }: { params: Promise<{ id: str
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ListingDetail
         listingId={sublet.id}
-        offersReceived={offersReceived}
+        offersReceived={offersReceivedResponse}
         isOwner={isOwner}
         myOfferGiven={myOfferGiven}
       />

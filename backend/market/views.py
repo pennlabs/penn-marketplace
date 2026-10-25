@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
@@ -71,7 +72,7 @@ class OffersMade(ListAPIView, DefaultOrderMixin):
 
     def get_queryset(self):
         user = self.request.user
-        return Offer.objects.filter(user=user)
+        return Offer.objects.filter(user=user).select_related("user")
 
 
 class OffersReceived(ListAPIView, DefaultOrderMixin):
@@ -81,7 +82,7 @@ class OffersReceived(ListAPIView, DefaultOrderMixin):
 
     def get_queryset(self):
         user = self.request.user
-        return Offer.objects.filter(listing__seller=user)
+        return Offer.objects.filter(listing__seller=user).select_related("user")
 
 
 class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
@@ -320,9 +321,11 @@ class Offers(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
-            return Offer.objects.filter(
-                listing_id=int(self.kwargs["listing_id"])
-            ).order_by("created_at")
+            return (
+                Offer.objects.filter(listing_id=int(self.kwargs["listing_id"]))
+                .select_related("user")
+                .order_by("created_at", "id")
+            )
         else:
             raise exceptions.NotFound("No Listing matches the given query")
 
@@ -366,38 +369,41 @@ class Offers(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
-class OfferStatusUpdate(UpdateAPIView):
+class LockedOfferUpdate(UpdateAPIView):
+    """Serialize status and detail edits against the same listing and offer."""
+
+    queryset = Offer.objects.select_related("user", "listing__seller")
+    lookup_url_kwarg = "offer_id"
+    http_method_names = ["patch"]
+
+    @transaction.atomic
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Lock the parent first so two offers on the same listing cannot both
+        # pass acceptance validation. Re-read the offer after obtaining the lock.
+        get_object_or_404(Listing.objects.select_for_update(), pk=instance.listing_id)
+        instance = get_object_or_404(
+            self.get_queryset().select_for_update(of=("self",)), pk=instance.pk
+        )
+        self.check_object_permissions(request, instance)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(OfferSerializer(serializer.instance).data)
+
+
+class OfferStatusUpdate(LockedOfferUpdate):
     """Allow the listing seller (or superuser) to update an offer's status (PATCH)."""
 
-    queryset = Offer.objects.all()
     serializer_class = OfferStatusSerializer
     permission_classes = [ListingOwnerOffersPermission | IsSuperUser]
-    lookup_url_kwarg = "offer_id"
-    http_method_names = ["patch"]
-
-    def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(OfferSerializer(instance).data)
 
 
-class OfferDetailsUpdate(UpdateAPIView):
+class OfferDetailsUpdate(LockedOfferUpdate):
     """Offer owner (or superuser) may PATCH offered_price and message."""
 
-    queryset = Offer.objects.all()
     serializer_class = OfferDetailsSerializer
     permission_classes = [OfferOwnerPermission | IsSuperUser]
-    lookup_url_kwarg = "offer_id"
-    http_method_names = ["patch"]
-
-    def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(OfferSerializer(instance).data)
 
 
 class MyOfferForListing(RetrieveAPIView):
@@ -407,10 +413,14 @@ class MyOfferForListing(RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        offer = Offer.objects.filter(
-            listing_id=self.kwargs["listing_id"],
-            user=self.request.user,
-        ).first()
+        offer = (
+            Offer.objects.select_related("user")
+            .filter(
+                listing_id=self.kwargs["listing_id"],
+                user=self.request.user,
+            )
+            .first()
+        )
         if offer is None:
             raise exceptions.NotFound("No offer for this listing")
         return offer

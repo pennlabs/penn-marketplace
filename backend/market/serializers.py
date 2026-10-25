@@ -105,6 +105,18 @@ class OfferDetailsSerializer(ModelSerializer):
             )
         return attrs
 
+    def update(self, instance, validated_data):
+        # Update only editable fields, and check status in the write itself.
+        # A stale pending instance must never undo a seller's decision.
+        if validated_data and not Offer.objects.filter(
+            pk=instance.pk, status=Offer.Status.PENDING
+        ).update(**validated_data):
+            raise ValidationError(
+                "This offer is no longer pending and cannot be edited."
+            )
+        instance.refresh_from_db()
+        return instance
+
 
 # Create/Update Image Serializer
 class ListingImageSerializer(ModelSerializer):

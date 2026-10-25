@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Offer } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Offer, PaginatedResponse } from "@/lib/types";
+import { OFFERS_PAGE_SIZE } from "@/constants/offers";
+import { queryKeys } from "@/lib/queryKeys";
 import { OfferCard } from "@/components/listings/offer/OfferCard";
 import { EditMyOfferModal } from "@/components/listings/offer/EditMyOfferModal";
 import {
@@ -27,31 +30,45 @@ export const OffersPanel = ({
   listingId,
 }: {
   isOwner: boolean;
-  offersReceived: Offer[];
+  offersReceived: PaginatedResponse<Offer> | null;
   myOfferGiven: Offer | null;
   listingId: number;
 }) => {
   const [isEditOfferOpen, setIsEditOfferOpen] = useState(false);
   const [isDeleteOfferOpen, setIsDeleteOfferOpen] = useState(false);
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const { data: myOffer } = useQuery({
     queryKey: ["myOffer", listingId],
     queryFn: () => getMyOfferForListing(listingId),
     enabled: !isOwner,
     initialData: myOfferGiven,
+    staleTime: 30_000,
   });
 
-  const { data: offersReceived } = useQuery({
-    queryKey: ["offersReceived", listingId],
-    queryFn: async () => (await getOffersReceivedForListing(listingId)).results,
+  const {
+    data: offersReceived,
+    isPending: isLoadingOffers,
+    isFetching: isFetchingOffers,
+    error: offersError,
+    refetch: refetchOffers,
+  } = useQuery({
+    queryKey: queryKeys.offersReceivedPage(listingId, page),
+    queryFn: () => getOffersReceivedForListing(listingId, page),
     enabled: isOwner,
-    initialData: initialOffersReceived,
+    initialData: page === 1 ? (initialOffersReceived ?? undefined) : undefined,
     // the server just rendered this list; don't immediately refetch it on mount
     staleTime: 30_000,
   });
 
+  const totalOffers = offersReceived?.count ?? initialOffersReceived?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalOffers / OFFERS_PAGE_SIZE));
+  useEffect(() => {
+    if (offersReceived && page > totalPages) setPage(totalPages);
+  }, [offersReceived, page, totalPages]);
+
   const handleStatusChange = () => {
-    queryClient.invalidateQueries({ queryKey: ["offersReceived", listingId] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.offersReceived(listingId) });
   };
 
   const deleteMyOfferMutation = useMutation({
@@ -95,7 +112,6 @@ export const OffersPanel = ({
           onClose={() => setIsEditOfferOpen(false)}
           offer={myOffer}
           onSaved={() => {
-            queryClient.invalidateQueries({ queryKey: ["myOffer", listingId] });
             setIsEditOfferOpen(false);
           }}
         />
@@ -129,13 +145,24 @@ export const OffersPanel = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" aria-busy={isFetchingOffers}>
       <h2 className="text-lg font-semibold">Offers received</h2>
-      {offersReceived.length === 0 ? (
+      {offersError ? (
+        <div className="flex items-center gap-3">
+          <p className="text-muted-foreground text-sm">Could not load offers.</p>
+          <Button variant="outline" size="sm" onClick={() => refetchOffers()}>
+            Try again
+          </Button>
+        </div>
+      ) : isLoadingOffers ? (
+        <p className="text-muted-foreground text-sm" role="status">
+          Loading offers...
+        </p>
+      ) : !offersReceived?.results.length ? (
         <p className="text-sm text-gray-500">No offers yet.</p>
       ) : (
         <div className="space-y-3">
-          {offersReceived.map((offer) => (
+          {offersReceived.results.map((offer) => (
             <OfferCard
               key={offer.id}
               variant="received"
@@ -144,6 +171,33 @@ export const OffersPanel = ({
             />
           ))}
         </div>
+      )}
+      {totalOffers > OFFERS_PAGE_SIZE && (
+        <nav aria-label="Offers pagination" className="flex items-center justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Previous offers"
+            disabled={page === 1 || isFetchingOffers}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+          >
+            <ChevronLeft aria-hidden="true" />
+          </Button>
+          <span className="text-muted-foreground text-sm" aria-live="polite">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Next offers"
+            disabled={page >= totalPages || isFetchingOffers}
+            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+          >
+            <ChevronRight aria-hidden="true" />
+          </Button>
+        </nav>
       )}
     </div>
   );

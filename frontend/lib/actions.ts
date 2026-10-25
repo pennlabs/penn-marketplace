@@ -2,6 +2,7 @@
 
 import { notFound, redirect } from "next/navigation";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
+import { OFFERS_PAGE_SIZE } from "@/constants/offers";
 import { clearAuthCookies, getTokensFromCookies } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
@@ -227,8 +228,14 @@ export async function getOffersReceived() {
   return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
 }
 
-export async function getOffersReceivedForListing(listingId: number) {
-  return await serverFetch<PaginatedResponse<Offer>>(`/market/listings/${listingId}/offers/`);
+export async function getOffersReceivedForListing(listingId: number, page = 1) {
+  const params = new URLSearchParams({
+    limit: String(OFFERS_PAGE_SIZE),
+    offset: String((page - 1) * OFFERS_PAGE_SIZE),
+  });
+  return await serverFetch<PaginatedResponse<Offer>>(
+    `/market/listings/${listingId}/offers/?${params}`
+  );
 }
 
 export async function changeOfferStatus(offerId: number, status: Offer["status"]) {

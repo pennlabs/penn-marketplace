@@ -13,7 +13,6 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
   const [item, currentUser] = await Promise.all([getListingOrNotFound(id), getCurrentUser()]);
   const isOwner = currentUser?.id === item.seller.id;
   const offersReceivedResponse = isOwner ? await getOffersReceivedForListing(item.id) : null;
-  const offersReceived = offersReceivedResponse?.results ?? [];
   const myOfferGiven = !isOwner ? await getMyOfferForListing(item.id) : null;
 
   // seed the cache with the already-fetched listing (no additional fetch).
@@ -25,7 +24,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ListingDetail
         listingId={item.id}
-        offersReceived={offersReceived}
+        offersReceived={offersReceivedResponse}
         isOwner={isOwner}
         myOfferGiven={myOfferGiven}
       />

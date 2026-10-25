@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { Check, Clock, Pencil, Star, Trash2, Undo2, X } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useSyncExternalStore } from "react";
+import { Check, Clock, Pencil, Phone, Star, Trash2, Undo2, X } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import type { Offer } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { changeOfferStatus } from "@/lib/actions";
@@ -21,12 +22,16 @@ const STATUS_BADGE_MINE: Record<Offer["status"], { label: string; className: str
   rejected: { label: "Rejected", className: "bg-red-100 text-red-700" },
 };
 
+const subscribeToClient = () => () => {};
+
 function useOfferLocalTime(createdAt: string) {
-  return useQuery({
-    queryKey: ["localDateTime", createdAt],
-    queryFn: () => formatServerDateTimeToLocal(createdAt),
-    staleTime: Infinity,
-  });
+  // Keep the server and initial hydration empty, then use the browser's timezone.
+  const isClient = useSyncExternalStore(
+    subscribeToClient,
+    () => true,
+    () => false
+  );
+  return isClient ? formatServerDateTimeToLocal(createdAt) : null;
 }
 
 function OfferCardHeader({
@@ -36,7 +41,7 @@ function OfferCardHeader({
 }: {
   offer: Offer;
   badge: { label: string; className: string } | undefined;
-  localCreatedAt: { date: string; time: string } | undefined;
+  localCreatedAt: { date: string; time: string } | null;
 }) {
   return (
     <div className="flex items-center justify-between">
@@ -62,7 +67,7 @@ type ReceivedProps = {
 };
 
 function OfferCardReceived({ offer, onStatusChange }: ReceivedProps) {
-  const { data: localCreatedAt } = useOfferLocalTime(offer.created_at);
+  const localCreatedAt = useOfferLocalTime(offer.created_at);
   const badge = STATUS_BADGE_RECEIVED[offer.status];
 
   const mutation = useMutation({
@@ -94,35 +99,42 @@ function OfferCardReceived({ offer, onStatusChange }: ReceivedProps) {
             </div>
           </div>
           {offer.message && <p className="mt-1.5 text-sm text-gray-500">{offer.message}</p>}
-          {offer.status !== "rejected" && (
-            <div className="mt-3 flex justify-end gap-2">
-              {offer.status === "pending" ? (
-                <Button
-                  size="sm"
-                  className="cursor-pointer bg-green-600 text-white hover:bg-green-700"
-                  onClick={() => mutation.mutate("accepted")}
-                  disabled={mutation.isPending}
-                >
-                  <Check className="mr-1 h-3.5 w-3.5" />
-                  {mutation.isPending && mutation.variables === "accepted"
-                    ? "Accepting..."
-                    : "Accept"}
-                </Button>
-              ) : (
-                // accepted offers can be reverted to pending or rejected
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="cursor-pointer"
-                  onClick={() => mutation.mutate("pending")}
-                  disabled={mutation.isPending}
-                >
-                  <Undo2 className="mr-1 h-3.5 w-3.5" />
-                  {mutation.isPending && mutation.variables === "pending"
-                    ? "Reverting..."
-                    : "Revert to pending"}
-                </Button>
-              )}
+          {offer.user.phone_number ? (
+            <p className="text-muted-foreground mt-2 inline-flex items-center gap-1.5 text-sm">
+              <Phone className="size-3.5" aria-hidden="true" />
+              {offer.user.phone_number}
+            </p>
+          ) : (
+            <p className="text-muted-foreground mt-2 text-sm">Phone number not provided.</p>
+          )}
+          <div className="mt-3 flex justify-end gap-2">
+            {offer.status === "pending" ? (
+              <Button
+                size="sm"
+                className="cursor-pointer bg-green-600 text-white hover:bg-green-700"
+                onClick={() => mutation.mutate("accepted")}
+                disabled={mutation.isPending}
+              >
+                <Check className="mr-1 h-3.5 w-3.5" />
+                {mutation.isPending && mutation.variables === "accepted"
+                  ? "Accepting..."
+                  : "Accept"}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => mutation.mutate("pending")}
+                disabled={mutation.isPending}
+              >
+                <Undo2 className="mr-1 h-3.5 w-3.5" />
+                {mutation.isPending && mutation.variables === "pending"
+                  ? "Reverting..."
+                  : "Revert to pending"}
+              </Button>
+            )}
+            {offer.status !== "rejected" && (
               <Button
                 size="sm"
                 className="cursor-pointer bg-red-500 text-white hover:bg-red-600"
@@ -134,8 +146,8 @@ function OfferCardReceived({ offer, onStatusChange }: ReceivedProps) {
                   ? "Rejecting..."
                   : "Reject"}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -149,7 +161,7 @@ type MineProps = {
 };
 
 function OfferCardMine({ offer, onEdit, onDelete }: MineProps) {
-  const { data: localCreatedAt } = useOfferLocalTime(offer.created_at);
+  const localCreatedAt = useOfferLocalTime(offer.created_at);
   const badge = STATUS_BADGE_MINE[offer.status];
 
   return (

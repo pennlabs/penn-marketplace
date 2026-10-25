@@ -49,6 +49,7 @@ export const ListingActions = ({
     queryFn: () => getMyOfferForListing(listing.id),
     enabled: !isOwner,
     initialData: initialMyOffer,
+    staleTime: 30_000,
   });
 
   if (isOwner) {

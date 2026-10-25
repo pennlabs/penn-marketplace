@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
 import { Heart } from "lucide-react";
-import { Item, Offer, Sublet } from "@/lib/types";
+import { Item, Offer, PaginatedResponse, Sublet } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
@@ -19,7 +19,7 @@ import { OffersPanel } from "@/components/listings/offer/OffersPanel";
 interface Props {
   listingId: number;
   isOwner: boolean;
-  offersReceived: Offer[];
+  offersReceived: PaginatedResponse<Offer> | null;
   myOfferGiven?: Offer | null;
 }
 
@@ -38,6 +38,7 @@ export const ListingDetail = ({
   const { data: listing } = useQuery({
     queryKey,
     queryFn: () => getListing(String(listingId)),
+    staleTime: 30_000,
   });
 
   const isFavorited = listing?.is_favorited ?? false;
@@ -131,6 +132,7 @@ export const ListingDetail = ({
       </div>
 
       <OffersPanel
+        key={listing.id}
         isOwner={isOwner}
         offersReceived={offersReceived}
         myOfferGiven={myOfferGiven}
