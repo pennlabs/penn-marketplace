@@ -7,12 +7,11 @@ import { NavbarActions } from "@/components/navbar/NavbarActions";
 import { NavTabs } from "@/components/navbar/NavTabs";
 import { cn } from "@/lib/utils";
 
-const ALL_LISTINGS_PAGES = ["/", "/items", "/sublets"] as const;
+const ALL_LISTINGS_PAGES = ["/items", "/sublets"] as const;
 
 type AllListingsPagePath = (typeof ALL_LISTINGS_PAGES)[number];
 
 const ALL_LISTINGS_PAGES_CONFIG: Record<AllListingsPagePath, { text: string; href: string }> = {
-  "/": { text: "New Item", href: "/create/item" },
   "/items": { text: "New Item", href: "/create/item" },
   "/sublets": { text: "New Sublet", href: "/create/sublet" },
 } as const;
