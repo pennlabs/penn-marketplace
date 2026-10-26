@@ -2,6 +2,8 @@ import { ReactNode } from "react";
 
 interface FormFieldProps {
   label: string;
+  /** id of the control the label belongs to */
+  htmlFor?: string;
   error?: string;
   touched?: boolean;
   optional?: boolean;
@@ -13,6 +15,7 @@ interface FormFieldProps {
 
 export const FormField = ({
   label,
+  htmlFor,
   error,
   touched = false,
   optional = false,
@@ -22,7 +25,7 @@ export const FormField = ({
 }: FormFieldProps) => {
   return (
     <div>
-      <label className="mb-2 flex items-center gap-1.5 text-sm font-medium">
+      <label htmlFor={htmlFor} className="mb-2 flex items-center gap-1.5 text-sm font-medium">
         <span>
           {label}
           {optional && <span className="font-normal text-gray-400"> (optional)</span>}

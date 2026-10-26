@@ -1,5 +1,4 @@
-import { DatePicker } from "@/components/filters/DatePicker";
-import { parseDateOnly, toDateOnlyString } from "@/lib/utils";
+import { DatePicker } from "@/components/common/DatePicker";
 
 interface Props {
   startDate?: string; // "YYYY-MM-DD"
@@ -19,19 +18,9 @@ export const DateRangeFields = ({
   showLabels = false,
 }: Props) => {
   const startPicker = (
-    <DatePicker
-      label="Start Date"
-      date={startDate ? parseDateOnly(startDate) : undefined}
-      onDateChange={(date) => onStartDateChange(date ? toDateOnlyString(date) : undefined)}
-    />
+    <DatePicker label="Start Date" value={startDate} onChange={onStartDateChange} />
   );
-  const endPicker = (
-    <DatePicker
-      label="End Date"
-      date={endDate ? parseDateOnly(endDate) : undefined}
-      onDateChange={(date) => onEndDateChange(date ? toDateOnlyString(date) : undefined)}
-    />
-  );
+  const endPicker = <DatePicker label="End Date" value={endDate} onChange={onEndDateChange} />;
 
   if (!showLabels) {
     return (

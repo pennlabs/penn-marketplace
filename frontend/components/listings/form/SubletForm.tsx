@@ -8,14 +8,14 @@ import { toast } from "sonner";
 import { Info } from "lucide-react";
 import { FormField } from "@/components/common/FormField";
 import { FormSelect } from "@/components/common/FormSelect";
-import { DatePicker } from "@/components/filters/DatePicker";
+import { DatePicker } from "@/components/common/DatePicker";
 import { AddressAutocomplete } from "@/components/listings/address/AddressAutocomplete";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { createListing } from "@/lib/actions";
 import { BEDS_OPTIONS, BATHS_OPTIONS } from "@/lib/constants";
-import { parseDateOnly, parsePriceString, toDateOnlyString } from "@/lib/utils";
+import { parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
 import type { CreateSubletPayload } from "@/lib/types";
 import type { CreateSubletFormData } from "@/lib/validations";
@@ -186,17 +186,19 @@ export function SubletForm() {
           render={({ field }) => (
             <FormField
               label="Start Date"
+              htmlFor="startDate"
               error={errors.startDate?.message}
               touched={touchedFields.startDate}
             >
               <DatePicker
-                label="Select date"
-                date={field.value ? parseDateOnly(field.value) : undefined}
-                onDateChange={(date) => {
-                  field.onChange(date ? toDateOnlyString(date) : "");
+                id="startDate"
+                label="Start Date"
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value ?? "");
                   field.onBlur();
                 }}
-                invalid={!!errors.startDate && touchedFields.startDate}
+                invalid={!!errors.startDate}
                 disabled={isFormDisabled}
               />
             </FormField>
@@ -208,17 +210,19 @@ export function SubletForm() {
           render={({ field }) => (
             <FormField
               label="End Date"
+              htmlFor="endDate"
               error={errors.endDate?.message}
               touched={touchedFields.endDate}
             >
               <DatePicker
-                label="Select date"
-                date={field.value ? parseDateOnly(field.value) : undefined}
-                onDateChange={(date) => {
-                  field.onChange(date ? toDateOnlyString(date) : "");
+                id="endDate"
+                label="End Date"
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value ?? "");
                   field.onBlur();
                 }}
-                invalid={!!errors.endDate && touchedFields.endDate}
+                invalid={!!errors.endDate}
                 disabled={isFormDisabled}
               />
             </FormField>
