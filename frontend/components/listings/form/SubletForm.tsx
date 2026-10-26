@@ -198,7 +198,7 @@ export function SubletForm() {
                   field.onChange(value ?? "");
                   field.onBlur();
                 }}
-                invalid={!!errors.startDate}
+                invalid={!!errors.startDate && touchedFields.startDate}
                 disabled={isFormDisabled}
               />
             </FormField>
@@ -222,7 +222,7 @@ export function SubletForm() {
                   field.onChange(value ?? "");
                   field.onBlur();
                 }}
-                invalid={!!errors.endDate}
+                invalid={!!errors.endDate && touchedFields.endDate}
                 disabled={isFormDisabled}
               />
             </FormField>
