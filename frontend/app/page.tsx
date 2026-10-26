@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getCurrentUser, getItems } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ItemFilters } from "@/components/filters/ItemFilters";
 import { ListingsGrid } from "@/components/listings/ListingsGrid";
+
+export const metadata: Metadata = { title: "Items" };
 
 export default async function ItemsPage() {
   const queryClient = new QueryClient();
