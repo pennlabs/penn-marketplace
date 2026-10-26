@@ -6,16 +6,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/FormField";
 import { FormSelect } from "@/components/common/FormSelect";
+import { DatePicker } from "@/components/filters/DatePicker";
 import { AddressAutocomplete } from "@/components/listings/address/AddressAutocomplete";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { createListing } from "@/lib/actions";
 import { BEDS_OPTIONS, BATHS_OPTIONS } from "@/lib/constants";
-import { parsePriceString } from "@/lib/utils";
+import { parseDateOnly, parsePriceString, toDateOnlyString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
 import type { CreateSubletPayload } from "@/lib/types";
 import type { CreateSubletFormData } from "@/lib/validations";
@@ -181,16 +181,22 @@ export function SubletForm() {
         <Controller
           name="startDate"
           control={control}
+          // re-check the end date error when the start date moves
+          rules={{ deps: "endDate" }}
           render={({ field }) => (
             <FormField
               label="Start Date"
               error={errors.startDate?.message}
               touched={touchedFields.startDate}
             >
-              <Input
-                {...field}
-                type="date"
-                aria-invalid={!!errors.startDate}
+              <DatePicker
+                label="Select date"
+                date={field.value ? parseDateOnly(field.value) : undefined}
+                onDateChange={(date) => {
+                  field.onChange(date ? toDateOnlyString(date) : "");
+                  field.onBlur();
+                }}
+                invalid={!!errors.startDate && touchedFields.startDate}
                 disabled={isFormDisabled}
               />
             </FormField>
@@ -205,10 +211,14 @@ export function SubletForm() {
               error={errors.endDate?.message}
               touched={touchedFields.endDate}
             >
-              <Input
-                {...field}
-                type="date"
-                aria-invalid={!!errors.endDate}
+              <DatePicker
+                label="Select date"
+                date={field.value ? parseDateOnly(field.value) : undefined}
+                onDateChange={(date) => {
+                  field.onChange(date ? toDateOnlyString(date) : "");
+                  field.onBlur();
+                }}
+                invalid={!!errors.endDate && touchedFields.endDate}
                 disabled={isFormDisabled}
               />
             </FormField>
