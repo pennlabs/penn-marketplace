@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { X, SlidersHorizontal } from "lucide-react";
 import { FilterBar } from "@/components/filters/FilterBar";
+import { DateRangeFields } from "@/components/filters/DateRangeFields";
 import { PriceRangeInput } from "@/components/filters/PriceRangeInput";
-import { DatePicker } from "@/components/filters/DatePicker";
 import { Select } from "@/components/filters/Select";
 import { Button } from "@/components/ui/button";
 import { BATHS_OPTIONS, BEDS_OPTIONS, SUBLET_FILTER_KEYS } from "@/lib/constants";
@@ -38,28 +38,16 @@ export const SubletFilters = () => {
     setIsMobileModalOpen(false);
   };
 
-  const toDateString = (date: Date | undefined) =>
-    date ? date.toISOString().split("T")[0] : undefined;
-
-  const startDate = filters.sublets.startDate ? new Date(filters.sublets.startDate) : undefined;
-  const endDate = filters.sublets.endDate ? new Date(filters.sublets.endDate) : undefined;
-  const tempStartDate = tempFilters.startDate ? new Date(tempFilters.startDate) : undefined;
-  const tempEndDate = tempFilters.endDate ? new Date(tempFilters.endDate) : undefined;
-
   return (
     <>
       {/* desktop view */}
       <div className="hidden md:block">
         <FilterBar>
-          <DatePicker
-            label="Start Date"
-            date={startDate}
-            onDateChange={(date) => updateFilter("sublets", "startDate", toDateString(date))}
-          />
-          <DatePicker
-            label="End Date"
-            date={endDate}
-            onDateChange={(date) => updateFilter("sublets", "endDate", toDateString(date))}
+          <DateRangeFields
+            startDate={filters.sublets.startDate}
+            endDate={filters.sublets.endDate}
+            onStartDateChange={(date) => updateFilter("sublets", "startDate", date)}
+            onEndDateChange={(date) => updateFilter("sublets", "endDate", date)}
           />
           <Select
             value={filters.sublets.numBeds || ""}
@@ -85,15 +73,11 @@ export const SubletFilters = () => {
       {/* mobile view */}
       <div className="flex items-center gap-2 md:hidden">
         <div className="flex flex-1 gap-2">
-          <DatePicker
-            label="Start Date"
-            date={startDate}
-            onDateChange={(date) => updateFilter("sublets", "startDate", toDateString(date))}
-          />
-          <DatePicker
-            label="End Date"
-            date={endDate}
-            onDateChange={(date) => updateFilter("sublets", "endDate", toDateString(date))}
+          <DateRangeFields
+            startDate={filters.sublets.startDate}
+            endDate={filters.sublets.endDate}
+            onStartDateChange={(date) => updateFilter("sublets", "startDate", date)}
+            onEndDateChange={(date) => updateFilter("sublets", "endDate", date)}
           />
         </div>
         <Button variant="outline" size="icon" onClick={handleOpenModal} aria-label="Open filters">
@@ -124,26 +108,13 @@ export const SubletFilters = () => {
 
             <div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto p-4">
               <div className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Start Date</label>
-                  <DatePicker
-                    label="Start Date"
-                    date={tempStartDate}
-                    onDateChange={(date) =>
-                      setTempFilters({ ...tempFilters, startDate: toDateString(date) })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">End Date</label>
-                  <DatePicker
-                    label="End Date"
-                    date={tempEndDate}
-                    onDateChange={(date) =>
-                      setTempFilters({ ...tempFilters, endDate: toDateString(date) })
-                    }
-                  />
-                </div>
+                <DateRangeFields
+                  startDate={tempFilters.startDate}
+                  endDate={tempFilters.endDate}
+                  onStartDateChange={(date) => setTempFilters({ ...tempFilters, startDate: date })}
+                  onEndDateChange={(date) => setTempFilters({ ...tempFilters, endDate: date })}
+                  showLabels
+                />
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
                     Number of Beds

@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { format } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -23,6 +24,18 @@ export function parsePriceString(price: string): number {
 const DISPLAY_TIME_ZONE = "America/New_York";
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+// "2026-09-15" -> local midnight on Sep 15. new Date("2026-09-15") would be UTC midnight,
+// which is still Sep 14 in US time zones
+export function parseDateOnly(dateString: string): Date {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+// local calendar date -> "2026-09-15". toISOString converts to UTC first, which can change the day
+export function toDateOnlyString(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
+
 /**
  * format a date for display, "Sep 15" by default (pass options for other formats).
  * - date-only strings ("2026-09-15", e.g. sublet dates) are calendar dates, so they're parsed as
@@ -34,8 +47,7 @@ export function formatDate(
   options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
 ) {
   if (DATE_ONLY_PATTERN.test(dateString)) {
-    const [year, month, day] = dateString.split("-").map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString("en-US", options);
+    return parseDateOnly(dateString).toLocaleDateString("en-US", options);
   }
   return new Date(dateString).toLocaleDateString("en-US", {
     ...options,
