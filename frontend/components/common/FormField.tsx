@@ -2,13 +2,11 @@ import { ReactNode } from "react";
 
 interface FormFieldProps {
   label: string;
-  /** id of the control the label belongs to */
   htmlFor?: string;
   error?: string;
   touched?: boolean;
   optional?: boolean;
   helperText?: string;
-  /** Rendered next to the label (e.g. info icon with hover message) */
   labelSupplement?: ReactNode;
   children: ReactNode;
 }

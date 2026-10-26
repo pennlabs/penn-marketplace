@@ -25,8 +25,6 @@ export const DatePicker = ({ label, value, onChange, invalid, disabled, id }: Pr
 
   return (
     <div className="relative flex-1">
-      {/* both are rendered and CSS picks by pointer type (no JS media query, so no hydration mismatch):
-          touch devices get the native input and the OS date wheel, mouse/trackpad gets the calendar */}
       <Input
         type="date"
         id={id}
@@ -51,7 +49,6 @@ export const DatePicker = ({ label, value, onChange, invalid, disabled, id }: Pr
             </Button>
           </PopoverTrigger>
           <CalendarIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 z-10 h-5 w-5 -translate-y-1/2 transform" />
-          {/* let the calendar focus the selected day (or today) instead of the first button */}
           <PopoverContent
             align="start"
             className="w-auto p-0"
@@ -70,8 +67,6 @@ export const DatePicker = ({ label, value, onChange, invalid, disabled, id }: Pr
           </PopoverContent>
         </Popover>
       </div>
-      {/* shared by both branches; iOS's date UI has no clear control. On touch it sits left of the
-          native picker icon some browsers draw */}
       {value && !disabled && (
         <Button
           type="button"
