@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getCurrentUser, getSublets } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
 import { PageHeader } from "@/components/common/PageHeader";
 import { SubletFilters } from "@/components/filters/SubletFilters";
 import { ListingsGrid } from "@/components/listings/ListingsGrid";
+
+export const metadata: Metadata = { title: "Sublets" };
 
 export default async function SubletsPage() {
   const queryClient = new QueryClient();

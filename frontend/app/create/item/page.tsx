@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import { ItemForm } from "@/components/listings/form/ItemForm";
+
+export const metadata: Metadata = { title: "New Item" };
 
 export default function CreateItemPage() {
   return (
