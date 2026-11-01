@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError as ModelValidationError
 from profanity_check import predict
 from rest_framework.serializers import (
     BooleanField,
+    CharField,
     DateTimeField,
     ImageField,
     ModelSerializer,
@@ -152,10 +153,11 @@ class ListingImageURLSerializer(ModelSerializer):
 class ItemDataSerializer(ModelSerializer):
     category = SlugRelatedField(slug_field="name", read_only=True)
     condition = SerializerMethodField()
+    condition_code = CharField(source="condition", read_only=True)
 
     class Meta:
         model = Item
-        fields = ["condition", "category"]
+        fields = ["condition", "condition_code", "category"]
 
     def get_condition(self, obj):
         return obj.get_condition_display()

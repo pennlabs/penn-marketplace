@@ -140,7 +140,11 @@ type BaseListing = {
 // ------------------------------------------------------------
 export type Item = BaseListing & {
   listing_type: "item";
-  additional_data: ItemAdditionalData;
+  additional_data: {
+    condition: string;
+    condition_code: ItemCondition;
+    category: ItemCategory;
+  };
 };
 
 // ------------------------------------------------------------

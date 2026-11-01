@@ -11,6 +11,7 @@ import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { createListing, updateListing } from "@/lib/actions";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/lib/constants";
+import { queryKeys } from "@/lib/queryKeys";
 import { parsePriceString } from "@/lib/utils";
 import { type CreateItemFormData, createItemSchema } from "@/lib/validations";
 import type { CreateItemPayload, Item, UpdateItemPayload } from "@/lib/types";
@@ -41,7 +42,7 @@ export function ItemForm({ initialListing }: ItemFormProps) {
       price: initialListing ? String(initialListing.price) : "",
       description: initialListing?.description ?? "",
       tags: [],
-      condition: initialListing?.additional_data.condition,
+      condition: initialListing?.additional_data.condition_code,
       category: initialListing?.additional_data.category,
     },
   });
@@ -60,8 +61,8 @@ export function ItemForm({ initialListing }: ItemFormProps) {
         : createListing(payload as CreateItemPayload),
     onSuccess: (data) => {
       toast.success(`${DISPLAY_LABEL} ${isEditMode ? "updated" : "created"} successfully!`);
-      if (isEditMode) {
-        queryClient.invalidateQueries({ queryKey: ["listing", initialListing?.id] });
+      if (isEditMode && initialListing) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.listing(initialListing.id) });
       }
       queryClient.invalidateQueries({ queryKey: ["items"] });
       if (!isEditMode) {

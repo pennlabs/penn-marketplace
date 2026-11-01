@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { deleteListing } from "@/lib/actions";
+import { queryKeys } from "@/lib/queryKeys";
 import type { Item, Sublet } from "@/lib/types";
 import {
   Dialog,
@@ -30,7 +31,7 @@ export const DeleteListing = ({ listing, open, onOpenChange }: Props) => {
     onSuccess: () => {
       const listKey = listing.listing_type === "sublet" ? "sublets" : "items";
       queryClient.invalidateQueries({ queryKey: [listKey] });
-      queryClient.removeQueries({ queryKey: ["listing", listing.id] });
+      queryClient.removeQueries({ queryKey: queryKeys.listing(listing.id) });
       router.push(listing.listing_type === "sublet" ? "/sublets" : "/items");
     },
     onError: () => {
