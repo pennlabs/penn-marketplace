@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageDropzone } from "@/components/common/ImageDropzone";
 import type { useImageUpload } from "@/hooks/useImageUpload";
+import { MAX_LISTING_IMAGES } from "@/lib/constants";
 
 interface ListingFormShellProps {
   /** Fires on form submission */
@@ -27,7 +28,7 @@ export function ListingFormShell({
   isFormDisabled,
   isPending,
   displayLabel,
-  maxFiles = 5,
+  maxFiles = MAX_LISTING_IMAGES,
   imageUpload,
   children,
 }: ListingFormShellProps) {

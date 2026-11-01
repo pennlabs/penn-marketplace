@@ -103,7 +103,8 @@ class Listing(models.Model):
 
 
 class ListingImage(models.Model):
-    MAX_PER_LISTING = 5
+    # keep in sync with MAX_LISTING_IMAGES in frontend/lib/constants.ts
+    MAX_PER_LISTING = 8
     MAX_SIZE_BYTES = 10 * 1024 * 1024  # checked before resize
 
     listing = models.ForeignKey(

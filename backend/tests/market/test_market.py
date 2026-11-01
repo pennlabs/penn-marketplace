@@ -1657,7 +1657,10 @@ class TestImages(BaseMarketTest):
         self.assertEqual(response.status_code, 400)
 
     def test_create_images_over_limit(self):
-        files = [open("tests/market/mock_image.jpg", "rb") for _ in range(6)]
+        files = [
+            open("tests/market/mock_image.jpg", "rb")
+            for _ in range(ListingImage.MAX_PER_LISTING + 1)
+        ]
         try:
             response = self.client.post(
                 f"/market/listings/{self.items[0].id}/images/",
@@ -1668,6 +1671,36 @@ class TestImages(BaseMarketTest):
             for f in files:
                 f.close()
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.items[0].images.count(), 0)
+
+    def post_images(self, count, **extra):
+        files = [open("tests/market/mock_image.jpg", "rb") for _ in range(count)]
+        try:
+            return self.client.post(
+                f"/market/listings/{self.items[0].id}/images/",
+                {"images": files, **extra},
+                "multipart",
+            )
+        finally:
+            for f in files:
+                f.close()
+
+    def test_create_images_order_follows_upload_order(self):
+        self.assertEqual(self.post_images(2).status_code, 201)  # orders 0, 1
+        self.assertEqual(self.post_images(1).status_code, 201)  # appended: 2
+        orders = list(self.items[0].images.values_list("order", flat=True))
+        self.assertEqual(orders, [0, 1, 2])
+
+    def test_create_image_with_client_order(self):
+        # parallel uploads can arrive out of order; the client's order wins
+        self.assertEqual(self.post_images(1, order=2).status_code, 201)
+        self.assertEqual(self.post_images(1, order=0).status_code, 201)
+        orders = list(self.items[0].images.values_list("order", flat=True))
+        self.assertEqual(orders, [0, 2])
+
+    def test_create_image_invalid_order(self):
+        self.assertEqual(self.post_images(1, order="first").status_code, 400)
+        self.assertEqual(self.post_images(1, order=-1).status_code, 400)
         self.assertEqual(self.items[0].images.count(), 0)
 
     def test_create_image_other_users_item(self):

@@ -52,7 +52,6 @@ export function SubletForm() {
   });
 
   const imageUpload = useImageUpload({
-    maxFiles: 5,
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
   });
@@ -64,9 +63,11 @@ export function SubletForm() {
       // wait for every upload to settle before rolling back on any failure.
       const files = imageUpload.getFiles();
       const results = await Promise.allSettled(
-        files.map(async (file) => {
+        files.map(async (file, index) => {
           const formData = new FormData();
           formData.append("images", file);
+          // parallel uploads finish in any order, so tell the backend where this one goes
+          formData.append("order", String(index));
           await uploadListingImages(data.id, formData);
         })
       );

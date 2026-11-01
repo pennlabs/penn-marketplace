@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 
 # ~6000x4000 (24MP phone default). PNG/WebP decode at full size (~100MB RGBA at
 # the cap) before shrinking; JPEG uses draft() and stays small.
-# ponytail: per-request cap only, add a bounded worker pool if concurrent uploads
+# TODO: per-request cap only, add a bounded worker pool if concurrent uploads
 # exhaust worker memory
 MAX_PIXELS = 25_000_000
 

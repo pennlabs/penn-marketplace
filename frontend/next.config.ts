@@ -3,9 +3,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone", // for optimal performance in containerized environments
   images: {
-    // backend already resizes uploads to webp; the optimizer would also have to fetch
-    // localhost:8000 from inside the frontend container, which fails in docker
-    unoptimized: true,
+    // dev serves uploads from localhost:8000, which the optimizer can't reach from inside
+    // the frontend container; production images come from S3 and get optimized
+    unoptimized: process.env.NODE_ENV === "development",
+    remotePatterns: [
+      {
+        protocol: "https",
+        // TODO: pin to the production bucket's hostname once Platform creates it
+        hostname: "*.s3.amazonaws.com",
+        pathname: "/marketplace/images/**",
+      },
+    ],
   },
   experimental: {
     serverActions: {

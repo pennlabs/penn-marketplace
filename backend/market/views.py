@@ -231,16 +231,28 @@ class CreateImages(CreateAPIView):
                 # lock the listing so concurrent uploads can't both pass the limit;
                 # count before validating so over-limit requests skip the resize
                 Listing.objects.select_for_update().get(pk=listing_id)
-                if listing.images.count() + len(images) > max_images:
+                existing = listing.images.count()
+                if existing + len(images) > max_images:
                     return Response(
                         {"detail": f"A listing can have at most {max_images} images."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                # parallel single-file uploads finish in any order, so the client
+                # sends each file's position; without it, append after existing ones
+                try:
+                    start = int(request.data.get("order", existing))
+                except ValueError:
+                    return Response(
+                        {"detail": "order must be an integer."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 # validate every file before saving any, so a bad file can't leave
                 # a partial set behind
                 serializers = [
-                    self.get_serializer(data={"listing": listing_id, "image": img})
-                    for img in images
+                    self.get_serializer(
+                        data={"listing": listing_id, "image": img, "order": start + i}
+                    )
+                    for i, img in enumerate(images)
                 ]
                 for img_serializer in serializers:
                     img_serializer.is_valid(raise_exception=True)
