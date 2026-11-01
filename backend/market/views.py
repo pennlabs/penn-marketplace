@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
@@ -81,13 +82,16 @@ class OffersReceived(ListAPIView, DefaultOrderMixin):
         return Offer.objects.filter(listing__seller=user)
 
 
-class NotificationsList(ListAPIView, DefaultOrderMixin):
+class NotificationsList(ListAPIView):
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
-        return self.request.user.notifications.all()
+        queryset = self.request.user.notifications.all()
+        if self.request.query_params.get("unread", "").lower() == "true":
+            queryset = queryset.filter(read_at__isnull=True)
+        return queryset
 
 
 class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
@@ -331,19 +335,21 @@ class Offers(viewsets.ModelViewSet):
         data["user"] = self.request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
 
-        seller = serializer.instance.listing.seller
-        if seller != request.user:
-            notify(
-                recipient=seller,
-                type=Notification.Type.OFFER_RECEIVED,
-                data={
-                    "listing_id": serializer.instance.listing.id,
-                    "listing_title": serializer.instance.listing.title,
-                    "offer_id": serializer.instance.id,
-                },
-            )
+        with transaction.atomic():
+            serializer.save()
+
+            seller = serializer.instance.listing.seller
+            if seller != request.user:
+                notify(
+                    recipient=seller,
+                    type=Notification.Type.OFFER_RECEIVED,
+                    data={
+                        "listing_id": serializer.instance.listing.id,
+                        "listing_title": serializer.instance.listing.title,
+                        "offer_id": serializer.instance.id,
+                    },
+                )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
