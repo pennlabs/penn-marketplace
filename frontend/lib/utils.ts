@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -58,6 +58,11 @@ export function formatDate(
 // e.g. "Sep 15 - Dec 20"
 export function formatDateRange(startDate: string, endDate: string) {
   return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+}
+
+// "2026-09-15" -> "2026-09-16", the earliest end date for a sublet starting that day
+export function nextDateOnly(dateString: string): string {
+  return toDateOnlyString(addDays(parseDateOnly(dateString), 1));
 }
 
 // e.g. "Studio", "1 bed", "2 beds"

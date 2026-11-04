@@ -15,7 +15,7 @@ import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { createListing } from "@/lib/actions";
 import { BEDS_OPTIONS, BATHS_OPTIONS } from "@/lib/constants";
-import { parsePriceString } from "@/lib/utils";
+import { nextDateOnly, parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
 import type { CreateSubletPayload } from "@/lib/types";
 import type { CreateSubletFormData } from "@/lib/validations";
@@ -30,6 +30,7 @@ export function SubletForm() {
   const {
     control,
     handleSubmit,
+    watch,
     reset,
     formState: { errors, touchedFields, isDirty, isSubmitting },
   } = useForm<CreateSubletFormData>({
@@ -88,6 +89,7 @@ export function SubletForm() {
   };
 
   const isFormDisabled = isPending || isSubmitting;
+  const startDate = watch("startDate");
 
   const subletFieldsAfterPrice = (
     <>
@@ -219,6 +221,7 @@ export function SubletForm() {
                 id="endDate"
                 label="End Date"
                 value={field.value}
+                minDate={startDate ? nextDateOnly(startDate) : undefined}
                 onChange={(value) => {
                   field.onChange(value ?? "");
                   field.onBlur();

@@ -1,4 +1,5 @@
 import { DatePicker } from "@/components/common/DatePicker";
+import { nextDateOnly } from "@/lib/utils";
 
 interface Props {
   startDate?: string; // "YYYY-MM-DD"
@@ -18,9 +19,24 @@ export const DateRangeFields = ({
   showLabels = false,
 }: Props) => {
   const startPicker = (
-    <DatePicker label="Start Date" value={startDate} onChange={onStartDateChange} />
+    <DatePicker
+      label="Start Date"
+      value={startDate}
+      onChange={(date) => {
+        onStartDateChange(date);
+        // a start on or after the end date would make the filter match nothing
+        if (date && endDate && endDate <= date) onEndDateChange(undefined);
+      }}
+    />
   );
-  const endPicker = <DatePicker label="End Date" value={endDate} onChange={onEndDateChange} />;
+  const endPicker = (
+    <DatePicker
+      label="End Date"
+      value={endDate}
+      minDate={startDate ? nextDateOnly(startDate) : undefined}
+      onChange={onEndDateChange}
+    />
+  );
 
   if (!showLabels) {
     return (

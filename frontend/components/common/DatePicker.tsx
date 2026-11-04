@@ -17,11 +17,22 @@ interface Props {
   invalid?: boolean;
   disabled?: boolean;
   id?: string;
+  minDate?: string;
 }
 
-export const DatePicker = ({ label, value, onChange, onBlur, invalid, disabled, id }: Props) => {
+export const DatePicker = ({
+  label,
+  value,
+  onChange,
+  onBlur,
+  invalid,
+  disabled,
+  id,
+  minDate,
+}: Props) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const date = value ? parseDateOnly(value) : undefined;
+  const min = minDate ? parseDateOnly(minDate) : undefined;
   const displayValue = date ? format(date, "MMM d, yyyy") : undefined;
 
   return (
@@ -29,6 +40,7 @@ export const DatePicker = ({ label, value, onChange, onBlur, invalid, disabled, 
       <Input
         type="date"
         id={id}
+        min={minDate}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value || undefined)}
         onBlur={onBlur}
@@ -69,12 +81,15 @@ export const DatePicker = ({ label, value, onChange, onBlur, invalid, disabled, 
             <Calendar
               autoFocus
               mode="single"
+              // clicking the selected day keeps it; the X button clears
+              required
               selected={date}
-              defaultMonth={date}
+              defaultMonth={date ?? min}
               onSelect={(selectedDate) => {
-                onChange(selectedDate ? toDateOnlyString(selectedDate) : undefined);
+                onChange(toDateOnlyString(selectedDate));
                 setIsOpen(false);
               }}
+              disabled={min ? { before: min } : undefined}
             />
           </PopoverContent>
         </Popover>

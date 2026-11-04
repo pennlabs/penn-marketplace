@@ -111,8 +111,10 @@ export const SubletFilters = () => {
                 <DateRangeFields
                   startDate={tempFilters.startDate}
                   endDate={tempFilters.endDate}
-                  onStartDateChange={(date) => setTempFilters({ ...tempFilters, startDate: date })}
-                  onEndDateChange={(date) => setTempFilters({ ...tempFilters, endDate: date })}
+                  onStartDateChange={(date) =>
+                    setTempFilters((prev) => ({ ...prev, startDate: date }))
+                  }
+                  onEndDateChange={(date) => setTempFilters((prev) => ({ ...prev, endDate: date }))}
                   showLabels
                 />
                 <div>
