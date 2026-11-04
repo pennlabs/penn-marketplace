@@ -17,9 +17,12 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // image uploads pass through a server action; matches the form's 5 files x 10MB + form overhead
-      bodySizeLimit: "55mb",
+      // one image per upload request, 10MB for image + 1MB for headroom
+      bodySizeLimit: "11mb",
     },
+  },
+  async redirects() {
+    return [{ source: "/", destination: "/items", permanent: false }];
   },
 };
 
