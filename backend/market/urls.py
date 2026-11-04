@@ -12,6 +12,7 @@ from market.views import (
     OffersReceived,
     Tags,
     UserFavorites,
+    delete_notification,
     get_current_user,
     get_phone_status,
     mark_all_notifications_read,
@@ -48,6 +49,11 @@ additional_urls = [
         "notifications/read-all/",
         mark_all_notifications_read,
         name="mark-all-notifications-read",
+    ),
+    path(
+        "notifications/<int:notification_id>/",
+        delete_notification,
+        name="delete-notification",
     ),
     # Favorites
     # post: add a listing to the user's favorites

@@ -465,3 +465,11 @@ def mark_all_notifications_read(request):
         read_at=timezone.now()
     )
     return Response({"success": True})
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_notification(request, notification_id):
+    notification = get_object_or_404(request.user.notifications, id=notification_id)
+    notification.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)

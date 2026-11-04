@@ -1622,3 +1622,19 @@ class TestNotification(BaseMarketTest):
         self.assertEqual(
             self.users[0].notifications.filter(read_at__isnull=True).count(), 0
         )
+
+    def test_delete_notification(self):
+        notification = Notification.objects.create(
+            recipient=self.users[0], type=Notification.Type.OFFER_RECEIVED, data={}
+        )
+        response = self.client.delete(f"/market/notifications/{notification.id}/")
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Notification.objects.filter(id=notification.id).exists())
+
+    def test_delete_notification_not_owner(self):
+        notification = Notification.objects.create(
+            recipient=self.users[1], type=Notification.Type.OFFER_RECEIVED, data={}
+        )
+        response = self.client.delete(f"/market/notifications/{notification.id}/")
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Notification.objects.filter(id=notification.id).exists())
