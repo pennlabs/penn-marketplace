@@ -9,6 +9,7 @@ from market.views import (
     Offers,
     OffersMade,
     OffersReceived,
+    PublicUser,
     Tags,
     UserFavorites,
     get_current_user,
@@ -26,6 +27,8 @@ router.register(r"listings", Listings, basename="listings")
 additional_urls = [
     # Current user
     path("user/me/", get_current_user, name="current-user"),
+    # Another user's public profile (no contact info)
+    path("users/<int:user_id>/", PublicUser.as_view(), name="public-user"),
     # List of all amenities
     path("tags/", Tags.as_view(), name="tags"),
     # All favorites for user

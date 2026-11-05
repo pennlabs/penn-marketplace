@@ -12,6 +12,7 @@ from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
     ListAPIView,
+    RetrieveAPIView,
     get_object_or_404,
 )
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -34,6 +35,7 @@ from market.serializers import (
     ListingSerializerList,
     ListingSerializerPublic,
     OfferSerializer,
+    PublicUserSerializer,
     TagSerializer,
     UserSerializer,
 )
@@ -44,6 +46,11 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+# listings that haven't expired, or have no expiration
+def not_expired():
+    return Q(expires_at__gte=timezone.now()) | Q(expires_at__isnull=True)
+
+
 class Tags(ListAPIView, DefaultOrderMixin):
     serializer_class = TagSerializer
     pagination_class = PageSizeOffsetPagination
@@ -52,14 +59,26 @@ class Tags(ListAPIView, DefaultOrderMixin):
         return Tag.objects.all()
 
 
-class UserFavorites(ListAPIView, DefaultOrderMixin):
+class UserFavorites(ListAPIView):
     serializer_class = ListingSerializerList
     permission_classes = [IsAuthenticated]
     pagination_class = PageSizeOffsetPagination
 
     def get_queryset(self):
         user = self.request.user
-        return user.listings_favorited.all()
+        return (
+            user.listings_favorited.filter(not_expired())
+            .select_related("item", "sublet")
+            .prefetch_related("tags", "images")
+            .order_by("-created_at")
+        )
+
+
+class PublicUser(RetrieveAPIView):
+    serializer_class = PublicUserSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = User.objects.all()
+    lookup_url_kwarg = "user_id"
 
 
 # TODO: Can add feature to filter for active offers only
@@ -172,12 +191,20 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
 
         if request.query_params.get("seller", "false").lower() == "true":
             queryset = queryset.filter(seller=request.user)
+            # absent: active and expired together
+            expired = request.query_params.get("expired", "").lower()
+            if expired == "true":
+                queryset = queryset.filter(expires_at__lt=timezone.now())
+            elif expired == "false":
+                queryset = queryset.filter(not_expired())
         else:
-            # Show listings that are not expired, or have no expiration
-            now = timezone.now()
-            queryset = queryset.filter(
-                Q(expires_at__gte=now) | Q(expires_at__isnull=True)
-            )
+            queryset = queryset.filter(not_expired())
+            if seller_id := request.query_params.get("seller_id"):
+                if not seller_id.isdigit():
+                    raise exceptions.ValidationError(
+                        {"seller_id": "Must be a user id."}
+                    )
+                queryset = queryset.filter(seller_id=seller_id)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
