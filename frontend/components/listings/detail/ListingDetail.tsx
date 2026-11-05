@@ -55,6 +55,11 @@ export const ListingDetail = ({ listingId }: Props) => {
         queryClient.setQueryData(queryKey, context.previous);
       }
     },
+    // refresh a cached /favorites list now, while still on this page. Left to refetch on
+    // mount, going back to /favorites keeps the old list: that refetch starts mid-navigation
+    // and its result never lands
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.favorites(), refetchType: "all" }),
   });
 
   const handleToggleFavorite = async () => {
