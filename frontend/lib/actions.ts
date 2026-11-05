@@ -12,6 +12,7 @@ import {
   Listing,
   ListingImage,
   PaginatedResponse,
+  PublicUser,
   Sublet,
   User,
 } from "@/lib/types";
@@ -104,11 +105,35 @@ async function serverFetch<T>(endpoint: string, options: RequestInit = {}): Prom
   return response.json();
 }
 
+// limit/offset for infinite queries, which count pages from 1
+function paginationParams(pageParam: unknown): URLSearchParams {
+  const page = typeof pageParam === "number" ? pageParam : 1;
+  const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
+
+  const params = new URLSearchParams();
+  params.append("limit", FETCH_LISTINGS_LIMIT.toString());
+  params.append("offset", offset.toString());
+  return params;
+}
+
 // ------------------------------------------------------------
 // user
 // ------------------------------------------------------------
 export async function getCurrentUser(): Promise<User> {
   return await serverFetch<User>("/market/user/me/");
+}
+
+export async function getPublicUser(id: string) {
+  return await serverFetch<PublicUser>(`/market/users/${id}/`);
+}
+
+export async function getPublicUserOrNotFound(id: string) {
+  try {
+    return await getPublicUser(id);
+  } catch (error) {
+    if (error instanceof APIError && error.status === 404) notFound();
+    throw error;
+  }
 }
 
 // ------------------------------------------------------------
@@ -129,13 +154,8 @@ export async function getItems({
   minPrice?: string;
   maxPrice?: string;
 }) {
-  const page = typeof pageParam === "number" ? pageParam : 1;
-  const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
-
-  const params = new URLSearchParams();
+  const params = paginationParams(pageParam);
   params.append("type", "item");
-  params.append("limit", FETCH_LISTINGS_LIMIT.toString());
-  params.append("offset", offset.toString());
 
   if (search.trim()) params.append("title", search.trim());
   if (category) params.append("category", category);
@@ -166,13 +186,8 @@ export async function getSublets({
   minPrice?: string;
   maxPrice?: string;
 }) {
-  const page = typeof pageParam === "number" ? pageParam : 1;
-  const offset = (page - 1) * FETCH_LISTINGS_LIMIT;
-
-  const params = new URLSearchParams();
+  const params = paginationParams(pageParam);
   params.append("type", "sublet");
-  params.append("limit", FETCH_LISTINGS_LIMIT.toString());
-  params.append("offset", offset.toString());
 
   if (numBeds !== undefined) params.append("beds", numBeds.toString());
   if (numBaths !== undefined) params.append("baths", numBaths.toString());
@@ -182,6 +197,38 @@ export async function getSublets({
   if (maxPrice !== undefined) params.append("max_price", maxPrice.toString());
 
   return await serverFetch<PaginatedResponse<Sublet>>(`/market/listings/?${params.toString()}`);
+}
+
+// ------------------------------------------------------------
+// a user's listings (items and sublets together)
+// ------------------------------------------------------------
+// a user's active listings, for their profile
+export async function getUserListings({
+  userId,
+  pageParam = 1,
+}: {
+  userId: number | string;
+  pageParam?: unknown;
+}) {
+  const params = paginationParams(pageParam);
+  params.append("seller_id", String(userId));
+
+  return await serverFetch<PaginatedResponse<Listing>>(`/market/listings/?${params.toString()}`);
+}
+
+// the current user's own listings, active or expired
+export async function getMyListings({
+  expired,
+  pageParam = 1,
+}: {
+  expired: boolean;
+  pageParam?: unknown;
+}) {
+  const params = paginationParams(pageParam);
+  params.append("seller", "true");
+  params.append("expired", String(expired));
+
+  return await serverFetch<PaginatedResponse<Listing>>(`/market/listings/?${params.toString()}`);
 }
 
 // ------------------------------------------------------------
@@ -260,8 +307,10 @@ export async function deleteFromUsersFavorites(listingId: number) {
   });
 }
 
-export async function getUsersFavorites() {
-  return await serverFetch<PaginatedResponse<Item | Sublet>>("/market/favorites/");
+export async function getUsersFavorites({ pageParam = 1 }: { pageParam?: unknown } = {}) {
+  const params = paginationParams(pageParam);
+
+  return await serverFetch<PaginatedResponse<Listing>>(`/market/favorites/?${params.toString()}`);
 }
 
 // ------------------------------------------------------------

@@ -16,6 +16,13 @@ export type User = {
   email: string;
 };
 
+// a user as other people see them on listings and profiles (no contact info)
+export type PublicUser = {
+  id: number;
+  display_name: string; // "Andrew K."
+  date_joined: string;
+};
+
 // ------------------------------------------------------------
 // additional data types (from API)
 // ------------------------------------------------------------
@@ -131,7 +138,7 @@ type BaseListing = {
   tags: string[];
   favorite_count: number;
   is_favorited?: boolean;
-  seller: User;
+  seller: PublicUser;
 };
 
 // ------------------------------------------------------------
