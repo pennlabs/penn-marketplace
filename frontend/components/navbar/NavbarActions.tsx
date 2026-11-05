@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Plus, Menu, X } from "lucide-react";
+import { Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/navbar/notifications/NotificationBell";
 import { UserProfileDropdown } from "@/components/navbar/UserProfileDropdown";
 
 interface Props {
@@ -18,15 +19,8 @@ export const NavbarActions = ({
   isMobileMenuOpen,
   onToggleMobileMenu,
 }: Props) => {
-  // FILLER count until the notifications API lands; replace with useNotifications()
-  const [unreadCount, setUnreadCount] = useState(3);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleNotificationClick = () => {
-    // TODO: open the notifications dropdown
-    setUnreadCount(0);
-  };
 
   const handleAvatarClick = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -89,23 +83,7 @@ export const NavbarActions = ({
       )}
 
       {/* notification bell */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="relative cursor-pointer"
-        onClick={handleNotificationClick}
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
-      >
-        <Bell className="h-5 w-5" />
-        {unreadCount > 0 && (
-          <span
-            className="bg-brand absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-medium text-white"
-            aria-hidden="true"
-          >
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </Button>
+      <NotificationBell />
 
       {/* user avatar */}
       <div className="relative" ref={containerRef}>
