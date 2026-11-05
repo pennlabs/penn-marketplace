@@ -1,0 +1,1 @@
+export const NOTIFICATION_PAGE_SIZE = 10;
