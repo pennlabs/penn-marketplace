@@ -8,6 +8,7 @@ export const queryKeys = {
     filters ?? DEFAULT_FILTERS[type],
   ],
   listing: (id: number | string) => ["listing", String(id)],
+  currentUser: () => ["user", "me"],
   user: (id: number | string) => ["user", String(id)],
   userListings: (id: number | string) => [...queryKeys.user(id), "listings"],
   myListings: (expired: boolean) => ["myListings", expired ? "expired" : "active"],
