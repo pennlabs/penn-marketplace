@@ -6,6 +6,7 @@ import { ListingsCard } from "@/components/listings/ListingsCard";
 import { NoListingsFound } from "@/components/listings/NoListingsFound";
 import { useListings } from "@/hooks/useListings";
 import { ListingTypes, User } from "@/lib/types";
+import { mediaUrl } from "@/lib/utils";
 
 type Props = {
   type: ListingTypes;
@@ -37,7 +38,9 @@ export const ListingsGrid = ({ type, currentUser }: Props) => {
             {data?.pages.map((group, i) => (
               <React.Fragment key={i}>
                 {group.results.map((post) => {
-                  const previewImageUrl = post.images?.[0]?.image_url;
+                  const previewImageUrl = post.images?.[0]
+                    ? mediaUrl(post.images[0].image_url)
+                    : undefined;
 
                   return (
                     <ListingsCard

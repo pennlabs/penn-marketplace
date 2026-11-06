@@ -6,17 +6,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/FormField";
 import { FormSelect } from "@/components/common/FormSelect";
+import { DatePicker } from "@/components/common/DatePicker";
 import { AddressAutocomplete } from "@/components/listings/address/AddressAutocomplete";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing, updateListing } from "@/lib/actions";
+import { createListing, deleteListing, updateListing, uploadListingImages } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
 import { BEDS_OPTIONS, BATHS_OPTIONS } from "@/lib/constants";
-import { parsePriceString } from "@/lib/utils";
+import { nextDateOnly, parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
 import type { CreateSubletPayload, Sublet, UpdateSubletPayload } from "@/lib/types";
 import type { CreateSubletFormData } from "@/lib/validations";
@@ -36,6 +36,7 @@ export function SubletForm({ initialListing }: SubletFormProps) {
   const {
     control,
     handleSubmit,
+    watch,
     reset,
     formState: { errors, touchedFields, dirtyFields, isDirty, isSubmitting },
   } = useForm<CreateSubletFormData>({
@@ -58,7 +59,6 @@ export function SubletForm({ initialListing }: SubletFormProps) {
   });
 
   const imageUpload = useImageUpload({
-    maxFiles: 10,
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
     initialImages: initialListing?.images,
@@ -69,11 +69,39 @@ export function SubletForm({ initialListing }: SubletFormProps) {
       isEditMode && initialListing
         ? updateListing(initialListing.id, payload as UpdateSubletPayload)
         : createListing(payload as CreateSubletPayload),
-    onSuccess: (data) => {
-      toast.success(`${DISPLAY_LABEL} ${isEditMode ? "updated" : "created"} successfully!`);
+    onSuccess: async (data) => {
       if (isEditMode && initialListing) {
         queryClient.invalidateQueries({ queryKey: queryKeys.listing(initialListing.id) });
+      } else {
+        // images attach to an existing listing, so they upload after it's created.
+        // wait for every upload to settle before rolling back on any failure.
+        const files = imageUpload.getFiles();
+        const results = await Promise.allSettled(
+          files.map(async (file, index) => {
+            const formData = new FormData();
+            formData.append("images", file);
+            // parallel uploads finish in any order, so tell the backend where this one goes
+            formData.append("order", String(index));
+            await uploadListingImages(data.id, formData);
+          })
+        );
+        const failed = files
+          .filter((_, index) => results[index].status === "rejected")
+          .map((file) => file.name);
+
+        if (failed.length > 0) {
+          failed.forEach((name) => toast.error(`The file "${name}" could not be uploaded.`));
+          try {
+            await deleteListing(data.id); // cascades to any images already uploaded
+            toast.error(`${DISPLAY_LABEL} was not created. Replace the file(s) and try again.`);
+          } catch {
+            toast.error(`${DISPLAY_LABEL} was created with missing images. Please delete it.`);
+          }
+          return; // keep the form filled in so the user can fix the files
+        }
       }
+
+      toast.success(`${DISPLAY_LABEL} ${isEditMode ? "updated" : "created"} successfully!`);
       queryClient.invalidateQueries({ queryKey: ["sublets"] });
       if (!isEditMode) {
         reset();
@@ -115,6 +143,7 @@ export function SubletForm({ initialListing }: SubletFormProps) {
   };
 
   const isFormDisabled = isPending || isSubmitting;
+  const startDate = watch("startDate");
 
   const subletFieldsAfterPrice = (
     <>
@@ -208,16 +237,25 @@ export function SubletForm({ initialListing }: SubletFormProps) {
         <Controller
           name="startDate"
           control={control}
+          // re-check the end date error when the start date moves
+          rules={{ deps: "endDate" }}
           render={({ field }) => (
             <FormField
               label="Start Date"
+              htmlFor="startDate"
               error={errors.startDate?.message}
               touched={touchedFields.startDate}
             >
-              <Input
-                {...field}
-                type="date"
-                aria-invalid={!!errors.startDate}
+              <DatePicker
+                id="startDate"
+                label="Start Date"
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value ?? "");
+                  field.onBlur();
+                }}
+                onBlur={field.onBlur}
+                invalid={!!errors.startDate && touchedFields.startDate}
                 disabled={isFormDisabled}
               />
             </FormField>
@@ -229,13 +267,21 @@ export function SubletForm({ initialListing }: SubletFormProps) {
           render={({ field }) => (
             <FormField
               label="End Date"
+              htmlFor="endDate"
               error={errors.endDate?.message}
               touched={touchedFields.endDate}
             >
-              <Input
-                {...field}
-                type="date"
-                aria-invalid={!!errors.endDate}
+              <DatePicker
+                id="endDate"
+                label="End Date"
+                value={field.value}
+                minDate={startDate ? nextDateOnly(startDate) : undefined}
+                onChange={(value) => {
+                  field.onChange(value ?? "");
+                  field.onBlur();
+                }}
+                onBlur={field.onBlur}
+                invalid={!!errors.endDate && touchedFields.endDate}
                 disabled={isFormDisabled}
               />
             </FormField>

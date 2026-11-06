@@ -31,7 +31,7 @@ export const ImageDropzone = ({
   maxFiles,
   label = "Images",
   error,
-  acceptedFormats = "image/png,image/jpeg,image/heic,image/webp",
+  acceptedFormats = "image/png,image/jpeg,image/webp",
   onDragEnter,
   onDragLeave,
   onDragOver,
@@ -115,7 +115,7 @@ export const ImageDropzone = ({
               {isDragging ? "Drop images here" : "Drop images here or click to browse"}
             </p>
             <p id={instructionsId} className="text-xs text-gray-400">
-              Up to {maxFiles} images. PNG, JPG, HEIC supported.
+              Up to {maxFiles} images. PNG, JPG, WebP supported.
             </p>
           </div>
         ) : (

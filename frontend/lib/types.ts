@@ -117,6 +117,7 @@ export type ValidatedAddress = {
 export type ListingImage = {
   id: number;
   image_url: string;
+  order: number;
 };
 
 type BaseListing = {
