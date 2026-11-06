@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Plus, Menu, X } from "lucide-react";
+import { Plus, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/navbar/notifications/NotificationBell";
 import { UserProfileDropdown } from "@/components/navbar/UserProfileDropdown";
 
 interface Props {
@@ -18,14 +19,8 @@ export const NavbarActions = ({
   isMobileMenuOpen,
   onToggleMobileMenu,
 }: Props) => {
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleNotificationClick = () => {
-    // TODO
-    setHasUnreadNotifications(false);
-  };
 
   const handleAvatarClick = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -88,21 +83,7 @@ export const NavbarActions = ({
       )}
 
       {/* notification bell */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="relative cursor-pointer"
-        onClick={handleNotificationClick}
-        aria-label={`Notifications${hasUnreadNotifications ? " (unread)" : ""}`}
-      >
-        <Bell className="h-5 w-5" />
-        {hasUnreadNotifications && (
-          <span
-            className="bg-primary absolute top-1 right-1 h-2 w-2 rounded-full"
-            aria-hidden="true"
-          />
-        )}
-      </Button>
+      <NotificationBell />
 
       {/* user avatar */}
       <div className="relative" ref={containerRef}>

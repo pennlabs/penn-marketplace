@@ -169,6 +169,36 @@ export type PaginatedResponse<T> = {
 };
 
 // ------------------------------------------------------------
+// base notification fields (shared by all notifications)
+// ------------------------------------------------------------
+type BaseNotification = {
+  id: number;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type NotificationType = "offer_received";
+
+export type OfferReceivedData = {
+  listing_id: number;
+  listing_title: string;
+  offer_id: number;
+};
+
+// ------------------------------------------------------------
+// offer received
+// ------------------------------------------------------------
+export type OfferReceivedNotification = BaseNotification & {
+  type: "offer_received";
+  data: OfferReceivedData;
+};
+
+// ------------------------------------------------------------
+// notifications (discriminated union)
+// ------------------------------------------------------------
+export type Notification = OfferReceivedNotification;
+
+// ------------------------------------------------------------
 // listing data
 // ------------------------------------------------------------
 /**

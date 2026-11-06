@@ -2,6 +2,7 @@
 
 import { notFound, redirect } from "next/navigation";
 import { FETCH_LISTINGS_LIMIT } from "@/constants/listings";
+import { NOTIFICATION_PAGE_SIZE } from "@/constants/notifications";
 import { clearAuthCookies, getTokensFromCookies } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
 import { APIError, ErrorMessages } from "@/lib/errors";
@@ -11,6 +12,7 @@ import {
   Item,
   Listing,
   ListingImage,
+  Notification,
   PaginatedResponse,
   Sublet,
   User,
@@ -290,4 +292,48 @@ export async function uploadListingImages(
 
 export async function deleteListing(listingId: number): Promise<void> {
   await serverFetch<void>(`/market/listings/${listingId}/`, { method: "DELETE" });
+}
+
+// ------------------------------------------------------------
+// notifications
+// ------------------------------------------------------------
+export async function getNotifications({
+  pageParam = 1,
+}: {
+  pageParam?: unknown;
+}): Promise<PaginatedResponse<Notification>> {
+  const page = typeof pageParam === "number" ? pageParam : 1;
+  const offset = (page - 1) * NOTIFICATION_PAGE_SIZE;
+
+  const params = new URLSearchParams({
+    limit: NOTIFICATION_PAGE_SIZE.toString(),
+    offset: offset.toString(),
+  });
+
+  return await serverFetch<PaginatedResponse<Notification>>(
+    `/market/notifications/?${params.toString()}`
+  );
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  const response = await serverFetch<{ count: number }>("/market/notifications/unread-count/");
+  return response.count;
+}
+
+export async function markNotificationRead(notificationId: number): Promise<Notification> {
+  return await serverFetch<Notification>(`/market/notifications/${notificationId}/read/`, {
+    method: "POST",
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<{ success: boolean }> {
+  return await serverFetch<{ success: boolean }>("/market/notifications/read-all/", {
+    method: "POST",
+  });
+}
+
+export async function deleteNotification(notificationId: number): Promise<void> {
+  return await serverFetch<void>(`/market/notifications/${notificationId}/`, {
+    method: "DELETE",
+  });
 }
