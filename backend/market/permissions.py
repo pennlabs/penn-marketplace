@@ -43,16 +43,27 @@ class ListingImageOwnerPermission(permissions.BasePermission):
         )
 
 
-class OfferOwnerPermission(permissions.BasePermission):
+class ListingOwnerOffersPermission(permissions.BasePermission):
     """
-    Custom permission to allow owner of an offer to delete it.
+    The listing seller may act on an Offer for their listing.
+    Use only on views/actions where that is intended (e.g. list offers, PATCH status).
     """
 
     def has_permission(self, request, view):
         return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:  # GET
-            return obj.listing.seller == request.user
+        return obj.listing.seller == request.user
 
-        return obj.user == request.user
+
+class OfferOwnerPermission(permissions.BasePermission):
+    """
+    The user who created the offer may act on that Offer.
+    Use only on buyer-facing views (e.g. withdraw offer, PATCH details).
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        return obj.user_id == request.user.id

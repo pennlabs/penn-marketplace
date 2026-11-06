@@ -14,6 +14,8 @@ export type User = {
   first_name: string;
   last_name: string;
   email: string;
+  phone_number: string | null;
+  phone_verified: boolean;
 };
 
 // ------------------------------------------------------------
@@ -123,7 +125,7 @@ type BaseListing = {
   title: string;
   description: string;
   external_link: string;
-  price: number;
+  price: string; // DRF DecimalField, e.g. "12312.00"
   negotiable: boolean;
   created_at: string;
   expires_at: string;
@@ -139,7 +141,11 @@ type BaseListing = {
 // ------------------------------------------------------------
 export type Item = BaseListing & {
   listing_type: "item";
-  additional_data: ItemAdditionalData;
+  additional_data: {
+    condition: string;
+    condition_code: ItemCondition;
+    category: ItemCategory;
+  };
 };
 
 // ------------------------------------------------------------
@@ -155,6 +161,18 @@ export type Sublet = BaseListing & {
 // ------------------------------------------------------------
 export type Listing = Item | Sublet;
 export type ListingTypes = "items" | "sublets";
+
+export type OfferStatus = "pending" | "accepted" | "rejected";
+
+export type Offer = {
+  id: number;
+  user: User;
+  listing: number;
+  offered_price: string; // DRF DecimalField, e.g. "1500.00"
+  message: string | null;
+  status: OfferStatus;
+  created_at: string;
+};
 
 // ------------------------------------------------------------
 // api responses
@@ -227,3 +245,25 @@ export type CreateSubletPayload = BaseCreatePayload & {
   listing_type: "sublet";
   additional_data: SubletAdditionalData;
 };
+
+// ------------------------------------------------------------
+// update payload types
+// ------------------------------------------------------------
+type BaseUpdatePayload = {
+  title?: string;
+  description?: string;
+  price?: number;
+  expires_at?: string;
+};
+
+export type UpdateItemPayload = BaseUpdatePayload & {
+  listing_type: "item";
+  additional_data?: Partial<ItemAdditionalData>;
+};
+
+export type UpdateSubletPayload = BaseUpdatePayload & {
+  listing_type: "sublet";
+  additional_data?: Partial<SubletAdditionalData>;
+};
+
+export type UpdateListingPayload = UpdateItemPayload | UpdateSubletPayload;
