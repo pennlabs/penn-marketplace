@@ -1,9 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
 import { FormField } from "@/components/common/FormField";
@@ -13,8 +11,7 @@ import { AddressAutocomplete } from "@/components/listings/address/AddressAutoco
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing, deleteListing, updateListing, uploadListingImages } from "@/lib/actions";
-import { queryKeys } from "@/lib/queryKeys";
+import { useSaveListing } from "@/hooks/useSaveListing";
 import { BEDS_OPTIONS, BATHS_OPTIONS } from "@/lib/constants";
 import { nextDateOnly, parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
@@ -29,8 +26,6 @@ type SubletFormProps = {
 };
 
 export function SubletForm({ initialListing }: SubletFormProps) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const isEditMode = Boolean(initialListing);
 
   const {
@@ -64,51 +59,12 @@ export function SubletForm({ initialListing }: SubletFormProps) {
     initialImages: initialListing?.images,
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (payload: CreateSubletPayload | UpdateSubletPayload) =>
-      isEditMode && initialListing
-        ? updateListing(initialListing.id, payload as UpdateSubletPayload)
-        : createListing(payload as CreateSubletPayload),
-    onSuccess: async (data) => {
-      if (isEditMode && initialListing) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.listing(initialListing.id) });
-      } else {
-        // images attach to an existing listing, so they upload after it's created.
-        // wait for every upload to settle before rolling back on any failure.
-        const files = imageUpload.getFiles();
-        const results = await Promise.allSettled(
-          files.map(async (file, index) => {
-            const formData = new FormData();
-            formData.append("images", file);
-            // parallel uploads finish in any order, so tell the backend where this one goes
-            formData.append("order", String(index));
-            await uploadListingImages(data.id, formData);
-          })
-        );
-        const failed = files
-          .filter((_, index) => results[index].status === "rejected")
-          .map((file) => file.name);
-
-        if (failed.length > 0) {
-          failed.forEach((name) => toast.error(`The file "${name}" could not be uploaded.`));
-          try {
-            await deleteListing(data.id); // cascades to any images already uploaded
-            toast.error(`${DISPLAY_LABEL} was not created. Replace the file(s) and try again.`);
-          } catch {
-            toast.error(`${DISPLAY_LABEL} was created with missing images. Please delete it.`);
-          }
-          return; // keep the form filled in so the user can fix the files
-        }
-      }
-
-      toast.success(`${DISPLAY_LABEL} ${isEditMode ? "updated" : "created"} successfully!`);
-      queryClient.invalidateQueries({ queryKey: ["sublets"] });
-      if (!isEditMode) {
-        reset();
-        imageUpload.clearImages();
-      }
-      router.replace(`/sublets/${data.id}`);
-    },
+  const { mutate, isPending } = useSaveListing({
+    listingId: initialListing?.id,
+    basePath: "sublets",
+    displayLabel: DISPLAY_LABEL,
+    imageUpload,
+    onCreated: reset,
   });
 
   const onSubmit = (data: CreateSubletFormData) => {
@@ -311,7 +267,7 @@ export function SubletForm({ initialListing }: SubletFormProps) {
         isSublet
         abandonGuard={{
           isDirty,
-          unsavedImageCount: imageUpload.images.length,
+          unsavedImageCount: imageUpload.unsavedImageCount,
         }}
         childrenAfterPrice={subletFieldsAfterPrice}
       />

@@ -17,23 +17,34 @@ User = get_user_model()
 TEST_BUYER_COUNT = 25
 
 
+def _test_email(username):
+    return f"{username}@example.invalid"
+
+
 def _seed_buyers():
     usernames = [
         f"marketplace_test_buyer_{index:02d}"
         for index in range(1, TEST_BUYER_COUNT + 1)
     ]
-    if User.objects.filter(username__in=usernames).exists():
-        raise CommandError(
-            "Test buyer usernames already exist. Refusing to reuse accounts "
-            "or change existing credentials."
-        )
+    existing = {
+        user.username: user for user in User.objects.filter(username__in=usernames)
+    }
+    # Reuse only accounts an earlier run created (no password, placeholder email);
+    # never take over a real account that happens to use a test username.
+    for username, user in existing.items():
+        if user.has_usable_password() or user.email != _test_email(username):
+            raise CommandError(
+                f"User {username!r} already exists but was not created by this "
+                "command. Refusing to reuse accounts or change existing credentials."
+            )
 
     # Unusable passwords keep these development-only accounts from password login.
     return [
-        User.objects.create_user(
+        existing.get(username)
+        or User.objects.create_user(
             username=username,
             password=None,
-            email=f"{username}@example.invalid",
+            email=_test_email(username),
             first_name="Test Buyer",
             last_name=f"{index:02d}",
             phone_number=f"+1215555{index:04d}",
@@ -44,8 +55,12 @@ def _seed_buyers():
 
 
 def _add_offers_to_listing(listing, buyers):
+    # a buyer can make one offer per listing, so skip buyers from an earlier run
+    already_offered = set(listing.offers_received.values_list("user_id", flat=True))
     offers = []
     for index, buyer in enumerate(buyers):
+        if buyer.id in already_offered:
+            continue
         amount = Decimal("35.00") + Decimal("2.50") * index
         offers.append(
             Offer(
@@ -62,7 +77,8 @@ def _add_offers_to_listing(listing, buyers):
 class Command(BaseCommand):
     help = (
         "Create 25 distinct pending test offers on each listing for USER_ID. "
-        "Development only; refuses existing test buyer usernames."
+        "Development only; safe to re-run (reuses its own test buyers and only "
+        "adds offers to listings that don't have them yet)."
     )
 
     def add_arguments(self, parser):

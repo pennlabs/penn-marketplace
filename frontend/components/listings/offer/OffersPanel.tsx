@@ -12,7 +12,7 @@ import {
   getMyOfferForListing,
   getOffersReceivedForListing,
 } from "@/lib/actions";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -57,6 +57,8 @@ export const OffersPanel = ({
     queryFn: () => getOffersReceivedForListing(listingId, page),
     enabled: isOwner,
     initialData: page === 1 ? (initialOffersReceived ?? undefined) : undefined,
+    // keep the current page on screen while the next one loads
+    placeholderData: keepPreviousData,
     // the server just rendered this list; don't immediately refetch it on mount
     staleTime: 30_000,
   });

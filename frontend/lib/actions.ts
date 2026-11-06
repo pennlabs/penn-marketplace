@@ -224,14 +224,6 @@ export async function createOffer({
   });
 }
 
-export async function getOffersMade() {
-  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/made/");
-}
-
-export async function getOffersReceived() {
-  return await serverFetch<PaginatedResponse<Offer>>("/market/offers/received/");
-}
-
 export async function getOffersReceivedForListing(listingId: number, page = 1) {
   const params = new URLSearchParams({
     limit: String(OFFERS_PAGE_SIZE),
@@ -356,6 +348,10 @@ export async function uploadListingImages(
     method: "POST",
     body: formData,
   });
+}
+
+export async function deleteListingImage(imageId: number): Promise<void> {
+  await serverFetch<void>(`/market/listings/images/${imageId}/`, { method: "DELETE" });
 }
 
 export async function deleteListing(listingId: number): Promise<void> {

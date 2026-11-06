@@ -201,11 +201,6 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         serializer = serializer_class(instance, context={"request": request})
         return Response(serializer.data)
 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 # TODO: This doesn't use CreateAPIView's functionality
 # since we overrode the create method.
@@ -369,8 +364,6 @@ class Offers(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         if self.action == "destroy":
             return [(OfferOwnerPermission | IsSuperUser)()]
-        if self.action == "list":
-            return [(ListingOwnerOffersPermission | IsSuperUser)()]
         return [(ListingOwnerOffersPermission | IsSuperUser)()]
 
     def get_queryset(self):

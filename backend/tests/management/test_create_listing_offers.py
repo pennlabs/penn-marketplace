@@ -105,10 +105,24 @@ class TestCreateListingOffers(TestCase):
     def test_repeated_run_does_not_change_credentials_or_add_offers(self):
         self.run_command()
         hashes = dict(User.objects.values_list("pk", "password"))
-        with self.assertRaisesMessage(CommandError, "already exist"):
-            self.run_command()
+        self.run_command()
         self.assertEqual(dict(User.objects.values_list("pk", "password")), hashes)
         self.assertEqual(Offer.objects.count(), 25)
+
+    def test_rerun_adds_offers_to_new_listings_only(self):
+        self.run_command()
+        user_count = User.objects.count()
+        new_item = Item.objects.create(
+            seller=self.seller,
+            title="New lamp",
+            price=20,
+            condition=Item.Condition.GOOD,
+            category=Category.objects.get(name="Other"),
+        )
+        self.run_command()
+        self.assertEqual(User.objects.count(), user_count)
+        self.assertEqual(new_item.offers_received.count(), 25)
+        self.assertEqual(self.item.offers_received.count(), 25)
 
     def test_failure_rolls_back_new_test_accounts_and_offers(self):
         count = User.objects.count()

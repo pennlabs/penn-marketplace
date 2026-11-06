@@ -1,17 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FormSelect } from "@/components/common/FormSelect";
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing, deleteListing, updateListing, uploadListingImages } from "@/lib/actions";
+import { useSaveListing } from "@/hooks/useSaveListing";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/lib/constants";
-import { queryKeys } from "@/lib/queryKeys";
 import { parsePriceString } from "@/lib/utils";
 import { type CreateItemFormData, createItemSchema } from "@/lib/validations";
 import type { CreateItemPayload, Item, UpdateItemPayload } from "@/lib/types";
@@ -24,8 +21,6 @@ type ItemFormProps = {
 };
 
 export function ItemForm({ initialListing }: ItemFormProps) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const isEditMode = Boolean(initialListing);
 
   const {
@@ -53,51 +48,12 @@ export function ItemForm({ initialListing }: ItemFormProps) {
     initialImages: initialListing?.images,
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (payload: CreateItemPayload | UpdateItemPayload) =>
-      isEditMode && initialListing
-        ? updateListing(initialListing.id, payload as UpdateItemPayload)
-        : createListing(payload as CreateItemPayload),
-    onSuccess: async (data) => {
-      if (isEditMode && initialListing) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.listing(initialListing.id) });
-      } else {
-        // images attach to an existing listing, so they upload after it's created.
-        // wait for every upload to settle before rolling back on any failure.
-        const files = imageUpload.getFiles();
-        const results = await Promise.allSettled(
-          files.map(async (file, index) => {
-            const formData = new FormData();
-            formData.append("images", file);
-            // parallel uploads finish in any order, so tell the backend where this one goes
-            formData.append("order", String(index));
-            await uploadListingImages(data.id, formData);
-          })
-        );
-        const failed = files
-          .filter((_, index) => results[index].status === "rejected")
-          .map((file) => file.name);
-
-        if (failed.length > 0) {
-          failed.forEach((name) => toast.error(`The file "${name}" could not be uploaded.`));
-          try {
-            await deleteListing(data.id); // cascades to any images already uploaded
-            toast.error(`${DISPLAY_LABEL} was not created. Replace the file(s) and try again.`);
-          } catch {
-            toast.error(`${DISPLAY_LABEL} was created with missing images. Please delete it.`);
-          }
-          return; // keep the form filled in so the user can fix the files
-        }
-      }
-
-      toast.success(`${DISPLAY_LABEL} ${isEditMode ? "updated" : "created"} successfully!`);
-      queryClient.invalidateQueries({ queryKey: ["items"] });
-      if (!isEditMode) {
-        reset();
-        imageUpload.clearImages();
-      }
-      router.replace(`/items/${data.id}`);
-    },
+  const { mutate, isPending } = useSaveListing({
+    listingId: initialListing?.id,
+    basePath: "items",
+    displayLabel: DISPLAY_LABEL,
+    imageUpload,
+    onCreated: reset,
   });
 
   const onSubmit = (data: CreateItemFormData) => {
@@ -182,7 +138,7 @@ export function ItemForm({ initialListing }: ItemFormProps) {
         exampleTitle={EXAMPLE_TITLE}
         abandonGuard={{
           isDirty,
-          unsavedImageCount: imageUpload.images.length,
+          unsavedImageCount: imageUpload.unsavedImageCount,
         }}
         childrenAfterDescription={itemFieldsAfterDescription}
       />

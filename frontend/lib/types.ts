@@ -125,7 +125,7 @@ type BaseListing = {
   title: string;
   description: string;
   external_link: string;
-  price: number;
+  price: string; // DRF DecimalField, e.g. "12312.00"
   negotiable: boolean;
   created_at: string;
   expires_at: string;
@@ -168,7 +168,7 @@ export type Offer = {
   id: number;
   user: User;
   listing: number;
-  offered_price: number;
+  offered_price: string; // DRF DecimalField, e.g. "1500.00"
   message: string | null;
   status: OfferStatus;
   created_at: string;

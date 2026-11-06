@@ -4,10 +4,8 @@
 .env*.local
 
 # Python
-**/__pycache__/
 __pycache__/
 *.py[cod]
-*.pyc
 *.pyo
 *.pyd
 .Python
@@ -24,7 +22,6 @@ venv/
 # Django
 *.sqlite3
 staticfiles/
-media/
 # local user uploads (dev only; prod uses S3) - never commit
 uploads/
 

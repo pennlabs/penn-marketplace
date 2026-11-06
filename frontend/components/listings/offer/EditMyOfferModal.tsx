@@ -65,7 +65,7 @@ export function EditMyOfferModal({
       const previousOffer = queryClient.getQueryData<Offer | null>(["myOffer", offer.listing]);
       queryClient.setQueryData<Offer | null>(["myOffer", offer.listing], {
         ...offer,
-        offered_price: parsePriceString(data.offeredPrice),
+        offered_price: String(parsePriceString(data.offeredPrice)),
         message: data.message?.trim() || "",
       });
       return { previousOffer };
@@ -79,7 +79,7 @@ export function EditMyOfferModal({
       if (context?.previousOffer !== undefined) {
         queryClient.setQueryData(["myOffer", offer.listing], context.previousOffer);
       }
-      toast.error("Failed to update offer.");
+      // the global MutationCache onError already toasts the backend's message
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["myOffer", offer.listing] });

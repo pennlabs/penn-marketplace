@@ -45,7 +45,13 @@ function OfferCardHeader({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-lg font-semibold">${offer.offered_price.toLocaleString()}</span>
+      <span className="text-lg font-semibold">
+        $
+        {Number(offer.offered_price).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
+      </span>
       <div className="flex items-center gap-2">
         {badge && (
           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>

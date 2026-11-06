@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getPhoneStatus, createOffer } from "@/lib/actions";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPhoneNumber, formatPrice } from "@/lib/utils";
 import { offerSchema, type OfferFormData } from "@/lib/validations";
 import type { Offer } from "@/lib/types";
 
@@ -20,7 +20,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   listingId: number;
-  listingPrice: number;
+  listingPrice: string;
   listingOwnerLabel: string;
   priceLabel?: string;
   onChangePhone: () => void;
@@ -75,7 +75,7 @@ export function MakeOfferModal({
           phone_verified: false,
         },
         listing: listingId,
-        offered_price: variables.offeredPrice,
+        offered_price: String(variables.offeredPrice),
         message: variables.message ?? "",
         status: "pending",
         created_at: new Date().toISOString(),
@@ -174,7 +174,7 @@ export function MakeOfferModal({
         >
           <div className="mb-2 flex items-center gap-2">
             <span className="text-sm text-gray-600">
-              Listed: ${listingPrice.toLocaleString()}
+              Listed: {formatPrice(listingPrice)}
               {priceLabel}
             </span>
             <Button

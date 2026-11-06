@@ -14,7 +14,7 @@ import type { Item, Offer, Sublet } from "@/lib/types";
 
 interface Props {
   listing: Item | Sublet;
-  listingPrice: number;
+  listingPrice: string;
   listingOwnerLabel: string;
   priceLabel?: string;
   isOwner?: boolean;
