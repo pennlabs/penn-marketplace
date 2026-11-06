@@ -473,3 +473,10 @@ def delete_notification(request, notification_id):
     notification = get_object_or_404(request.user.notifications, id=notification_id)
     notification.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def unread_notification_count(request):
+    count = request.user.notifications.filter(read_at__isnull=True).count()
+    return Response({"count": count})

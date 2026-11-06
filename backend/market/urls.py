@@ -18,6 +18,7 @@ from market.views import (
     mark_all_notifications_read,
     mark_notification_read,
     send_verification_code,
+    unread_notification_count,
     verify_phone_code,
 )
 
@@ -49,6 +50,11 @@ additional_urls = [
         "notifications/read-all/",
         mark_all_notifications_read,
         name="mark-all-notifications-read",
+    ),
+    path(
+        "notifications/unread-count/",
+        unread_notification_count,
+        name="unread-notification-count",
     ),
     path(
         "notifications/<int:notification_id>/",

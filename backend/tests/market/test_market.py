@@ -1638,3 +1638,18 @@ class TestNotification(BaseMarketTest):
         response = self.client.delete(f"/market/notifications/{notification.id}/")
         self.assertEqual(response.status_code, 404)
         self.assertTrue(Notification.objects.filter(id=notification.id).exists())
+
+    def test_unread_notification_count(self):
+        read = Notification.objects.create(
+            recipient=self.users[0], type=Notification.Type.OFFER_RECEIVED, data={}
+        )
+        Notification.objects.create(
+            recipient=self.users[0], type=Notification.Type.OFFER_RECEIVED, data={}
+        )
+        Notification.objects.create(
+            recipient=self.users[1], type=Notification.Type.OFFER_RECEIVED, data={}
+        )
+        self.client.post(f"/market/notifications/{read.id}/read/")
+        response = self.client.get("/market/notifications/unread-count/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
