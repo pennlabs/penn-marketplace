@@ -28,9 +28,20 @@ const DEFAULT_ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 // local image id -> the image as saved on the server
 type SavedImages = Record<string, ListingImage>;
 
-// syncs the image list to a listing: deletes removed images, then uploads new files after the
-// kept ones (new files are always appended, so kept images never need reordering). returns the
-// updated saved map and error messages; saving again retries only what failed.
+// deletes the given saved images, dropping each one that succeeded from `next`.
+// returns an error message if any failed.
+async function deleteSaved(ids: string[], next: SavedImages): Promise<string | null> {
+  const results = await Promise.allSettled(ids.map((id) => deleteListingImage(next[id].id)));
+  ids.forEach((id, i) => {
+    if (results[i].status === "fulfilled") delete next[id];
+  });
+  const failed = results.filter((r) => r.status === "rejected").length;
+  return failed > 0 ? `${failed} image(s) could not be removed. Save again to retry.` : null;
+}
+
+// syncs the image list to a listing: uploads new files after the existing ones (new files are
+// always appended, so kept images never need reordering), then deletes removed images. returns
+// the updated saved map and error messages; saving again retries only what failed.
 async function persistImages(
   listingId: number,
   images: ImageFile[],
@@ -38,24 +49,22 @@ async function persistImages(
 ): Promise<{ saved: SavedImages; errors: string[] }> {
   const next = { ...saved };
   const currentIds = new Set(images.map((img) => img.id));
-
-  // delete first so the backend's per-listing image limit counts the final set
   const removed = Object.keys(next).filter((id) => !currentIds.has(id));
-  const deletes = await Promise.allSettled(removed.map((id) => deleteListingImage(next[id].id)));
-  removed.forEach((id, i) => {
-    if (deletes[i].status === "fulfilled") delete next[id];
-  });
-  const failedDeletes = deletes.filter((r) => r.status === "rejected").length;
-  if (failedDeletes > 0) {
-    // uploading now could exceed the image limit or collide with the images still there
-    return {
-      saved: next,
-      errors: [`${failedDeletes} image(s) could not be removed. Save again to retry.`],
-    };
+  const toUpload = images.filter((img) => !(img.id in next));
+
+  // upload before deleting so a failed upload never costs the user a photo they still have.
+  // only when uploading first would pass the per-listing limit must some deletes go first.
+  const overLimit = Object.keys(next).length + toUpload.length - MAX_LISTING_IMAGES;
+  const deleteFirst = removed.slice(0, Math.max(0, overLimit));
+  const deleteAfter = removed.slice(deleteFirst.length);
+
+  const deleteFirstError = await deleteSaved(deleteFirst, next);
+  if (deleteFirstError) {
+    // uploading now would exceed the image limit
+    return { saved: next, errors: [deleteFirstError] };
   }
 
   const start = Math.max(-1, ...Object.values(next).map((img) => img.order)) + 1;
-  const toUpload = images.filter((img) => !(img.id in next));
   const uploads = await Promise.allSettled(
     toUpload.map(async (img, i) => {
       const formData = new FormData();
@@ -71,6 +80,11 @@ async function persistImages(
     if (result.status === "fulfilled") next[img.id] = result.value;
     else errors.push(`The file "${img.file.name}" could not be uploaded.`);
   });
+  // keep the removed photos until every replacement is up; the retry deletes them
+  if (errors.length > 0) return { saved: next, errors };
+
+  const deleteAfterError = await deleteSaved(deleteAfter, next);
+  if (deleteAfterError) errors.push(deleteAfterError);
   return { saved: next, errors };
 }
 
