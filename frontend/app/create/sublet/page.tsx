@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BackButton } from "@/components/listings/detail/BackButton";
 import { SubletForm } from "@/components/listings/form/SubletForm";
+
+export const metadata: Metadata = { title: "New Sublet" };
 
 export default function CreateSubletPage() {
   return (
