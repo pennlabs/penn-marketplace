@@ -1782,7 +1782,7 @@ class TestNotification(BaseMarketTest):
         self.assertEqual(
             notification.data["listing_title"], self.other_user_items[0].title
         )
-        self.assertEqual(notification.data["offer_id"], response.json()["id"])
+        self.assertEqual(notification.offer_id, response.json()["id"])
         self.assertIsNone(notification.read_at)
 
     def test_self_offer_does_not_create_notification(self):
@@ -1830,6 +1830,7 @@ class TestNotification(BaseMarketTest):
         )
         response = self.client.post("/market/notifications/read-all/")
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 2)
         self.assertEqual(
             self.users[0].notifications.filter(read_at__isnull=True).count(), 0
         )
@@ -1864,3 +1865,32 @@ class TestNotification(BaseMarketTest):
         response = self.client.get("/market/notifications/unread-count/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["count"], 1)
+
+    def test_withdraw_offer_deletes_notification(self):
+        response = self.client.post(
+            f"/market/listings/{self.other_user_items[0].id}/offers/",
+            {"offered_price": "10.00", "message": "I want this"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        offer_id = response.json()["id"]
+        self.assertTrue(Notification.objects.filter(offer_id=offer_id).exists())
+
+        delete_response = self.client.delete(
+            f"/market/listings/{self.other_user_items[0].id}/offers/"
+        )
+        self.assertEqual(delete_response.status_code, 204)
+        self.assertFalse(Notification.objects.filter(offer_id=offer_id).exists())
+
+    def test_delete_listing_cascades_offer_notification(self):
+        response = self.client.post(
+            f"/market/listings/{self.other_user_items[0].id}/offers/",
+            {"offered_price": "10.00", "message": "I want this"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        offer_id = response.json()["id"]
+        self.assertTrue(Notification.objects.filter(offer_id=offer_id).exists())
+
+        self.other_user_items[0].delete()
+        self.assertFalse(Notification.objects.filter(offer_id=offer_id).exists())

@@ -57,6 +57,13 @@ class Notification(models.Model):
     recipient = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="notifications"
     )
+    offer = models.ForeignKey(
+        "Offer",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
+    )
     type = models.CharField(max_length=50, choices=Type.choices)
     data = models.JSONField(default=dict, blank=True)
     read_at = models.DateTimeField(null=True, blank=True)

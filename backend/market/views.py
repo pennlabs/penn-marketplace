@@ -397,12 +397,12 @@ class Offers(viewsets.ModelViewSet):
             if seller != request.user:
                 notify(
                     recipient=seller,
-                    type=Notification.Type.OFFER_RECEIVED,
+                    notification_type=Notification.Type.OFFER_RECEIVED,
                     data={
                         "listing_id": serializer.instance.listing.id,
                         "listing_title": serializer.instance.listing.title,
-                        "offer_id": serializer.instance.id,
                     },
+                    offer=serializer.instance,
                 )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -515,10 +515,10 @@ def mark_notification_read(request, notification_id):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def mark_all_notifications_read(request):
-    request.user.notifications.filter(read_at__isnull=True).update(
+    count = request.user.notifications.filter(read_at__isnull=True).update(
         read_at=timezone.now()
     )
-    return Response({"success": True})
+    return Response({"count": count})
 
 
 @api_view(["DELETE"])
