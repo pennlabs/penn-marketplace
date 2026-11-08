@@ -8,4 +8,6 @@ export const queryKeys = {
     filters ?? DEFAULT_FILTERS[type],
   ],
   listing: (id: number | string) => ["listing", String(id)],
+  notificationsList: () => ["notifications", "list"],
+  notificationsUnreadCount: () => ["notifications", "unreadCount"],
 };

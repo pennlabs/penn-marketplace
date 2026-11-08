@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
-import { addDays, format } from "date-fns";
+import { addDays, format, formatDistanceToNowStrict } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -68,6 +68,11 @@ export function formatDateRange(startDate: string, endDate: string) {
 // "2026-09-15" -> "2026-09-16", the earliest end date for a sublet starting that day
 export function nextDateOnly(dateString: string): string {
   return toDateOnlyString(addDays(parseDateOnly(dateString), 1));
+}
+
+// e.g. "5 minutes ago". Uses the current time, so gate it behind mount to avoid a hydration mismatch.
+export function formatRelativeTime(dateString: string): string {
+  return formatDistanceToNowStrict(new Date(dateString), { addSuffix: true });
 }
 
 // e.g. "Studio", "1 bed", "2 beds"
