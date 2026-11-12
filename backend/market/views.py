@@ -200,10 +200,13 @@ class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
         else:
             queryset = queryset.filter(not_expired())
             if seller_id := request.query_params.get("seller_id"):
-                if not seller_id.isdigit():
+                # int(), not isdigit(): isdigit() passes "²", which crashes the query
+                try:
+                    seller_id = int(seller_id)
+                except ValueError as e:
                     raise exceptions.ValidationError(
                         {"seller_id": "Must be a user id."}
-                    )
+                    ) from e
                 queryset = queryset.filter(seller_id=seller_id)
 
         page = self.paginate_queryset(queryset)

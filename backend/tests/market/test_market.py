@@ -1902,8 +1902,9 @@ class PublicProfileTest(TestCase):
         self.assertEqual(self.listing_ids(response), {self.my_active_sublet.id})
 
     def test_seller_id_invalid(self):
-        response = self.client.get("/market/listings/?seller_id=abc")
-        self.assertEqual(response.status_code, 400)
+        for seller_id in ("abc", "²"):
+            response = self.client.get(f"/market/listings/?seller_id={seller_id}")
+            self.assertEqual(response.status_code, 400)
 
     def test_my_listings_expired_split(self):
         active = self.listing_ids(
