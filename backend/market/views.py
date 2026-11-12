@@ -20,7 +20,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from market.mixins import DefaultOrderMixin
-from market.models import Listing, ListingImage, Offer, Tag
+from market.models import Listing, ListingImage, Notification, Offer, Tag
+from market.notifications import notify
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
@@ -34,6 +35,7 @@ from market.serializers import (
     ListingSerializer,
     ListingSerializerList,
     ListingSerializerPublic,
+    NotificationSerializer,
     OfferSerializer,
     PublicUserSerializer,
     TagSerializer,
@@ -100,6 +102,18 @@ class OffersReceived(ListAPIView, DefaultOrderMixin):
     def get_queryset(self):
         user = self.request.user
         return Offer.objects.filter(listing__seller=user)
+
+
+class NotificationsList(ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = PageSizeOffsetPagination
+
+    def get_queryset(self):
+        queryset = self.request.user.notifications.all()
+        if self.request.query_params.get("unread", "").lower() == "true":
+            queryset = queryset.filter(read_at__isnull=True)
+        return queryset
 
 
 class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
@@ -405,7 +419,22 @@ class Offers(viewsets.ModelViewSet):
         data["user"] = self.request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+
+        with transaction.atomic():
+            serializer.save()
+
+            seller = serializer.instance.listing.seller
+            if seller != request.user:
+                notify(
+                    recipient=seller,
+                    notification_type=Notification.Type.OFFER_RECEIVED,
+                    data={
+                        "listing_id": serializer.instance.listing.id,
+                        "listing_title": serializer.instance.listing.title,
+                    },
+                    offer=serializer.instance,
+                )
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
@@ -501,3 +530,37 @@ def get_phone_status(request):
             "phone_verified": user.phone_verified,
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_notification_read(request, notification_id):
+    notification = get_object_or_404(request.user.notifications, id=notification_id)
+    if notification.read_at is None:
+        notification.read_at = timezone.now()
+        notification.save(update_fields=["read_at"])
+    return Response(NotificationSerializer(notification).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_all_notifications_read(request):
+    count = request.user.notifications.filter(read_at__isnull=True).update(
+        read_at=timezone.now()
+    )
+    return Response({"count": count})
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_notification(request, notification_id):
+    notification = get_object_or_404(request.user.notifications, id=notification_id)
+    notification.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def unread_notification_count(request):
+    count = request.user.notifications.filter(read_at__isnull=True).count()
+    return Response({"count": count})
