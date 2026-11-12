@@ -10,7 +10,6 @@ interface Props {
   expired: boolean;
 }
 
-// links rather than local state, so the tab survives refresh and back/forward
 export const MyListingsTabs = ({ expired }: Props) => {
   return (
     <div className="bg-muted inline-flex items-center gap-1 rounded-lg p-1">

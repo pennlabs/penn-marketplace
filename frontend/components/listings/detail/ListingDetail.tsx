@@ -34,7 +34,7 @@ export const ListingDetail = ({ listingId }: Props) => {
   const isFavorited = listing?.is_favorited ?? false;
 
   const toggleFavoriteMutation = useMutation({
-    meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
+    meta: { suppressErrorToast: true },
     mutationFn: async (shouldFavorite: boolean) => {
       if (shouldFavorite) {
         await addToUsersFavorites(listingId);

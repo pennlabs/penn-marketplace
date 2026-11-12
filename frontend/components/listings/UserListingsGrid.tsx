@@ -13,7 +13,6 @@ type Props = {
   currentUser: User;
 };
 
-// a user's active listings on their profile
 export const UserListingsGrid = ({ userId, currentUser }: Props) => {
   const query = useInfiniteListings({
     queryKey: queryKeys.userListings(userId),

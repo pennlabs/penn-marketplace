@@ -14,7 +14,6 @@ type Props = {
   currentUser: User;
 };
 
-// one tab of /my-listings; each tab is its own paginated query
 export const MyListingsGrid = ({ expired, currentUser }: Props) => {
   const query = useInfiniteListings({
     queryKey: queryKeys.myListings(expired),

@@ -1,7 +1,6 @@
 import { PublicUser } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
-// "Andrew K." -> "AK", "Sam" -> "S"
 function getInitials(displayName: string): string {
   const lastInitial = displayName.endsWith(".") ? displayName.charAt(displayName.length - 2) : "";
   return `${displayName.charAt(0)}${lastInitial}`.toUpperCase();
