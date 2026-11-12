@@ -22,7 +22,7 @@ const NAV_LINKS: NavLink[] = [
   },
   {
     href: "/sublets",
-    label: "Sublet",
+    label: "Sublets",
     icon: Home,
     activePaths: SUBLETS_PATH,
   },

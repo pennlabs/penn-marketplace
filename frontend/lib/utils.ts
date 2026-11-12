@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { addDays, format } from "date-fns";
+import type { Listing } from "@/lib/types";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -68,6 +69,16 @@ export function formatDateRange(startDate: string, endDate: string) {
 // "2026-09-15" -> "2026-09-16", the earliest end date for a sublet starting that day
 export function nextDateOnly(dateString: string): string {
   return toDateOnlyString(addDays(parseDateOnly(dateString), 1));
+}
+
+// detail page for a listing of either type, e.g. "/items/12" or "/sublets/7"
+export function listingHref(listing: Listing): string {
+  switch (listing.listing_type) {
+    case "item":
+      return `/items/${listing.id}`;
+    case "sublet":
+      return `/sublets/${listing.id}`;
+  }
 }
 
 // e.g. "Studio", "1 bed", "2 beds"
