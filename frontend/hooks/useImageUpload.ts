@@ -39,53 +39,68 @@ async function deleteSaved(ids: string[], next: SavedImages): Promise<string | n
   return failed > 0 ? `${failed} image(s) could not be removed. Save again to retry.` : null;
 }
 
+// local image id -> gallery position assigned to a new file, kept across retries
+type PlannedOrders = Record<string, number>;
+
 // syncs the image list to a listing: uploads new files after the existing ones (new files are
 // always appended, so kept images never need reordering), then deletes removed images. returns
-// the updated saved map and error messages; saving again retries only what failed.
+// the updated saved map, planned orders and error messages; saving again retries only what
+// failed. a removed photo is never deleted before its replacement is safely uploaded.
 async function persistImages(
   listingId: number,
   images: ImageFile[],
-  saved: SavedImages
-): Promise<{ saved: SavedImages; errors: string[] }> {
+  saved: SavedImages,
+  orders: PlannedOrders
+): Promise<{ saved: SavedImages; orders: PlannedOrders; errors: string[] }> {
   const next = { ...saved };
+  const nextOrders = { ...orders };
   const currentIds = new Set(images.map((img) => img.id));
   const removed = Object.keys(next).filter((id) => !currentIds.has(id));
   const toUpload = images.filter((img) => !(img.id in next));
 
-  // upload before deleting so a failed upload never costs the user a photo they still have.
-  // only when uploading first would pass the per-listing limit must some deletes go first.
-  const overLimit = Object.keys(next).length + toUpload.length - MAX_LISTING_IMAGES;
-  const deleteFirst = removed.slice(0, Math.max(0, overLimit));
-  const deleteAfter = removed.slice(deleteFirst.length);
-
-  const deleteFirstError = await deleteSaved(deleteFirst, next);
-  if (deleteFirstError) {
-    // uploading now would exceed the image limit
-    return { saved: next, errors: [deleteFirstError] };
+  // give each new file a position once, in editor order, and reuse it on retries, so a file
+  // that failed and is retried still lands where the editor shows it
+  let lastOrder = Math.max(
+    -1,
+    ...Object.values(next).map((img) => img.order),
+    ...Object.values(nextOrders)
+  );
+  for (const img of toUpload) {
+    if (!(img.id in nextOrders)) nextOrders[img.id] = ++lastOrder;
   }
 
-  const start = Math.max(-1, ...Object.values(next).map((img) => img.order)) + 1;
+  // a full listing has no room to upload first, so the uploads that need room carry the photo
+  // they replace; the backend deletes it in the same transaction as the upload succeeds
+  const overLimit = Math.max(0, Object.keys(next).length + toUpload.length - MAX_LISTING_IMAGES);
+  const swapped = removed.slice(0, overLimit); // swapped[i] is replaced by toUpload[i]
+  const deleteAfter = removed.slice(overLimit);
+
   const uploads = await Promise.allSettled(
     toUpload.map(async (img, i) => {
       const formData = new FormData();
       formData.append("images", img.file);
       // parallel uploads finish in any order, so tell the backend where this one goes
-      formData.append("order", String(start + i));
+      formData.append("order", String(nextOrders[img.id]));
+      if (swapped[i]) formData.append("replace", String(next[swapped[i]].id));
       return (await uploadListingImages(listingId, formData))[0];
     })
   );
   const errors: string[] = [];
   toUpload.forEach((img, i) => {
     const result = uploads[i];
-    if (result.status === "fulfilled") next[img.id] = result.value;
-    else errors.push(`The file "${img.file.name}" could not be uploaded.`);
+    if (result.status === "fulfilled") {
+      next[img.id] = result.value;
+      if (swapped[i]) delete next[swapped[i]];
+    } else {
+      errors.push(`The file "${img.file.name}" could not be uploaded.`);
+    }
   });
-  // keep the removed photos until every replacement is up; the retry deletes them
-  if (errors.length > 0) return { saved: next, errors };
+  // keep the other removed photos until every new one is up; the retry deletes them
+  if (errors.length > 0) return { saved: next, orders: nextOrders, errors };
 
   const deleteAfterError = await deleteSaved(deleteAfter, next);
   if (deleteAfterError) errors.push(deleteAfterError);
-  return { saved: next, errors };
+  return { saved: next, orders: nextOrders, errors };
 }
 
 export function useImageUpload({
@@ -107,6 +122,7 @@ export function useImageUpload({
   const [saved, setSaved] = useState<SavedImages>(() =>
     Object.fromEntries(initialImages.map((img) => [String(img.id), img]))
   );
+  const [plannedOrders, setPlannedOrders] = useState<PlannedOrders>({});
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 
@@ -253,13 +269,17 @@ export function useImageUpload({
 
   // returns error messages; an empty list means every change was saved
   const saveToListing = async (listingId: number): Promise<string[]> => {
-    const result = await persistImages(listingId, images, saved);
+    const result = await persistImages(listingId, images, saved, plannedOrders);
     setSaved(result.saved);
+    setPlannedOrders(result.orders);
     return result.errors;
   };
 
   // after a failed create is rolled back, nothing is on the server anymore
-  const markAllUnsaved = useCallback(() => setSaved({}), []);
+  const markAllUnsaved = useCallback(() => {
+    setSaved({});
+    setPlannedOrders({});
+  }, []);
 
   // new files not yet uploaded, plus saved images the user removed
   const currentIds = new Set(images.map((img) => img.id));

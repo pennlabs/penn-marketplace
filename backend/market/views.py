@@ -243,6 +243,17 @@ class CreateImages(CreateAPIView):
                 {"detail": "No images provided."}, status=status.HTTP_400_BAD_REQUEST
             )
 
+        # optional ids of this listing's images that the upload replaces. they are
+        # deleted in the same transaction, so a failed upload never loses the old
+        # photo, and a full listing can swap a photo without exceeding the limit.
+        try:
+            replace_ids = {int(i) for i in request.data.getlist("replace")}
+        except ValueError:
+            return Response(
+                {"detail": "replace must be a list of image ids."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         max_images = ListingImage.MAX_PER_LISTING
         instances = []
         try:
@@ -250,7 +261,13 @@ class CreateImages(CreateAPIView):
                 # lock the listing so concurrent uploads can't both pass the limit;
                 # count before validating so over-limit requests skip the resize
                 Listing.objects.select_for_update().get(pk=listing_id)
-                existing = listing.images.count()
+                replaced = list(listing.images.filter(id__in=replace_ids))
+                if len(replaced) != len(replace_ids):
+                    return Response(
+                        {"detail": "Images to replace must belong to this listing."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                existing = listing.images.count() - len(replaced)
                 if existing + len(images) > max_images:
                     return Response(
                         {"detail": f"A listing can have at most {max_images} images."},
@@ -284,6 +301,9 @@ class CreateImages(CreateAPIView):
                     )
                     instances.append(instance)
                     instance.save()
+                # their files are removed only after commit (see delete_image_file)
+                for old in replaced:
+                    old.delete()
         except Exception:
             # rolled-back rows don't fire post_delete, so remove their files here.
             for instance in instances:
