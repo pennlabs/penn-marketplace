@@ -63,6 +63,35 @@ class Offer(models.Model):
         return f"Offer for {self.listing} made by {self.user}"
 
 
+class Notification(models.Model):
+    class Type(models.TextChoices):
+        OFFER_RECEIVED = "offer_received", "Offer Received"
+
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="notifications"
+    )
+    offer = models.ForeignKey(
+        "Offer",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
+    )
+    type = models.CharField(max_length=50, choices=Type.choices)
+    data = models.JSONField(default=dict, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.type} notification for {self.recipient}"
+
+
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
 

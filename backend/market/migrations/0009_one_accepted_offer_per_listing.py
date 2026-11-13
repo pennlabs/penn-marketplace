@@ -17,7 +17,7 @@ def revert_extra_accepted_offers(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("market", "0006_offer_status"),
+        ("market", "0008_offer_status"),
     ]
 
     operations = [

@@ -267,8 +267,8 @@ export async function updateMyOfferDetails(
   });
 }
 
-export async function deleteMyOfferForListing(listingId: number): Promise<{ deleted: boolean }> {
-  return await serverFetch<{ deleted: boolean }>(`/market/listings/${listingId}/offers/`, {
+export async function deleteMyOfferForListing(listingId: number): Promise<void> {
+  await serverFetch<void>(`/market/listings/${listingId}/offers/`, {
     method: "DELETE",
   });
 }

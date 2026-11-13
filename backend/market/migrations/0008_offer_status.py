@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("market", "0005_sublet_true_latitude_sublet_true_longitude"),
+        ("market", "0007_notification_offer"),
     ]
 
     operations = [
