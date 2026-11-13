@@ -8,4 +8,6 @@ export const queryKeys = {
     filters ?? DEFAULT_FILTERS[type],
   ],
   listing: (id: number | string) => ["listing", String(id)],
+  offersReceived: (listingId: number) => ["offersReceived", listingId],
+  offersReceivedPage: (listingId: number, page: number) => ["offersReceived", listingId, page],
 };

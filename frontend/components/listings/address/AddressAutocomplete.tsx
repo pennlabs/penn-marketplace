@@ -27,7 +27,9 @@ export function AddressAutocomplete({
 }: AddressAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [hasValidatedAddress, setHasValidatedAddress] = useState(false);
+  // a prefilled address (edit mode) was validated when the listing was saved; treating it as
+  // validated means typing over it clears the old coordinates and forces a new selection
+  const [hasValidatedAddress, setHasValidatedAddress] = useState(() => value.trim().length > 0);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const {

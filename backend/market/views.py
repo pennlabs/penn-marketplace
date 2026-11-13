@@ -12,6 +12,8 @@ from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
     ListAPIView,
+    RetrieveAPIView,
+    UpdateAPIView,
     get_object_or_404,
 )
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -25,6 +27,7 @@ from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
     ListingImageOwnerPermission,
+    ListingOwnerOffersPermission,
     ListingOwnerPermission,
     OfferOwnerPermission,
 )
@@ -35,7 +38,9 @@ from market.serializers import (
     ListingSerializerList,
     ListingSerializerPublic,
     NotificationSerializer,
+    OfferDetailsSerializer,
     OfferSerializer,
+    OfferStatusSerializer,
     TagSerializer,
     UserSerializer,
 )
@@ -72,7 +77,7 @@ class OffersMade(ListAPIView, DefaultOrderMixin):
 
     def get_queryset(self):
         user = self.request.user
-        return Offer.objects.filter(user=user)
+        return Offer.objects.filter(user=user).select_related("user")
 
 
 class OffersReceived(ListAPIView, DefaultOrderMixin):
@@ -82,7 +87,7 @@ class OffersReceived(ListAPIView, DefaultOrderMixin):
 
     def get_queryset(self):
         user = self.request.user
-        return Offer.objects.filter(listing__seller=user)
+        return Offer.objects.filter(listing__seller=user).select_related("user")
 
 
 class NotificationsList(ListAPIView):
@@ -238,6 +243,17 @@ class CreateImages(CreateAPIView):
                 {"detail": "No images provided."}, status=status.HTTP_400_BAD_REQUEST
             )
 
+        # optional ids of this listing's images that the upload replaces. they are
+        # deleted in the same transaction, so a failed upload never loses the old
+        # photo, and a full listing can swap a photo without exceeding the limit.
+        try:
+            replace_ids = {int(i) for i in request.data.getlist("replace")}
+        except ValueError:
+            return Response(
+                {"detail": "replace must be a list of image ids."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         max_images = ListingImage.MAX_PER_LISTING
         instances = []
         try:
@@ -245,7 +261,13 @@ class CreateImages(CreateAPIView):
                 # lock the listing so concurrent uploads can't both pass the limit;
                 # count before validating so over-limit requests skip the resize
                 Listing.objects.select_for_update().get(pk=listing_id)
-                existing = listing.images.count()
+                replaced = list(listing.images.filter(id__in=replace_ids))
+                if len(replaced) != len(replace_ids):
+                    return Response(
+                        {"detail": "Images to replace must belong to this listing."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                existing = listing.images.count() - len(replaced)
                 if existing + len(images) > max_images:
                     return Response(
                         {"detail": f"A listing can have at most {max_images} images."},
@@ -279,6 +301,9 @@ class CreateImages(CreateAPIView):
                     )
                     instances.append(instance)
                     instance.save()
+                # their files are removed only after commit (see delete_image_file)
+                for old in replaced:
+                    old.delete()
         except Exception:
             # rolled-back rows don't fire post_delete, so remove their files here.
             for instance in instances:
@@ -365,15 +390,23 @@ class Offers(viewsets.ModelViewSet):
     Delete the offer between the user and the listing matching the ID.
     """
 
-    permission_classes = [OfferOwnerPermission | IsSuperUser]
     serializer_class = OfferSerializer
     pagination_class = PageSizeOffsetPagination
 
+    def get_permissions(self):
+        if self.action == "create":
+            return [IsAuthenticated()]
+        if self.action == "destroy":
+            return [(OfferOwnerPermission | IsSuperUser)()]
+        return [(ListingOwnerOffersPermission | IsSuperUser)()]
+
     def get_queryset(self):
         if Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
-            return Offer.objects.filter(
-                listing_id=int(self.kwargs["listing_id"])
-            ).order_by("created_at")
+            return (
+                Offer.objects.filter(listing_id=int(self.kwargs["listing_id"]))
+                .select_related("user")
+                .order_by("created_at", "id")
+            )
         else:
             raise exceptions.NotFound("No Listing matches the given query")
 
@@ -381,6 +414,11 @@ class Offers(viewsets.ModelViewSet):
         if not request.user.phone_number or not request.user.phone_verified:
             raise exceptions.ValidationError(
                 "You must verify your phone number before making an offer"
+            )
+        listing = get_object_or_404(Listing, pk=self.kwargs["listing_id"])
+        if listing.seller_id == request.user.id:
+            raise exceptions.ValidationError(
+                "You cannot make an offer on your own listing"
             )
         data = request.data.copy()
         if self.get_queryset().filter(user=self.request.user).exists():
@@ -419,11 +457,69 @@ class Offers(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):
-        if not Listing.objects.filter(pk=int(self.kwargs["listing_id"])).exists():
-            raise exceptions.NotFound("No Listing matches the given query")
-        for offer in self.get_queryset():
-            self.check_object_permissions(request, offer)
+        listing = get_object_or_404(Listing, pk=self.kwargs["listing_id"])
+        if not (request.user.is_superuser or listing.seller_id == request.user.id):
+            raise exceptions.PermissionDenied(
+                "Only the listing owner can view offers for this listing."
+            )
         return super().list(request, *args, **kwargs)
+
+
+class LockedOfferUpdate(UpdateAPIView):
+    """Serialize status and detail edits against the same listing and offer."""
+
+    queryset = Offer.objects.select_related("user", "listing__seller")
+    lookup_url_kwarg = "offer_id"
+    http_method_names = ["patch"]
+
+    @transaction.atomic
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Lock the parent first so two offers on the same listing cannot both
+        # pass acceptance validation. Re-read the offer after obtaining the lock.
+        get_object_or_404(Listing.objects.select_for_update(), pk=instance.listing_id)
+        instance = get_object_or_404(
+            self.get_queryset().select_for_update(of=("self",)), pk=instance.pk
+        )
+        self.check_object_permissions(request, instance)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(OfferSerializer(serializer.instance).data)
+
+
+class OfferStatusUpdate(LockedOfferUpdate):
+    """Allow the listing seller (or superuser) to update an offer's status (PATCH)."""
+
+    serializer_class = OfferStatusSerializer
+    permission_classes = [ListingOwnerOffersPermission | IsSuperUser]
+
+
+class OfferDetailsUpdate(LockedOfferUpdate):
+    """Offer owner (or superuser) may PATCH offered_price and message."""
+
+    serializer_class = OfferDetailsSerializer
+    permission_classes = [OfferOwnerPermission | IsSuperUser]
+
+
+class MyOfferForListing(RetrieveAPIView):
+    """Return the authenticated user's offer for a given listing (GET)."""
+
+    serializer_class = OfferSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        offer = (
+            Offer.objects.select_related("user")
+            .filter(
+                listing_id=self.kwargs["listing_id"],
+                user=self.request.user,
+            )
+            .first()
+        )
+        if offer is None:
+            raise exceptions.NotFound("No offer for this listing")
+        return offer
 
 
 @api_view(["POST"])
