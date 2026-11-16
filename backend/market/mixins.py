@@ -1,6 +1,16 @@
 from market.models import Item, Sublet
 
 
+def get_listing_type(obj):
+    for subclass in (Item, Sublet):
+        try:
+            getattr(obj, subclass.__name__.lower())
+            return subclass.__name__.lower()
+        except subclass.DoesNotExist:
+            continue
+    return "other"
+
+
 class DefaultOrderMixin:
     default_ordering = ["id"]
 
@@ -13,13 +23,7 @@ class DefaultOrderMixin:
 
 class ListingTypeMixin:
     def get_listing_type(self, obj):
-        for subclass in (Item, Sublet):
-            try:
-                getattr(obj, subclass.__name__.lower())
-                return subclass.__name__.lower()
-            except subclass.DoesNotExist:
-                continue
-        return "other"
+        return get_listing_type(obj)
 
     def get_additional_data(self, obj):
         from market.serializers import ItemDataSerializer, SubletDataSerializer
