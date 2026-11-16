@@ -326,8 +326,8 @@ export async function markNotificationRead(notificationId: number): Promise<Noti
   });
 }
 
-export async function markAllNotificationsRead(): Promise<{ success: boolean }> {
-  return await serverFetch<{ success: boolean }>("/market/notifications/read-all/", {
+export async function markAllNotificationsRead(): Promise<{ count: number }> {
+  return await serverFetch<{ count: number }>("/market/notifications/read-all/", {
     method: "POST",
   });
 }

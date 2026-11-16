@@ -39,8 +39,8 @@ export const NotificationDropdown = ({
 }: Props) => {
   const { ref: loadMoreRef, inView } = useInView();
   useEffect(() => {
-    if (inView) onLoadMore();
-  }, [inView, onLoadMore]);
+    if (inView && hasNextPage && !isFetchingNextPage) onLoadMore();
+  }, [inView, hasNextPage, isFetchingNextPage, onLoadMore]);
 
   return (
     <>

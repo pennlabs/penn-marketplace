@@ -177,12 +177,10 @@ type BaseNotification = {
   created_at: string;
 };
 
-export type NotificationType = "offer_received";
-
 export type OfferReceivedData = {
   listing_id: number;
   listing_title: string;
-  offer_id: number;
+  listing_type: "item" | "sublet";
 };
 
 // ------------------------------------------------------------
@@ -197,6 +195,7 @@ export type OfferReceivedNotification = BaseNotification & {
 // notifications (discriminated union)
 // ------------------------------------------------------------
 export type Notification = OfferReceivedNotification;
+export type NotificationType = Notification["type"];
 
 // ------------------------------------------------------------
 // listing data

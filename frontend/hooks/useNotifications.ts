@@ -31,7 +31,6 @@ export function useNotifications(isOpen: boolean) {
   const countQuery = useQuery({
     queryKey: countKey,
     queryFn: getUnreadNotificationCount,
-    // Matches the poll cadence; also stops a refetch right after the layout's hydrated prefetch.
     staleTime: 60_000,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
@@ -43,7 +42,17 @@ export function useNotifications(isOpen: boolean) {
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => (lastPage.next ? allPages.length + 1 : undefined),
     enabled: isOpen,
+    refetchInterval: 60_000,
   });
+
+  const seen = new Set<number>();
+  const notifications = (listQuery.data?.pages.flatMap((page) => page.results) ?? []).filter(
+    (row) => {
+      if (seen.has(row.id)) return false;
+      seen.add(row.id);
+      return true;
+    }
+  );
 
   const applyOptimistic = async (
     update: (list: NotificationList) => NotificationList,
@@ -86,24 +95,28 @@ export function useNotifications(isOpen: boolean) {
     queryClient.invalidateQueries({ queryKey: countKey });
   };
 
+  const findNotification = (id: number) =>
+    queryClient
+      .getQueryData<NotificationList>(listKey)
+      ?.pages.flatMap((page) => page.results)
+      .find((notification) => notification.id === id);
+
   const markReadMutation = useMutation({
     mutationFn: markNotificationRead,
     // Suppress the generic error toast; onError shows a specific message.
     meta: { suppressErrorToast: true },
     onMutate: (id: number) => {
       const now = new Date().toISOString();
-      let wasUnread = false;
+      const wasUnread = findNotification(id)?.read_at === null;
 
       return applyOptimistic(
         (list) =>
           mapRows(list, (rows) =>
-            rows.map((notification) => {
-              if (notification.id === id && notification.read_at === null) {
-                wasUnread = true;
-                return { ...notification, read_at: now };
-              }
-              return notification;
-            })
+            rows.map((notification) =>
+              notification.id === id && notification.read_at === null
+                ? { ...notification, read_at: now }
+                : notification
+            )
           ),
         (count) => (wasUnread ? count - 1 : count)
       );
@@ -142,7 +155,7 @@ export function useNotifications(isOpen: boolean) {
     mutationFn: deleteNotification,
     meta: { suppressErrorToast: true },
     onMutate: (id: number) => {
-      let wasUnread = false;
+      const wasUnread = findNotification(id)?.read_at === null;
 
       return applyOptimistic(
         (list) => ({
@@ -150,13 +163,7 @@ export function useNotifications(isOpen: boolean) {
           pages: list.pages.map((page) => ({
             ...page,
             count: Math.max(0, page.count - 1),
-            results: page.results.filter((notification) => {
-              if (notification.id === id) {
-                wasUnread = notification.read_at === null;
-                return false;
-              }
-              return true;
-            }),
+            results: page.results.filter((notification) => notification.id !== id),
           })),
         }),
         (count) => (wasUnread ? count - 1 : count)
@@ -171,7 +178,7 @@ export function useNotifications(isOpen: boolean) {
 
   return {
     unreadCount: countQuery.data ?? 0,
-    notifications: listQuery.data?.pages.flatMap((page) => page.results) ?? [],
+    notifications,
     isLoading: listQuery.isLoading,
     isError: listQuery.isError,
     markAsRead: (id: number) => markReadMutation.mutate(id),

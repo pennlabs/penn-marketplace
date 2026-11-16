@@ -14,7 +14,7 @@ const renderers: {
 } = {
   offer_received: (data) => ({
     text: `New offer on ${data.listing_title}`,
-    href: `/items/${data.listing_id}`,
+    href: `/${data.listing_type === "sublet" ? "sublets" : "items"}/${data.listing_id}`,
     icon: Tag,
   }),
 };
