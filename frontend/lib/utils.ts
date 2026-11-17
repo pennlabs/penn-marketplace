@@ -1,8 +1,14 @@
 import { clsx, type ClassValue } from "clsx";
+import { addDays, format } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// backend returns relative media paths in dev (/media/...) and absolute S3 urls in prod
+export function mediaUrl(url: string): string {
+  return url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_API_URL}${url}`;
 }
 
 export function formatPrice(price: number, showMonthly: boolean = false) {
@@ -19,10 +25,59 @@ export function parsePriceString(price: string): number {
   return Number(price.replace(/[$,]/g, ""));
 }
 
-export function formatDate(dateString: string) {
+// timestamps are shown in Penn's time zone so the server render and the browser always agree
+const DISPLAY_TIME_ZONE = "America/New_York";
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+// "2026-09-15" -> local midnight on Sep 15. new Date("2026-09-15") would be UTC midnight,
+// which is still Sep 14 in US time zones
+export function parseDateOnly(dateString: string): Date {
   const [year, month, day] = dateString.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return new Date(year, month - 1, day);
+}
+
+// local calendar date -> "2026-09-15". toISOString converts to UTC first, which can change the day
+export function toDateOnlyString(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
+
+/**
+ * format a date for display, "Sep 15" by default (pass options for other formats).
+ * - date-only strings ("2026-09-15", e.g. sublet dates) are calendar dates, so they're parsed as
+ *   local dates and never shift by a day
+ * - full timestamps ("2026-08-26T14:00:00Z", e.g. created_at) are shown in DISPLAY_TIME_ZONE
+ */
+export function formatDate(
+  dateString: string,
+  options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
+) {
+  if (DATE_ONLY_PATTERN.test(dateString)) {
+    return parseDateOnly(dateString).toLocaleDateString("en-US", options);
+  }
+  return new Date(dateString).toLocaleDateString("en-US", {
+    ...options,
+    timeZone: DISPLAY_TIME_ZONE,
+  });
+}
+
+// e.g. "Sep 15 - Dec 20"
+export function formatDateRange(startDate: string, endDate: string) {
+  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+}
+
+// "2026-09-15" -> "2026-09-16", the earliest end date for a sublet starting that day
+export function nextDateOnly(dateString: string): string {
+  return toDateOnlyString(addDays(parseDateOnly(dateString), 1));
+}
+
+// e.g. "Studio", "1 bed", "2 beds"
+export function formatBeds(beds: number): string {
+  return beds === 0 ? "Studio" : `${beds} ${beds === 1 ? "bed" : "beds"}`;
+}
+
+// e.g. "1 bath", "2 baths"
+export function formatBaths(baths: number): string {
+  return `${baths} ${baths === 1 ? "bath" : "baths"}`;
 }
 
 // format phone number as (XXX) XXX-XXXX

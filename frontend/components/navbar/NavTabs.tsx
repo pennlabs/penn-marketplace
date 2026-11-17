@@ -3,7 +3,7 @@ import { usePathname } from "next/navigation";
 import { ShoppingBag, Home, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ITEMS_PATH = ["/items", "/"];
+const ITEMS_PATH = ["/items"];
 const SUBLETS_PATH = ["/sublets"];
 
 type NavLink = {

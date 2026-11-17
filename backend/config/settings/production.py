@@ -3,6 +3,7 @@ Production settings
 """
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 from .base import *
 
@@ -34,6 +35,12 @@ PLATFORM_ACCOUNTS = {
     "PLATFORM_URL": "https://platform.pennlabs.org",
     "CUSTOM_ADMIN": False,
 }
+
+# Production always uses S3 and requires its own bucket setting.
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "").strip()
+if not AWS_STORAGE_BUCKET_NAME:
+    raise ImproperlyConfigured("AWS_STORAGE_BUCKET_NAME is required in production.")
+STORAGES = S3_STORAGES
 
 # change if domain changes from pennmarketplace
 CORS_ALLOWED_ORIGINS = [

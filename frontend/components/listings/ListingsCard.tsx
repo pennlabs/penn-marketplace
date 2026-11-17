@@ -2,7 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice, formatCondition, formatDate } from "@/lib/utils";
+import {
+  formatBaths,
+  formatBeds,
+  formatCondition,
+  formatDateRange,
+  formatPrice,
+} from "@/lib/utils";
 import { Item, Sublet } from "@/lib/types";
 
 const DEFAULT_IMAGE = "/images/default-image.jpg";
@@ -19,10 +25,7 @@ function getBadgeContent(listing: Item | Sublet): string {
     case "item":
       return formatCondition(listing.additional_data.condition);
     case "sublet":
-      const { beds, baths } = listing.additional_data;
-      const bedText = beds === 0 ? "Studio" : `${beds} bed${beds > 1 ? "s" : ""}`;
-      const bathText = `${baths} bath${baths > 1 ? "s" : ""}`;
-      return `${bedText} • ${bathText}`;
+      return `${formatBeds(listing.additional_data.beds)} • ${formatBaths(listing.additional_data.baths)}`;
     default:
       return "";
   }
@@ -42,8 +45,7 @@ function getMetadataContent(listing: Item | Sublet): React.ReactNode {
         <div className="flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
           <span className="line-clamp-1">
-            {formatDate(listing.additional_data.start_date)} -{" "}
-            {formatDate(listing.additional_data.end_date)}
+            {formatDateRange(listing.additional_data.start_date, listing.additional_data.end_date)}
           </span>
         </div>
       );

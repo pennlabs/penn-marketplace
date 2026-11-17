@@ -73,7 +73,7 @@ export const ListingActions = ({
     <>
       <Button
         onClick={handleMakeOfferClick}
-        className="bg-brand hover:bg-brand-hover h-12 w-full cursor-pointer text-base text-white"
+        className="bg-brand hover:bg-brand-hover h-12 w-full cursor-pointer rounded-lg px-6 text-base text-white md:w-auto"
       >
         <DollarSign className="mr-2 h-5 w-5" />
         Make an Offer

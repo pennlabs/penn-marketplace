@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MAX_LISTING_IMAGES } from "@/lib/constants";
 
 export type ImageFile = {
   file: File;
@@ -17,12 +18,11 @@ type UseImageUploadOptions = {
   onError?: (message: string) => void;
 };
 
-const DEFAULT_MAX_FILES = 10;
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024;
-const DEFAULT_ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/heic", "image/webp"];
+const DEFAULT_ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export function useImageUpload({
-  maxFiles = DEFAULT_MAX_FILES,
+  maxFiles = MAX_LISTING_IMAGES,
   maxSizeBytes = DEFAULT_MAX_SIZE,
   acceptedTypes = DEFAULT_ACCEPTED_TYPES,
   onError,
@@ -46,7 +46,7 @@ export function useImageUpload({
   const validateFile = useCallback(
     (file: File): string | null => {
       if (!acceptedTypes.includes(file.type)) {
-        return `File type "${file.type}" is not supported. Please use PNG, JPG, or HEIC.`;
+        return `File type "${file.type}" is not supported. Please use PNG, JPG, or WebP.`;
       }
       if (file.size > maxSizeBytes) {
         const sizeMB = (maxSizeBytes / (1024 * 1024)).toFixed(0);

@@ -1,6 +1,9 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
@@ -17,7 +20,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from market.mixins import DefaultOrderMixin
-from market.models import Listing, ListingImage, Offer, Rating, Tag
+from market.models import Listing, ListingImage, Notification, Offer, Rating, Tag
+from market.notifications import notify
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
     IsSuperUser,
@@ -32,6 +36,7 @@ from market.serializers import (
     ListingSerializer,
     ListingSerializerList,
     ListingSerializerPublic,
+    NotificationSerializer,
     OfferSerializer,
     RatingSerializer,
     TagSerializer,
@@ -40,6 +45,7 @@ from market.serializers import (
 from utils.sms import generate_verification_code, send_verification_sms
 
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -80,6 +86,18 @@ class OffersReceived(ListAPIView, DefaultOrderMixin):
     def get_queryset(self):
         user = self.request.user
         return Offer.objects.filter(listing__seller=user)
+
+
+class NotificationsList(ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = PageSizeOffsetPagination
+
+    def get_queryset(self):
+        queryset = self.request.user.notifications.all()
+        if self.request.query_params.get("unread", "").lower() == "true":
+            queryset = queryset.filter(read_at__isnull=True)
+        return queryset
 
 
 class Listings(viewsets.ModelViewSet, DefaultOrderMixin):
@@ -214,18 +232,69 @@ class CreateImages(CreateAPIView):
 
     # takes an image multipart form data and creates a new image object
     def post(self, request, *args, **kwargs):
-        images = request.data.getlist("images", [])
+        images = request.FILES.getlist("images")
         listing_id = int(self.kwargs["listing_id"])
         listing = get_object_or_404(Listing, id=listing_id)
         self.check_object_permissions(request, listing)
-        instances = []
-
-        for img in images:
-            img_serializer = self.get_serializer(
-                data={"listing": listing_id, "image": img}
+        if not images:
+            return Response(
+                {"detail": "No images provided."}, status=status.HTTP_400_BAD_REQUEST
             )
-            img_serializer.is_valid(raise_exception=True)
-            instances.append(img_serializer.save())
+
+        max_images = ListingImage.MAX_PER_LISTING
+        instances = []
+        try:
+            with transaction.atomic():
+                # lock the listing so concurrent uploads can't both pass the limit;
+                # count before validating so over-limit requests skip the resize
+                Listing.objects.select_for_update().get(pk=listing_id)
+                existing = listing.images.count()
+                if existing + len(images) > max_images:
+                    return Response(
+                        {"detail": f"A listing can have at most {max_images} images."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                # parallel single-file uploads finish in any order, so the client
+                # sends each file's position; without it, append after existing ones
+                try:
+                    start = int(request.data.get("order", existing))
+                except ValueError:
+                    return Response(
+                        {"detail": "order must be an integer."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                # validate every file before saving any, so a bad file can't leave
+                # a partial set behind
+                serializers = [
+                    self.get_serializer(
+                        data={"listing": listing_id, "image": img, "order": start + i}
+                    )
+                    for i, img in enumerate(images)
+                ]
+                for img_serializer in serializers:
+                    img_serializer.is_valid(raise_exception=True)
+                for img_serializer in serializers:
+                    instance = ListingImage(**img_serializer.validated_data)
+                    # Store and track the file before inserting its database row,
+                    # so an insert failure can still clean up this upload.
+                    instance.image.save(
+                        instance.image.name, instance.image.file, save=False
+                    )
+                    instances.append(instance)
+                    instance.save()
+        except Exception:
+            # rolled-back rows don't fire post_delete, so remove their files here.
+            for instance in instances:
+                try:
+                    instance.image.storage.delete(instance.image.name)
+                except Exception:
+                    logger.exception(
+                        "Failed to delete image %s while rolling back uploads "
+                        "for listing %s",
+                        instance.image.name,
+                        listing_id,
+                    )
+            raise
 
         data = ListingImageURLSerializer(instances, many=True).data
         return Response(data, status=status.HTTP_201_CREATED)
@@ -323,7 +392,22 @@ class Offers(viewsets.ModelViewSet):
         data["user"] = self.request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+
+        with transaction.atomic():
+            serializer.save()
+
+            seller = serializer.instance.listing.seller
+            if seller != request.user:
+                notify(
+                    recipient=seller,
+                    notification_type=Notification.Type.OFFER_RECEIVED,
+                    data={
+                        "listing_id": serializer.instance.listing.id,
+                        "listing_title": serializer.instance.listing.title,
+                    },
+                    offer=serializer.instance,
+                )
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
@@ -466,3 +550,37 @@ def get_phone_status(request):
             "phone_verified": user.phone_verified,
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_notification_read(request, notification_id):
+    notification = get_object_or_404(request.user.notifications, id=notification_id)
+    if notification.read_at is None:
+        notification.read_at = timezone.now()
+        notification.save(update_fields=["read_at"])
+    return Response(NotificationSerializer(notification).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_all_notifications_read(request):
+    count = request.user.notifications.filter(read_at__isnull=True).update(
+        read_at=timezone.now()
+    )
+    return Response({"count": count})
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_notification(request, notification_id):
+    notification = get_object_or_404(request.user.notifications, id=notification_id)
+    notification.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def unread_notification_count(request):
+    count = request.user.notifications.filter(read_at__isnull=True).count()
+    return Response({"count": count})

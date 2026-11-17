@@ -39,3 +39,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+
+# Set a dedicated development bucket to enable S3; otherwise use local storage.
+# Never fall back to the production bucket setting.
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_DEV_STORAGE_BUCKET_NAME", "").strip()
+if AWS_STORAGE_BUCKET_NAME:
+    STORAGES = S3_STORAGES

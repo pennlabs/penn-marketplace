@@ -133,14 +133,11 @@ export const createSubletSchema = z
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date is required"),
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date is required"),
   })
-  .refine(
-    (data) => {
-      const start = Date.parse(data.startDate);
-      const end = Date.parse(data.endDate);
-      return Number.isFinite(start) && Number.isFinite(end) && end > start;
-    },
-    { message: "End date must be after start date", path: ["end_date"] }
-  )
+  // zero-padded "YYYY-MM-DD" strings sort the same as the dates they represent
+  .refine((data) => data.endDate > data.startDate, {
+    message: "End date must be after start date",
+    path: ["endDate"],
+  })
   .refine((data) => data.latitude !== 0 && data.longitude !== 0, {
     message: "Please select an address from the dropdown",
     path: ["street_address"],

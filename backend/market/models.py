@@ -6,7 +6,9 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -46,6 +48,35 @@ class Offer(models.Model):
 
     def __str__(self):
         return f"Offer for {self.listing} made by {self.user}"
+
+
+class Notification(models.Model):
+    class Type(models.TextChoices):
+        OFFER_RECEIVED = "offer_received", "Offer Received"
+
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="notifications"
+    )
+    offer = models.ForeignKey(
+        "Offer",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
+    )
+    type = models.CharField(max_length=50, choices=Type.choices)
+    data = models.JSONField(default=dict, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.type} notification for {self.recipient}"
 
 
 class Category(models.Model):
@@ -101,6 +132,10 @@ class Listing(models.Model):
 
 
 class ListingImage(models.Model):
+    # keep in sync with MAX_LISTING_IMAGES in frontend/lib/constants.ts
+    MAX_PER_LISTING = 8
+    MAX_SIZE_BYTES = 10 * 1024 * 1024  # checked before resize
+
     listing = models.ForeignKey(
         Listing, on_delete=models.CASCADE, related_name="images"
     )
@@ -112,6 +147,15 @@ class ListingImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.listing}"
+
+
+@receiver(post_delete, sender=ListingImage)
+def delete_image_file(sender, instance, **kwargs):
+    # also fires on cascade from Listing, so S3 doesn't accumulate orphans.
+    # on_commit: a rolled-back delete must not lose the file
+    if instance.image:
+        storage, name = instance.image.storage, instance.image.name
+        transaction.on_commit(lambda: storage.delete(name), robust=True)
 
 
 class Item(Listing):
