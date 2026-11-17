@@ -1,9 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
 import { FormField } from "@/components/common/FormField";
@@ -13,104 +11,90 @@ import { AddressAutocomplete } from "@/components/listings/address/AddressAutoco
 import { BaseListingForm } from "@/components/listings/form/BaseListingForm";
 import { ListingFormShell } from "@/components/listings/form/ListingFormShell";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { createListing, deleteListing, uploadListingImages } from "@/lib/actions";
+import { useSaveListing } from "@/hooks/useSaveListing";
 import { BEDS_OPTIONS, BATHS_OPTIONS } from "@/lib/constants";
 import { nextDateOnly, parsePriceString } from "@/lib/utils";
 import { createSubletSchema } from "@/lib/validations";
-import type { CreateSubletPayload } from "@/lib/types";
+import type { CreateSubletPayload, Sublet, UpdateSubletPayload } from "@/lib/types";
 import type { CreateSubletFormData } from "@/lib/validations";
 
 const DISPLAY_LABEL = "Listing";
 const EXAMPLE_TITLE = "e.g., Spacious 2BR near campus";
 
-export function SubletForm() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
+type SubletFormProps = {
+  initialListing?: Sublet;
+};
+
+export function SubletForm({ initialListing }: SubletFormProps) {
+  const isEditMode = Boolean(initialListing);
 
   const {
     control,
     handleSubmit,
     watch,
     reset,
-    formState: { errors, touchedFields, isDirty, isSubmitting },
+    formState: { errors, touchedFields, dirtyFields, isDirty, isSubmitting },
   } = useForm<CreateSubletFormData>({
     resolver: zodResolver(createSubletSchema),
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: {
-      title: "",
-      price: "",
-      description: "",
+      title: initialListing?.title ?? "",
+      price: initialListing ? String(initialListing.price) : "",
+      description: initialListing?.description ?? "",
       tags: [],
-      street_address: "",
-      latitude: 0,
-      longitude: 0,
-      beds: 0,
-      baths: 0,
-      startDate: "",
-      endDate: "",
+      street_address: initialListing?.additional_data.street_address ?? "",
+      latitude: initialListing?.additional_data.latitude ?? 0,
+      longitude: initialListing?.additional_data.longitude ?? 0,
+      beds: initialListing?.additional_data.beds ?? 0,
+      baths: initialListing?.additional_data.baths ?? 0,
+      startDate: initialListing?.additional_data.start_date?.slice(0, 10) ?? "",
+      endDate: initialListing?.additional_data.end_date?.slice(0, 10) ?? "",
     },
   });
 
   const imageUpload = useImageUpload({
     maxSizeBytes: 10 * 1024 * 1024,
     onError: (message) => toast.error(message),
+    initialImages: initialListing?.images,
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: createListing,
-    onSuccess: async (data) => {
-      // images attach to an existing listing, so they upload after it's created.
-      // wait for every upload to settle before rolling back on any failure.
-      const files = imageUpload.getFiles();
-      const results = await Promise.allSettled(
-        files.map(async (file, index) => {
-          const formData = new FormData();
-          formData.append("images", file);
-          // parallel uploads finish in any order, so tell the backend where this one goes
-          formData.append("order", String(index));
-          await uploadListingImages(data.id, formData);
-        })
-      );
-      const failed = files
-        .filter((_, index) => results[index].status === "rejected")
-        .map((file) => file.name);
-
-      if (failed.length > 0) {
-        failed.forEach((name) => toast.error(`The file "${name}" could not be uploaded.`));
-        try {
-          await deleteListing(data.id); // cascades to any images already uploaded
-          toast.error(`${DISPLAY_LABEL} was not created. Replace the file(s) and try again.`);
-        } catch {
-          toast.error(`${DISPLAY_LABEL} was created with missing images. Please delete it.`);
-        }
-        return; // keep the form filled in so the user can fix the files
-      }
-
-      toast.success(`${DISPLAY_LABEL} created successfully!`);
-      queryClient.invalidateQueries({ queryKey: ["sublets"] });
-      reset();
-      imageUpload.clearImages();
-      router.replace(`/sublets/${data.id}`);
-    },
+  const { mutate, isPending } = useSaveListing({
+    listingId: initialListing?.id,
+    basePath: "sublets",
+    displayLabel: DISPLAY_LABEL,
+    imageUpload,
+    onCreated: reset,
   });
 
   const onSubmit = (data: CreateSubletFormData) => {
-    const payload: CreateSubletPayload = {
-      title: data.title,
-      description: data.description,
-      price: String(parsePriceString(data.price)),
-      listing_type: "sublet",
-      additional_data: {
-        street_address: data.street_address,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        beds: data.beds,
-        baths: data.baths,
-        start_date: data.startDate,
-        end_date: data.endDate,
-      },
+    const parsedPrice = parsePriceString(data.price);
+    const additional_data = {
+      street_address: data.street_address,
+      beds: data.beds,
+      baths: data.baths,
+      start_date: data.startDate,
+      end_date: data.endDate,
     };
+    const coords = { latitude: data.latitude, longitude: data.longitude };
+    // edit form is prefilled with the backend's approximate coords; only send them
+    // after a fresh address selection, else the stored exact location drifts on save
+    const addressChanged = dirtyFields.latitude || dirtyFields.longitude;
+    const payload: CreateSubletPayload | UpdateSubletPayload = isEditMode
+      ? {
+          title: data.title,
+          description: data.description ?? "",
+          price: parsedPrice,
+          listing_type: "sublet",
+          additional_data: addressChanged ? { ...additional_data, ...coords } : additional_data,
+        }
+      : {
+          title: data.title,
+          description: data.description ?? "",
+          price: String(parsedPrice),
+          listing_type: "sublet",
+          additional_data: { ...additional_data, ...coords },
+        };
     mutate(payload);
   };
 
@@ -270,6 +254,8 @@ export function SubletForm() {
       isPending={isPending}
       displayLabel={DISPLAY_LABEL}
       imageUpload={imageUpload}
+      submitLabel={isEditMode ? "Save Changes" : undefined}
+      pendingLabel={isEditMode ? "Saving..." : undefined}
     >
       <BaseListingForm<CreateSubletFormData>
         control={control}
@@ -281,7 +267,7 @@ export function SubletForm() {
         isSublet
         abandonGuard={{
           isDirty,
-          unsavedImageCount: imageUpload.images.length,
+          unsavedImageCount: imageUpload.unsavedImageCount,
         }}
         childrenAfterPrice={subletFieldsAfterPrice}
       />

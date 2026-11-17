@@ -20,7 +20,7 @@ export interface BaseListingFormProps<T extends BaseCreatePayload> {
   childrenAfterPrice?: React.ReactNode;
   /** rendered after description */
   childrenAfterDescription?: React.ReactNode;
-  /** when provided, warns on tab/window close if form is dirty or has unsaved images */
+  /** when provided, warns on tab close or link navigation if form is dirty or has unsaved images */
   abandonGuard?: { isDirty: boolean; unsavedImageCount: number };
 }
 
@@ -49,13 +49,25 @@ export const BaseListingForm = <T extends BaseCreatePayload>({
   useEffect(() => {
     if (abandonGuard === undefined) return;
     const { isDirty, unsavedImageCount } = abandonGuard;
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty || unsavedImageCount > 0) {
+    if (!isDirty && unsavedImageCount === 0) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    // in-app navigation (links, the back button) never fires beforeunload, so catch the
+    // click in the capture phase, before Next's <Link> or React handlers see it.
+    // ponytail: browser back/forward isn't covered; App Router has no way to cancel it
+    const handleClick = (e: MouseEvent) => {
+      const link = (e.target as Element | null)?.closest("a[href]");
+      if (!link || link.getAttribute("target") === "_blank") return;
+      if (!window.confirm("You have unsaved changes. Leave this page?")) {
         e.preventDefault();
+        e.stopPropagation();
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("click", handleClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("click", handleClick, true);
+    };
   }, [abandonGuard]);
 
   return (

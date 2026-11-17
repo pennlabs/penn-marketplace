@@ -21,6 +21,10 @@ interface ListingFormShellProps {
   imageUpload: ReturnType<typeof useImageUpload>;
   /** The form fields (left column) */
   children: React.ReactNode;
+  /** Optional override for submit button text */
+  submitLabel?: string;
+  /** Optional override for pending button text */
+  pendingLabel?: string;
 }
 
 export function ListingFormShell({
@@ -31,6 +35,8 @@ export function ListingFormShell({
   maxFiles = MAX_LISTING_IMAGES,
   imageUpload,
   children,
+  submitLabel,
+  pendingLabel,
 }: ListingFormShellProps) {
   return (
     <form onSubmit={onSubmit} noValidate>
@@ -57,6 +63,10 @@ export function ListingFormShell({
             />
           </fieldset>
           <div className="pt-4">
+            {/*
+              Keep the live region message in sync with the button state so screen readers
+              announce the right action in both create and edit modes.
+            */}
             <Button
               type="submit"
               className="h-12 w-full text-base font-medium"
@@ -65,14 +75,14 @@ export function ListingFormShell({
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
-                  Creating...
+                  {pendingLabel ?? "Creating..."}
                 </>
               ) : (
-                `Create ${displayLabel}`
+                (submitLabel ?? `Create ${displayLabel}`)
               )}
             </Button>
             <div className="sr-only" aria-live="polite" aria-atomic="true">
-              {isPending && "Creating your listing, please wait..."}
+              {isPending && (pendingLabel ?? "Creating your listing, please wait...")}
             </div>
           </div>
         </div>

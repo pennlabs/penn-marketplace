@@ -11,8 +11,9 @@ export function mediaUrl(url: string): string {
   return url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_API_URL}${url}`;
 }
 
-export function formatPrice(price: number, showMonthly: boolean = false) {
-  const formatted = `$${price.toLocaleString("en-US", {
+// the API sends prices as decimal strings ("12312.00"), which toLocaleString won't format
+export function formatPrice(price: number | string, showMonthly: boolean = false) {
+  const formatted = `$${Number(price).toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })}`;
@@ -78,6 +79,22 @@ export function formatBeds(beds: number): string {
 // e.g. "1 bath", "2 baths"
 export function formatBaths(baths: number): string {
   return `${baths} ${baths === 1 ? "bath" : "baths"}`;
+}
+
+// Convert an ISO timestamp from the server into the viewer's local machine time.
+export function formatServerDateTimeToLocal(dateString: string) {
+  const date = new Date(dateString);
+  const datePart = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const timePart = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return { date: datePart, time: timePart };
 }
 
 // format phone number as (XXX) XXX-XXXX
