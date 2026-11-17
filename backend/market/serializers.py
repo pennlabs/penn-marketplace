@@ -22,11 +22,11 @@ from market.models import (
     Item,
     Listing,
     ListingImage,
+    Notification,
     Offer,
     Rating,
     Sublet,
     Tag,
-    Notification,
 )
 from utils.images import resize_image
 
@@ -533,6 +533,10 @@ class RatingSerializer(ModelSerializer):
             raise ValidationError(
                 "You cannot rate a user who is not on either side of the transaction."
             )
+        if Rating.objects.filter(
+            reviewer=reviewer, reviewed_user=reviewed_user, listing=listing
+        ).exists():
+            raise ValidationError("You have already rated this user for this rating.")
         if not (is_seller or target_is_seller):
             raise ValidationError("Ratings must be between the seller and a buyer")
         attr["rating_type"] = (

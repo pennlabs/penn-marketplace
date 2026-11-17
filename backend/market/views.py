@@ -3,7 +3,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
@@ -441,7 +441,13 @@ class Ratings(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericVi
         data["listing"] = int(self.kwargs["listing_id"])
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except IntegrityError:
+            raise exceptions.ValidationError(
+                "You have already rated this user for this listing."
+            )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

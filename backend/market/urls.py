@@ -69,7 +69,7 @@ additional_urls = [
     # post: add a listing to the user's favorites
     # delete: remove a listing from the user's favorites
     path(
-        "listings/<listing_id>/favorites/",
+        "listings/<int:listing_id>/favorites/",
         Favorites.as_view({"post": "create", "delete": "destroy"}),
     ),
     # Offers
@@ -77,12 +77,12 @@ additional_urls = [
     # post: create an offer for an listing
     # delete: delete an offer for an listing
     path(
-        "listings/<listing_id>/offers/",
+        "listings/<int:listing_id>/offers/",
         Offers.as_view({"get": "list", "post": "create", "delete": "destroy"}),
     ),
     # Ratings for a listing (list + create)
     path(
-        "listings/<listing_id>/ratings/",
+        "listings/<int:listing_id>/ratings/",
         Ratings.as_view({"get": "list", "post": "create"}),
         name="listing-ratings",
     ),
@@ -104,7 +104,7 @@ additional_urls = [
         name="user-ratings-average",
     ),
     # Image Creation
-    path("listings/<listing_id>/images/", CreateImages.as_view()),
+    path("listings/<int:listing_id>/images/", CreateImages.as_view()),
     # Image Deletion
     path("listings/images/<image_id>/", DeleteImage.as_view()),
     # Phone verification
