@@ -34,7 +34,7 @@ export const ListingDetail = ({ listingId }: Props) => {
   const isFavorited = listing?.is_favorited ?? false;
 
   const toggleFavoriteMutation = useMutation({
-    meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
+    meta: { suppressErrorToast: true },
     mutationFn: async (shouldFavorite: boolean) => {
       if (shouldFavorite) {
         await addToUsersFavorites(listingId);
@@ -55,6 +55,11 @@ export const ListingDetail = ({ listingId }: Props) => {
         queryClient.setQueryData(queryKey, context.previous);
       }
     },
+    // refresh a cached /favorites list now, while still on this page. Left to refetch on
+    // mount, going back to /favorites keeps the old list: that refetch starts mid-navigation
+    // and its result never lands
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.favorites(), refetchType: "all" }),
   });
 
   const handleToggleFavorite = async () => {

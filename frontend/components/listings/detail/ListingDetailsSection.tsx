@@ -1,8 +1,8 @@
-import { User } from "@/lib/types";
+import { PublicUser } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
 interface Props {
-  seller: User;
+  seller: PublicUser;
   ownerLabel: string;
   createdAt: string;
 }
@@ -11,7 +11,7 @@ export const ListingDetailsSection = ({ seller, ownerLabel, createdAt }: Props) 
   const details = [
     {
       label: ownerLabel,
-      value: `${seller.first_name} ${seller.last_name}`.trim() || seller.username,
+      value: seller.display_name,
     },
     {
       label: "Listing Date",

@@ -1756,6 +1756,194 @@ class TestImages(BaseMarketTest):
         storage.delete.assert_called_once_with(name)
 
 
+class PublicProfileTest(TestCase):
+    """seller privacy, public user profiles, and the profile/my listings/favorites
+    queries. Builds its own data; load_sublets' fixtures are out of date."""
+
+    PRIVATE_SELLER_KEYS = ("email", "phone_number", "last_name", "username")
+
+    def setUp(self):
+        self.client = APIClient()
+        self.category = Category.objects.create(name="Book")
+        self.user = User.objects.create_user(
+            "self",
+            "self@upenn.edu",
+            "pw",
+            first_name="Andrew",
+            last_name="Kim",
+            phone_number="+12155550100",
+        )
+        self.other = User.objects.create_user(
+            "other", "other@upenn.edu", "pw", first_name="Lau", last_name="Beck"
+        )
+        self.client.force_authenticate(self.user)
+
+        future = now() + datetime.timedelta(days=30)
+        past = now() - datetime.timedelta(days=1)
+        self.my_active_item = self.make_item(self.user, "My active item", future)
+        self.my_open_item = self.make_item(self.user, "My no-expiry item", None)
+        self.my_expired_item = self.make_item(self.user, "My expired item", past)
+        self.my_active_sublet = self.make_sublet(self.user, "My sublet", future)
+        self.my_expired_sublet = self.make_sublet(self.user, "My old sublet", past)
+        self.other_item = self.make_item(self.other, "Other item", future)
+        self.other_expired_item = self.make_item(self.other, "Other old item", past)
+
+    def make_item(self, seller, title, expires_at):
+        return Item.objects.create(
+            seller=seller,
+            title=title,
+            price=10,
+            expires_at=expires_at,
+            category=self.category,
+            condition="GOOD",
+        )
+
+    def make_sublet(self, seller, title, expires_at):
+        return Sublet.objects.create(
+            seller=seller,
+            title=title,
+            price=900,
+            expires_at=expires_at,
+            street_address="3401 Walnut St",
+            beds=1,
+            baths=1,
+            start_date="2027-01-01",
+            end_date="2027-05-01",
+        )
+
+    def listing_ids(self, response):
+        self.assertEqual(response.status_code, 200)
+        return {listing["id"] for listing in response.json()["results"]}
+
+    def assert_public_seller(self, seller, user):
+        self.assertEqual(set(seller), {"id", "display_name", "date_joined"})
+        self.assertEqual(seller["id"], user.id)
+        for key in self.PRIVATE_SELLER_KEYS:
+            self.assertNotIn(key, seller)
+
+    def test_list_hides_seller_contact_info(self):
+        response = self.client.get("/market/listings/")
+        results = response.json()["results"]
+        self.assertTrue(results)
+        for listing in results:
+            seller = (
+                self.user if listing["seller"]["id"] == self.user.id else self.other
+            )
+            self.assert_public_seller(listing["seller"], seller)
+        body = response.content.decode()
+        for private in (
+            "self@upenn.edu",
+            "other@upenn.edu",
+            "2155550100",
+            "Kim",
+            "Beck",
+        ):
+            self.assertNotIn(private, body)
+
+    def test_detail_hides_seller_contact_info(self):
+        response = self.client.get(f"/market/listings/{self.other_item.id}/")
+        self.assertEqual(response.status_code, 200)
+        seller = response.json()["seller"]
+        self.assert_public_seller(seller, self.other)
+        self.assertEqual(seller["display_name"], "Lau B.")
+        self.assertNotIn("other@upenn.edu", response.content.decode())
+
+    def test_own_detail_uses_public_seller(self):
+        response = self.client.get(f"/market/listings/{self.my_active_item.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assert_public_seller(response.json()["seller"], self.user)
+        self.assertEqual(response.json()["seller"]["display_name"], "Andrew K.")
+
+    def test_display_name_fallbacks(self):
+        first_only = User.objects.create_user("first", first_name="Sam")
+        no_first = User.objects.create_user("nofirst", last_name="Lee")
+        for user, expected in [
+            (self.user, "Andrew K."),
+            (first_only, "Sam"),
+            (no_first, "Penn user"),
+        ]:
+            response = self.client.get(f"/market/users/{user.id}/")
+            self.assertEqual(response.json()["display_name"], expected)
+
+    def test_public_user(self):
+        response = self.client.get(f"/market/users/{self.other.id}/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(set(data), {"id", "display_name", "date_joined"})
+        self.assertEqual(data["display_name"], "Lau B.")
+        self.assertEqual(
+            datetime.datetime.fromisoformat(data["date_joined"]),
+            self.other.date_joined,
+        )
+        self.assertNotIn("other@upenn.edu", response.content.decode())
+        self.assertNotIn("Beck", response.content.decode())
+
+    def test_public_user_unknown_id(self):
+        response = self.client.get("/market/users/999999/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_public_user_requires_auth(self):
+        self.client.force_authenticate(None)
+        response = self.client.get(f"/market/users/{self.other.id}/")
+        self.assertIn(response.status_code, (401, 403))
+
+    def test_seller_id_returns_active_listings_of_both_types(self):
+        response = self.client.get(f"/market/listings/?seller_id={self.user.id}")
+        self.assertEqual(
+            self.listing_ids(response),
+            {self.my_active_item.id, self.my_open_item.id, self.my_active_sublet.id},
+        )
+        response = self.client.get(f"/market/listings/?seller_id={self.other.id}")
+        self.assertEqual(self.listing_ids(response), {self.other_item.id})
+
+    def test_seller_id_with_type(self):
+        response = self.client.get(
+            f"/market/listings/?seller_id={self.user.id}&type=sublet"
+        )
+        self.assertEqual(self.listing_ids(response), {self.my_active_sublet.id})
+
+    def test_seller_id_invalid(self):
+        for seller_id in ("abc", "²"):
+            response = self.client.get(f"/market/listings/?seller_id={seller_id}")
+            self.assertEqual(response.status_code, 400)
+
+    def test_my_listings_expired_split(self):
+        active = self.listing_ids(
+            self.client.get("/market/listings/?seller=true&expired=false")
+        )
+        expired = self.listing_ids(
+            self.client.get("/market/listings/?seller=true&expired=true")
+        )
+        everything = self.listing_ids(self.client.get("/market/listings/?seller=true"))
+        self.assertEqual(
+            active,
+            {self.my_active_item.id, self.my_open_item.id, self.my_active_sublet.id},
+        )
+        self.assertEqual(expired, {self.my_expired_item.id, self.my_expired_sublet.id})
+        self.assertEqual(everything, active | expired)
+
+    def test_my_listings_never_include_other_users(self):
+        other_ids = {self.other_item.id, self.other_expired_item.id}
+        for query in ("", "&expired=true", "&expired=false"):
+            ids = self.listing_ids(
+                self.client.get(f"/market/listings/?seller=true{query}")
+            )
+            self.assertFalse(ids & other_ids)
+
+    def test_favorites_exclude_expired(self):
+        self.other_item.favorites.add(self.user)
+        self.other_expired_item.favorites.add(self.user)
+        response = self.client.get("/market/favorites/")
+        self.assertEqual(self.listing_ids(response), {self.other_item.id})
+
+    def test_favorites_newest_first(self):
+        newer = self.make_item(self.other, "Newer item", None)
+        self.other_item.favorites.add(self.user)
+        newer.favorites.add(self.user)
+        results = self.client.get("/market/favorites/").json()["results"]
+        self.assertEqual([r["id"] for r in results], [newer.id, self.other_item.id])
+
+
 class TestNotification(BaseMarketTest):
     def setUp(self):
         super().setUp()

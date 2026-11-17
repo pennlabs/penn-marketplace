@@ -45,6 +45,26 @@ class UserSerializer(ModelSerializer):
         read_only_fields = fields
 
 
+# what other users see: no contact info or full last name
+class PublicUserSerializer(ModelSerializer):
+    display_name = SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["id", "display_name", "date_joined"]
+        read_only_fields = fields
+
+    # "Andrew K."; first name alone if there's no last name
+    def get_display_name(self, obj):
+        first_name = obj.first_name.strip()
+        last_name = obj.last_name.strip()
+        if not first_name:
+            return "Penn user"
+        if not last_name:
+            return first_name
+        return f"{first_name} {last_name[0]}."
+
+
 class TagSerializer(ModelSerializer):
     class Meta:
         model = Tag
@@ -177,7 +197,7 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
         required=False,
         allow_empty=True,
     )
-    seller = UserSerializer(read_only=True)
+    seller = PublicUserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
     is_favorited = SerializerMethodField()
@@ -401,7 +421,7 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
     is_favorited = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
-    seller = UserSerializer(read_only=True)
+    seller = PublicUserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
 
@@ -445,7 +465,7 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
     favorite_count = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
-    seller = UserSerializer(read_only=True)
+    seller = PublicUserSerializer(read_only=True)
     listing_type = SerializerMethodField()
     additional_data = SerializerMethodField()
 

@@ -1,66 +1,24 @@
 "use client";
 
-import React from "react";
-import { Spinner } from "@/components/ui/spinner";
-import { ListingsCard } from "@/components/listings/ListingsCard";
+import { ListingsGridView } from "@/components/listings/ListingsGridView";
 import { NoListingsFound } from "@/components/listings/NoListingsFound";
 import { useListings } from "@/hooks/useListings";
 import { ListingTypes, User } from "@/lib/types";
-import { mediaUrl } from "@/lib/utils";
 
 type Props = {
   type: ListingTypes;
   currentUser: User;
 };
 
+// the filtered /items and /sublets feeds
 export const ListingsGrid = ({ type, currentUser }: Props) => {
-  const { data, error, isFetchingNextPage, hasNextPage, ref } = useListings({ type });
-
-  const totalResults = data?.pages.reduce((acc, page) => acc + page.results.length, 0) || 0;
-  const isEmpty = totalResults === 0;
-
-  if (error && totalResults === 0) {
-    return (
-      <div className="flex w-full flex-col items-center space-y-4 py-12">
-        <p className="text-muted-foreground text-sm">
-          Failed to load listings. Please try refreshing the page.
-        </p>
-      </div>
-    );
-  }
+  const query = useListings({ type });
 
   return (
-    <div className="flex w-full flex-col items-center space-y-4">
-      <div className="w-full">
-        {isEmpty && <NoListingsFound type={type} />}
-        {!isEmpty && (
-          <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {data?.pages.map((group, i) => (
-              <React.Fragment key={i}>
-                {group.results.map((post) => {
-                  const previewImageUrl = post.images?.[0]
-                    ? mediaUrl(post.images[0].image_url)
-                    : undefined;
-
-                  return (
-                    <ListingsCard
-                      key={post.id}
-                      listing={post}
-                      previewImageUrl={previewImageUrl}
-                      href={`/${type}/${post.id}`}
-                      isMyListing={post.seller.id === currentUser.id}
-                    />
-                  );
-                })}
-              </React.Fragment>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="flex min-h-4 items-center justify-center">
-        {isFetchingNextPage && hasNextPage && <Spinner />}
-      </div>
-      <div ref={ref} />
-    </div>
+    <ListingsGridView
+      query={query}
+      currentUser={currentUser}
+      emptyState={<NoListingsFound type={type} />}
+    />
   );
 };
