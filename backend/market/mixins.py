@@ -8,7 +8,7 @@ def get_listing_type(obj):
             return subclass.__name__.lower()
         except subclass.DoesNotExist:
             continue
-    return "other"
+    raise ValueError(f"Listing {obj.pk} is neither an Item nor a Sublet")
 
 
 class DefaultOrderMixin:
@@ -32,8 +32,5 @@ class ListingTypeMixin:
         if listing_type == "item":
             serializer = ItemDataSerializer(obj.item, context=self.context)
             return serializer.data
-        elif listing_type == "sublet":
-            serializer = SubletDataSerializer(obj.sublet, context=self.context)
-            return serializer.data
-        print("UNKNOWN LISTING TYPE FOR ADDITIONAL DATA")
-        return {}
+        serializer = SubletDataSerializer(obj.sublet, context=self.context)
+        return serializer.data
