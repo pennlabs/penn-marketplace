@@ -454,6 +454,7 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
 # Read-only serializer for use when pulling all listings /etc
 class ListingSerializerList(ListingTypeMixin, ModelSerializer):
     favorite_count = SerializerMethodField()
+    is_favorited = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
     seller = UserSerializer(read_only=True)
@@ -471,6 +472,7 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
             "expires_at",
             "images",
             "favorite_count",
+            "is_favorited",
             "listing_type",
             "additional_data",
         ]
@@ -478,6 +480,16 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
 
     def get_favorite_count(self, obj):
         return obj.favorites.count()
+
+    def get_is_favorited(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        if "favorited_ids" not in self.context:
+            self.context["favorited_ids"] = set(
+                request.user.listings_favorited.values_list("id", flat=True)
+            )
+        return obj.id in self.context["favorited_ids"]
 
 
 class RatingStatsSerializer(Serializer):
