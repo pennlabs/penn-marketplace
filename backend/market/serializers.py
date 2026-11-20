@@ -256,6 +256,12 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
         return super().validate(attrs)
 
+    def get_is_favorited(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.listings_favorited.filter(id=obj.id).exists()
+
     def validate_title(self, value):
         if self.contains_profanity(value):
             raise ValidationError("The title contains inappropriate language.")
@@ -438,6 +444,12 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
     def get_favorite_count(self, obj):
         return obj.favorites.count()
 
+    def get_is_favorited(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.listings_favorited.filter(id=obj.id).exists()
+
 
 # Read-only serializer for use when pulling all listings /etc
 class ListingSerializerList(ListingTypeMixin, ModelSerializer):
@@ -468,6 +480,17 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
 
     def get_favorite_count(self, obj):
         return obj.favorites.count()
+
+    # list items share one context, so this is one query per page, not per listing
+    def get_is_favorited(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        if "favorited_ids" not in self.context:
+            self.context["favorited_ids"] = set(
+                request.user.listings_favorited.values_list("id", flat=True)
+            )
+        return obj.id in self.context["favorited_ids"]
 
 
 class RatingStatsSerializer(Serializer):
