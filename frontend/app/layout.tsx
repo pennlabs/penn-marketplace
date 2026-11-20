@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -33,6 +34,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-background flex min-h-screen flex-col antialiased`}
       >
+        <Script
+          src="https://status.pennlabs.org/banner.js"
+          data-product="penn-marketplace"
+          strategy="afterInteractive"
+        />
         <TanstackQueryProvider>
           <FiltersProvider>
             <Navbar />
