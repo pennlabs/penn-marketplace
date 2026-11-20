@@ -1782,8 +1782,29 @@ class TestNotification(BaseMarketTest):
         self.assertEqual(
             notification.data["listing_title"], self.other_user_items[0].title
         )
+        self.assertEqual(notification.data["listing_type"], "item")
         self.assertEqual(notification.offer_id, response.json()["id"])
         self.assertIsNone(notification.read_at)
+
+    def test_offer_notification_includes_sublet_type(self):
+        sublet = Sublet.objects.create(
+            seller=self.users[1],
+            title="Test Sublet",
+            price="100.00",
+            street_address="123 Test St",
+            beds=1,
+            baths=1,
+            start_date="2026-01-01",
+            end_date="2026-06-01",
+        )
+        response = self.client.post(
+            f"/market/listings/{sublet.id}/offers/",
+            {"offered_price": "10.00", "message": "I want this"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        notification = Notification.objects.get(recipient=self.users[1])
+        self.assertEqual(notification.data["listing_type"], "sublet")
 
     def test_self_offer_does_not_create_notification(self):
         response = self.client.post(

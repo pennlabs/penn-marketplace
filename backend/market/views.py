@@ -19,7 +19,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from market.mixins import DefaultOrderMixin
+from market.mixins import DefaultOrderMixin, get_listing_type
 from market.models import Listing, ListingImage, Notification, Offer, Rating, Tag
 from market.notifications import notify
 from market.pagination import PageSizeOffsetPagination
@@ -404,6 +404,7 @@ class Offers(viewsets.ModelViewSet):
                     data={
                         "listing_id": serializer.instance.listing.id,
                         "listing_title": serializer.instance.listing.title,
+                        "listing_type": get_listing_type(serializer.instance.listing),
                     },
                     offer=serializer.instance,
                 )
