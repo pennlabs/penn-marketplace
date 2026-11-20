@@ -14,16 +14,15 @@ interface Props {
 
 export const FavoriteButton = ({ listingId, isFavorited: initial = false, className }: Props) => {
   const queryClient = useQueryClient();
-  const [toggled, setToggled] = useState<boolean>(); // optimistic value once clicked
+  const [toggled, setToggled] = useState<boolean>();
   const isFavorited = toggled ?? initial;
 
   const { mutate } = useMutation({
-    meta: { suppressErrorToast: true }, // the heart flipping back is the error feedback
+    meta: { suppressErrorToast: true },
     mutationFn: (favorite: boolean) =>
       favorite ? addToUsersFavorites(listingId) : deleteFromUsersFavorites(listingId),
     onMutate: (favorite) => setToggled(favorite),
     onError: (_error, favorite) => setToggled(!favorite),
-    // cached lists and detail pages now hold a stale is_favorited: refetch them on next mount
     onSettled: () => queryClient.invalidateQueries({ refetchType: "none" }),
   });
 
@@ -40,7 +39,6 @@ export const FavoriteButton = ({ listingId, isFavorited: initial = false, classN
     >
       <span className="relative block size-5">
         <Heart className="size-5" />
-        {/* red fill grows from the center when liked, shrinks back into it when unliked */}
         <Heart
           className={cn(
             "absolute inset-0 size-5 fill-red-500 text-red-500 transition-transform motion-reduce:transition-none",

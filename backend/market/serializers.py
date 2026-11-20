@@ -481,7 +481,6 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
     def get_favorite_count(self, obj):
         return obj.favorites.count()
 
-    # list items share one context, so this is one query per page, not per listing
     def get_is_favorited(self, obj):
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
