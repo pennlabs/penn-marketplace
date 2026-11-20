@@ -256,12 +256,6 @@ class ListingSerializer(ListingTypeMixin, ModelSerializer):
 
         return super().validate(attrs)
 
-    def get_is_favorited(self, obj):
-        request = self.context.get("request")
-        if not request or not request.user or not request.user.is_authenticated:
-            return False
-        return request.user.listings_favorited.filter(id=obj.id).exists()
-
     def validate_title(self, value):
         if self.contains_profanity(value):
             raise ValidationError("The title contains inappropriate language.")
@@ -444,16 +438,11 @@ class ListingSerializerPublic(ListingTypeMixin, ModelSerializer):
     def get_favorite_count(self, obj):
         return obj.favorites.count()
 
-    def get_is_favorited(self, obj):
-        request = self.context.get("request")
-        if not request or not request.user or not request.user.is_authenticated:
-            return False
-        return request.user.listings_favorited.filter(id=obj.id).exists()
-
 
 # Read-only serializer for use when pulling all listings /etc
 class ListingSerializerList(ListingTypeMixin, ModelSerializer):
     favorite_count = SerializerMethodField()
+    is_favorited = SerializerMethodField()
     tags = SlugRelatedField(many=True, slug_field="name", queryset=Tag.objects.all())
     images = ListingImageURLSerializer(many=True)
     seller = UserSerializer(read_only=True)
@@ -471,6 +460,7 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
             "expires_at",
             "images",
             "favorite_count",
+            "is_favorited",
             "listing_type",
             "additional_data",
         ]

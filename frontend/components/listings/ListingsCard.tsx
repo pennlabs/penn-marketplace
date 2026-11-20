@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { FavoriteButton } from "@/components/listings/FavoriteButton";
 import {
   formatBaths,
   formatBeds,
@@ -58,50 +59,57 @@ export const ListingsCard = ({ listing, previewImageUrl, href, isMyListing = fal
   const showMonthlyPrice = listing.listing_type === "sublet";
 
   return (
-    <Link
-      href={href}
-      className="group flex w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:shadow-lg"
-    >
-      {/* image container */}
-      <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
-        <Image
-          src={previewImageUrl || DEFAULT_IMAGE}
-          alt={listing.title}
-          fill
-          className="object-cover transition-transform duration-200 group-hover:scale-105"
-        />
+    <div className="group relative">
+      <Link
+        href={href}
+        className="flex w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 group-hover:shadow-lg"
+      >
+        {/* image container */}
+        <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
+          <Image
+            src={previewImageUrl || DEFAULT_IMAGE}
+            alt={listing.title}
+            fill
+            className="object-cover transition-transform duration-200 group-hover:scale-105"
+          />
 
-        {/* badges overlay */}
-        {isMyListing && (
-          <div className="absolute top-3 left-3">
-            <Badge className="bg-brand hover:bg-brand-hover border-none text-white shadow-sm">
-              My Listing
+          {/* badges overlay */}
+          {isMyListing && (
+            <div className="absolute top-3 left-3">
+              <Badge className="bg-brand hover:bg-brand-hover border-none text-white shadow-sm">
+                My Listing
+              </Badge>
+            </div>
+          )}
+          <div className="absolute bottom-3 left-3">
+            <Badge className="border-none bg-white/90 text-gray-900 shadow-sm backdrop-blur-sm hover:bg-white">
+              {getBadgeContent(listing)}
             </Badge>
           </div>
-        )}
-        <div className="absolute bottom-3 left-3">
-          <Badge className="border-none bg-white/90 text-gray-900 shadow-sm backdrop-blur-sm hover:bg-white">
-            {getBadgeContent(listing)}
-          </Badge>
-        </div>
-      </div>
-
-      {/* content (title, price, metadata) */}
-      <div className="flex flex-col gap-2 p-4">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="line-clamp-1 text-sm leading-tight font-semibold">{listing.title}</h2>
-
-          <p className="text-base font-bold">
-            <span>{formatPrice(listing.price, false)}</span>
-            {showMonthlyPrice && <span className="text-xs font-normal">/mo</span>}
-          </p>
         </div>
 
-        {/* Metadata */}
-        <div className="flex h-[20px] flex-col gap-1 text-xs text-gray-600">
-          {getMetadataContent(listing)}
+        {/* content (title, price, metadata) */}
+        <div className="flex flex-col gap-2 p-4">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="line-clamp-1 text-sm leading-tight font-semibold">{listing.title}</h2>
+
+            <p className="text-base font-bold">
+              <span>{formatPrice(listing.price, false)}</span>
+              {showMonthlyPrice && <span className="text-xs font-normal">/mo</span>}
+            </p>
+          </div>
+
+          {/* Metadata */}
+          <div className="flex h-[20px] flex-col gap-1 text-xs text-gray-600">
+            {getMetadataContent(listing)}
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      <FavoriteButton
+        listingId={listing.id}
+        isFavorited={listing.is_favorited}
+        className="absolute top-3 right-3 size-9 rounded-full bg-black/25 text-white backdrop-blur-sm after:absolute after:-inset-1 hover:bg-black/40"
+      />
+    </div>
   );
 };

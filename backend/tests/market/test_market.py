@@ -212,6 +212,7 @@ class TestItemGet(BaseMarketTest):
                     "expires_at": "3000-08-12T01:00:00-04:00",
                     "images": [],
                     "favorite_count": 0,
+                    "is_favorited": False,
                     "listing_type": "item",
                     "additional_data": {
                         "condition": "NEW",
@@ -227,6 +228,7 @@ class TestItemGet(BaseMarketTest):
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
                     "favorite_count": 0,
+                    "is_favorited": False,
                     "listing_type": "item",
                     "additional_data": {
                         "condition": "GOOD",
@@ -242,6 +244,7 @@ class TestItemGet(BaseMarketTest):
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
                     "favorite_count": 0,
+                    "is_favorited": False,
                     "listing_type": "item",
                     "additional_data": {
                         "condition": "FAIR",
@@ -276,6 +279,7 @@ class TestItemGet(BaseMarketTest):
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
                     "favorite_count": 0,
+                    "is_favorited": False,
                     "listing_type": "item",
                     "additional_data": {
                         "condition": "GOOD",
@@ -291,6 +295,12 @@ class TestItemGet(BaseMarketTest):
             [],
             ["results", "results.tags", "results.images"],
         )
+
+    def test_get_items_is_favorited(self):
+        self.users[0].listings_favorited.add(self.items[1])
+        response = self.client.get("/market/listings/?type=item")
+        favorited = {r["id"]: r["is_favorited"] for r in response.json()["results"]}
+        self.assertEqual(favorited, {1: False, 2: True, 3: False})
 
     def test_get_single_item_own(self):
         response = self.client.get(f"/market/listings/{self.items[0].id}/")
@@ -790,6 +800,7 @@ class TestSubletGet(BaseMarketTest):
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
                     "favorite_count": 0,
+                    "is_favorited": False,
                     "listing_type": "sublet",
                     "additional_data": {
                         "address": "Cira Green, Philadelphia, PA",
@@ -808,6 +819,7 @@ class TestSubletGet(BaseMarketTest):
                     "expires_at": "3000-12-12T00:00:00-05:00",
                     "images": [],
                     "favorite_count": 0,
+                    "is_favorited": False,
                     "listing_type": "sublet",
                     "additional_data": {
                         "address": "3901 Locust Walk, Philadelphia, PA",

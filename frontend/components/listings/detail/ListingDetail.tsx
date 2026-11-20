@@ -1,11 +1,10 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addToUsersFavorites, deleteFromUsersFavorites, getListing } from "@/lib/actions";
+import { useQuery } from "@tanstack/react-query";
+import { getListing } from "@/lib/actions";
 import { queryKeys } from "@/lib/queryKeys";
-import { Heart } from "lucide-react";
-import { Item, Sublet } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
+import { FavoriteButton } from "@/components/listings/FavoriteButton";
 import { ListingActions } from "@/components/listings/detail/ListingActions";
 import { ListingImageGallery } from "@/components/listings/detail/ListingImageGallery";
 import { ListingDescription } from "@/components/listings/detail/ListingDescription";
@@ -23,43 +22,10 @@ const ICON_BUTTON_CLASS =
   "flex size-10 cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white transition-colors hover:bg-gray-50";
 
 export const ListingDetail = ({ listingId }: Props) => {
-  const queryClient = useQueryClient();
-  const queryKey = queryKeys.listing(listingId);
-
   const { data: listing } = useQuery({
-    queryKey,
+    queryKey: queryKeys.listing(listingId),
     queryFn: () => getListing(String(listingId)),
   });
-
-  const isFavorited = listing?.is_favorited ?? false;
-
-  const toggleFavoriteMutation = useMutation({
-    meta: { suppressErrorToast: true }, // since it's noisy to show error toast on top of optimistic update
-    mutationFn: async (shouldFavorite: boolean) => {
-      if (shouldFavorite) {
-        await addToUsersFavorites(listingId);
-      } else {
-        await deleteFromUsersFavorites(listingId);
-      }
-    },
-    onMutate: async (shouldFavorite: boolean) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<Item | Sublet>(queryKey);
-      if (previous) {
-        queryClient.setQueryData(queryKey, { ...previous, is_favorited: shouldFavorite });
-      }
-      return { previous };
-    },
-    onError: (_error, _shouldFavorite, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
-      }
-    },
-  });
-
-  const handleToggleFavorite = async () => {
-    toggleFavoriteMutation.mutate(!isFavorited);
-  };
 
   if (!listing) return null;
 
@@ -86,15 +52,11 @@ export const ListingDetail = ({ listingId }: Props) => {
         <BackButton />
         <div className="flex items-center gap-2">
           <ShareButton title={listing.title} text={shareText} className={ICON_BUTTON_CLASS} />
-          <button
-            type="button"
+          <FavoriteButton
+            listingId={listingId}
+            isFavorited={listing.is_favorited}
             className={ICON_BUTTON_CLASS}
-            onClick={handleToggleFavorite}
-            aria-pressed={isFavorited}
-            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-          >
-            <Heart className={isFavorited ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"} />
-          </button>
+          />
         </div>
       </div>
 

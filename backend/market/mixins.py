@@ -22,6 +22,17 @@ class DefaultOrderMixin:
 
 
 class ListingTypeMixin:
+    # a list shares one context, so this is one query per page, not one per listing
+    def get_is_favorited(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        if "favorited_ids" not in self.context:
+            self.context["favorited_ids"] = set(
+                request.user.listings_favorited.values_list("id", flat=True)
+            )
+        return obj.id in self.context["favorited_ids"]
+
     def get_listing_type(self, obj):
         return get_listing_type(obj)
 
