@@ -5,8 +5,11 @@ from profanity_check import predict
 from rest_framework.serializers import (
     BooleanField,
     DateTimeField,
+    FloatField,
     ImageField,
+    IntegerField,
     ModelSerializer,
+    Serializer,
     SerializerMethodField,
     SlugRelatedField,
     URLField,
@@ -21,6 +24,7 @@ from market.models import (
     ListingImage,
     Notification,
     Offer,
+    Rating,
     Sublet,
     Tag,
 )
@@ -42,6 +46,13 @@ class UserSerializer(ModelSerializer):
             "phone_number",
             "phone_verified",
         ]
+        read_only_fields = fields
+
+
+class PublicUserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "first_name", "last_name"]
         read_only_fields = fields
 
 
@@ -467,3 +478,81 @@ class ListingSerializerList(ListingTypeMixin, ModelSerializer):
 
     def get_favorite_count(self, obj):
         return obj.favorites.count()
+
+
+class RatingStatsSerializer(Serializer):
+    average = FloatField(allow_null=True)
+    count = IntegerField()
+
+
+class AverageRatingSerializer(Serializer):
+    buyer = RatingStatsSerializer()
+    seller = RatingStatsSerializer()
+
+
+class RatingSerializer(ModelSerializer):
+    reviewer = PublicUserSerializer(read_only=True)
+
+    class Meta:
+        model = Rating
+        fields = [
+            "id",
+            "reviewer",
+            "reviewed_user",
+            "listing",
+            "score",
+            "rating_type",
+            "comment",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "reviewer", "rating_type"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["reviewed_user"] = PublicUserSerializer(instance.reviewed_user).data
+        return data
+
+    def validate(self, attr):
+        reviewer = self.context["request"].user
+        reviewed_user = attr["reviewed_user"]
+        listing = attr["listing"]
+
+        if reviewer == reviewed_user:
+            raise ValidationError("You cannot review yourself.")
+
+        is_seller = listing.seller == reviewer
+        is_buyer = listing.offers_received.filter(user=reviewer).exists()
+        if not is_seller and not is_buyer:
+            raise ValidationError(
+                "You can only rate users on listings you have interacted with."
+            )
+
+        target_is_seller = listing.seller == reviewed_user
+        target_is_buyer = listing.offers_received.filter(user=reviewed_user).exists()
+        if not target_is_seller and not target_is_buyer:
+            raise ValidationError(
+                "You cannot rate a user who is not on either side of the transaction."
+            )
+        if Rating.objects.filter(
+            reviewer=reviewer, reviewed_user=reviewed_user, listing=listing
+        ).exists():
+            raise ValidationError("You have already rated this user for this rating.")
+        if not (is_seller or target_is_seller):
+            raise ValidationError("Ratings must be between the seller and a buyer")
+        attr["rating_type"] = (
+            Rating.RatingType.SELLER if target_is_seller else Rating.RatingType.BUYER
+        )
+
+        return attr
+
+    def validate_comment(self, value):
+        if self.contains_profanity(value):
+            raise ValidationError("The comment contains inappropriate language.")
+        return value
+
+    def contains_profanity(self, text):
+        return predict([text])[0]
+
+    def create(self, validated_data):
+        validated_data["reviewer"] = self.context["request"].user
+        return super().create(validated_data)

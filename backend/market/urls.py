@@ -10,8 +10,12 @@ from market.views import (
     Offers,
     OffersMade,
     OffersReceived,
+    Ratings,
     Tags,
+    UserAverageRating,
+    UserBuyerRatings,
     UserFavorites,
+    UserSellerRatings,
     delete_notification,
     get_current_user,
     get_phone_status,
@@ -65,7 +69,7 @@ additional_urls = [
     # post: add a listing to the user's favorites
     # delete: remove a listing from the user's favorites
     path(
-        "listings/<listing_id>/favorites/",
+        "listings/<int:listing_id>/favorites/",
         Favorites.as_view({"post": "create", "delete": "destroy"}),
     ),
     # Offers
@@ -73,11 +77,34 @@ additional_urls = [
     # post: create an offer for an listing
     # delete: delete an offer for an listing
     path(
-        "listings/<listing_id>/offers/",
+        "listings/<int:listing_id>/offers/",
         Offers.as_view({"get": "list", "post": "create", "delete": "destroy"}),
     ),
+    # Ratings for a listing (list + create)
+    path(
+        "listings/<int:listing_id>/ratings/",
+        Ratings.as_view({"get": "list", "post": "create"}),
+        name="listing-ratings",
+    ),
+    # Current user's received ratings by type
+    path(
+        "user/ratings/buyer/",
+        UserBuyerRatings.as_view(),
+        name="user-ratings-buyer",
+    ),
+    path(
+        "user/ratings/seller/",
+        UserSellerRatings.as_view(),
+        name="user-ratings-seller",
+    ),
+    # Average rating summary (buyer/seller) for any user
+    path(
+        "users/<user_id>/ratings/average/",
+        UserAverageRating.as_view(),
+        name="user-ratings-average",
+    ),
     # Image Creation
-    path("listings/<listing_id>/images/", CreateImages.as_view()),
+    path("listings/<int:listing_id>/images/", CreateImages.as_view()),
     # Image Deletion
     path("listings/images/<image_id>/", DeleteImage.as_view()),
     # Phone verification

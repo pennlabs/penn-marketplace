@@ -3,7 +3,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import exceptions, mixins, status, viewsets
@@ -17,9 +17,10 @@ from rest_framework.generics import (
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from market.mixins import DefaultOrderMixin, get_listing_type
-from market.models import Listing, ListingImage, Notification, Offer, Tag
+from market.models import Listing, ListingImage, Notification, Offer, Rating, Tag
 from market.notifications import notify
 from market.pagination import PageSizeOffsetPagination
 from market.permissions import (
@@ -29,6 +30,7 @@ from market.permissions import (
     OfferOwnerPermission,
 )
 from market.serializers import (
+    AverageRatingSerializer,
     ListingImageSerializer,
     ListingImageURLSerializer,
     ListingSerializer,
@@ -36,6 +38,7 @@ from market.serializers import (
     ListingSerializerPublic,
     NotificationSerializer,
     OfferSerializer,
+    RatingSerializer,
     TagSerializer,
     UserSerializer,
 )
@@ -425,6 +428,59 @@ class Offers(viewsets.ModelViewSet):
         for offer in self.get_queryset():
             self.check_object_permissions(request, offer)
         return super().list(request, *args, **kwargs)
+
+
+class Ratings(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = RatingSerializer
+    permission_classes = [IsAuthenticated | IsSuperUser]
+
+    def get_queryset(self):
+        return Rating.objects.filter(listing_id=self.kwargs["listing_id"])
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data["listing"] = int(self.kwargs["listing_id"])
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except IntegrityError:
+            raise exceptions.ValidationError(
+                "You have already rated this user for this listing."
+            )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class UserBuyerRatings(ListAPIView, DefaultOrderMixin):
+    serializer_class = RatingSerializer
+    permission_classes = [IsAuthenticated | IsSuperUser]
+    default_ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return Rating.objects.filter(
+            reviewed_user=self.request.user, rating_type=Rating.RatingType.BUYER
+        )
+
+
+class UserSellerRatings(ListAPIView, DefaultOrderMixin):
+    serializer_class = RatingSerializer
+    permission_classes = [IsAuthenticated | IsSuperUser]
+    default_ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return Rating.objects.filter(
+            reviewed_user=self.request.user, rating_type=Rating.RatingType.SELLER
+        )
+
+
+class UserAverageRating(APIView):
+    permission_classes = [IsAuthenticated | IsSuperUser]
+
+    def get(self, request, user_id):
+        user = get_object_or_404(User, pk=user_id)
+        serializer = AverageRatingSerializer(Rating.summary_for_user(user))
+        return Response(serializer.data)
 
 
 @api_view(["POST"])
